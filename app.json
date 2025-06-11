@@ -4,7 +4,11 @@
     "slug": "healthiq",
     "version": "1.0.0",
     "jsEngine": "jsc",
-    "platforms": ["ios", "android", "web"],
+    "platforms": [
+      "ios",
+      "android",
+      "web"
+    ],
     "ios": {
       "bundleIdentifier": "com.anonymous.healthiq",
       "supportsTablet": true
@@ -14,6 +18,9 @@
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF"
       }
-    }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
