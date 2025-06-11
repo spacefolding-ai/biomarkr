@@ -12,27 +12,30 @@ const Tab = createBottomTabNavigator();
 const AppNavigator = () => {
   return (
     <Tab.Navigator
-      // @ts-ignore - Required for React Navigation v7
       id={undefined}
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName = 'ios-alert';
+        headerShown: false,
+        tabBarIcon: ({ color, size }) => {
+          let iconName: string = '';
 
           switch (route.name) {
             case 'Overview':
-              iconName = focused ? 'ios-information-circle' : 'ios-information-circle-outline';
+              iconName = 'home-outline';
               break;
             case 'Parameters':
-              iconName = focused ? 'ios-list-box' : 'ios-list';
+              iconName = 'list-outline';
               break;
             case 'Upload':
-              iconName = focused ? 'ios-cloud-upload' : 'ios-cloud-upload-outline';
+              iconName = 'cloud-upload-outline';
               break;
             case 'Lab Assistant':
-              iconName = focused ? 'ios-flask' : 'ios-flask-outline';
+              iconName = 'chatbubble-ellipses-outline';
               break;
             case 'Settings':
-              iconName = focused ? 'ios-settings' : 'ios-settings-outline';
+              iconName = 'settings-outline';
+              break;
+            default:
+              iconName = 'ellipse-outline';
               break;
           }
 
@@ -49,4 +52,4 @@ const AppNavigator = () => {
   );
 };
 
-export default AppNavigator; 
+export default AppNavigator;

@@ -3,7 +3,7 @@
     "name": "healthiq",
     "slug": "healthiq",
     "version": "1.0.0",
-    "jsEngine": "jsc",
+    "jsEngine": "hermes",
     "platforms": [
       "ios",
       "android",
