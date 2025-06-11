@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "healthiq",
+    "slug": "healthiq",
+    "version": "1.0.0",
+    "jsEngine": "jsc",
+    "platforms": ["ios", "android", "web"],
+    "ios": {
+      "bundleIdentifier": "com.anonymous.healthiq",
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.anonymous.healthiq",
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFFFF"
+      }
+    }
+  }
+}

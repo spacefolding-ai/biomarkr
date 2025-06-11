@@ -1,12 +1,17 @@
+import 'react-native-url-polyfill/auto';
 import React from 'react';
-import { View, Text, AppRegistry } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { AppRegistry } from 'react-native';
+import AppNavigator from './app/navigation/AppNavigator';
 
-export default function App() {
+function App() {
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>🚀 HealthIQ App booted successfully!</Text>
-    </View>
+    <NavigationContainer>
+      <AppNavigator />
+    </NavigationContainer>
   );
 }
 
 AppRegistry.registerComponent('main', () => App);
+
+export default App;

@@ -1,0 +1,3 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -workspace /Users/miroslavjugovic/Projects/healthiq/ios/healthiq.xcworkspace -configuration Debug -scheme healthiq -destination id=5992875A-6561-490D-83A8-E4F9680C48A9
+
