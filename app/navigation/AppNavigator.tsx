@@ -1,11 +1,11 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import OverviewScreen from '../screens/OverviewScreen';
 import ParametersScreen from '../screens/ParametersScreen';
 import UploadScreen from '../screens/UploadScreen';
 import LabAssistantScreen from '../screens/LabAssistantScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+import { AppIcon } from '@components/IconRegistry';
 
 const Tab = createBottomTabNavigator();
 
@@ -16,30 +16,27 @@ const AppNavigator = () => {
       screenOptions={({ route }) => ({
         headerShown: false,
         tabBarIcon: ({ color, size }) => {
-          let iconName: string = '';
+          let iconName: any = 'overview';
 
           switch (route.name) {
             case 'Overview':
-              iconName = 'home-outline';
+              iconName = 'overview';
               break;
             case 'Parameters':
-              iconName = 'list-outline';
+              iconName = 'parameters';
               break;
             case 'Upload':
-              iconName = 'cloud-upload-outline';
+              iconName = 'upload';
               break;
             case 'Lab Assistant':
-              iconName = 'chatbubble-ellipses-outline';
+              iconName = 'lab';
               break;
             case 'Settings':
-              iconName = 'settings-outline';
-              break;
-            default:
-              iconName = 'ellipse-outline';
+              iconName = 'settings';
               break;
           }
 
-          return <Ionicons name={iconName} size={size} color={color} />;
+          return <AppIcon name={iconName} size={size} color={color} />;
         },
       })}
     >
