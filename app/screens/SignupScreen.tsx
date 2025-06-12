@@ -3,7 +3,7 @@ import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { supabase } from '../services/supabaseClient';
+import { handleSignUp } from '../services/auth';
 
 const signupSchema = z.object({
   fullName: z.string().min(1, 'Full Name is required'),
@@ -25,17 +25,7 @@ const SignupScreen = () => {
 
   const onSubmit = async (data) => {
     try {
-      const { error } = await supabase.auth.signUp({
-        email: data.email,
-        password: data.password,
-      });
-      if (error) throw error;
-
-      const { error: insertError } = await supabase
-        .from('users')
-        .insert([{ full_name: data.fullName }]);
-      if (insertError) throw insertError;
-
+      const user = await handleSignUp(data.email, data.password, data.fullName);
       alert('Account created. Please check your email to verify.');
     } catch (error) {
       alert(error.message);
@@ -47,6 +37,7 @@ const SignupScreen = () => {
       <Controller
         control={control}
         name="fullName"
+        defaultValue=""
         render={({ field: { onChange, onBlur, value } }) => (
           <>
             <TextInput
@@ -63,6 +54,7 @@ const SignupScreen = () => {
       <Controller
         control={control}
         name="email"
+        defaultValue=""
         render={({ field: { onChange, onBlur, value } }) => (
           <>
             <TextInput
