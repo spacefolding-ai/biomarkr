@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { supabase } from '../services/supabaseClient';
 import { LogIn } from 'lucide-react-native';
+import Toast from 'react-native-toast-message';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -30,9 +31,10 @@ const LoginScreen = () => {
         password,
       });
       if (error) throw error;
+      Toast.show({ type: 'success', text1: 'Login successful!' });
       navigation.navigate('Main');
     } catch (error) {
-      // Optionally handle error (e.g., show error message)
+      Toast.show({ type: 'error', text1: 'Login failed', text2: error.message || 'Please try again.' });
     } finally {
       setLoading(false);
     }

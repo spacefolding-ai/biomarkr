@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { handleSignUp } from '../services/auth';
 import { UserPlus } from 'lucide-react-native';
+import Toast from 'react-native-toast-message';
 
 const signupSchema = z.object({
   fullName: z.string().min(1, 'Full Name is required'),
@@ -34,9 +35,10 @@ const SignupScreen = () => {
       const password = data.password.trim();
       const fullName = data.fullName;
       await handleSignUp(email, password, fullName);
+      Toast.show({ type: 'success', text1: 'Signup successful! Please log in.' });
       navigation.navigate('Login');
     } catch (error) {
-      // Optionally handle error (e.g., show error message)
+      Toast.show({ type: 'error', text1: 'Signup failed', text2: error.message || 'Please try again.' });
     } finally {
       setLoading(false);
     }
