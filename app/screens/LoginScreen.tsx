@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { supabase } from '../services/supabaseClient';
-import { LogIn } from 'lucide-react-native';
+import { LogIn, Eye, EyeOff } from 'lucide-react-native';
 import Toast from 'react-native-toast-message';
 
 const loginSchema = z.object({
@@ -20,6 +20,7 @@ const LoginScreen = () => {
     mode: 'onChange',
   });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = async (data) => {
     setLoading(true);
@@ -34,7 +35,15 @@ const LoginScreen = () => {
       Toast.show({ type: 'success', text1: 'Login successful!' });
       navigation.navigate('Main');
     } catch (error) {
-      Toast.show({ type: 'error', text1: 'Login failed', text2: error.message || 'Please try again.' });
+      if (error?.code === 'email_not_confirmed') {
+        Toast.show({
+          type: 'error',
+          text1: 'Email not confirmed',
+          text2: 'Please check your email for a confirmation link before logging in.'
+        });
+      } else {
+        Toast.show({ type: 'error', text1: 'Login failed', text2: error.message || 'Please try again.' });
+      }
     } finally {
       setLoading(false);
     }
@@ -70,14 +79,23 @@ const LoginScreen = () => {
         defaultValue=""
         render={({ field: { onChange, onBlur, value } }) => (
           <>
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              secureTextEntry
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-            />
+            <View style={{ position: 'relative' }}>
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                secureTextEntry={!showPassword}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+              />
+              <View style={{ position: 'absolute', right: 8, top: 8 }}>
+                {showPassword ? (
+                  <EyeOff size={20} color="#888" onPress={() => setShowPassword(false)} />
+                ) : (
+                  <Eye size={20} color="#888" onPress={() => setShowPassword(true)} />
+                )}
+              </View>
+            </View>
             <Text style={styles.inlineError}>{errors.password ? errors.password.message : ' '}</Text>
           </>
         )}
@@ -101,13 +119,13 @@ const styles = StyleSheet.create({
     height: 40,
     borderColor: 'gray',
     borderWidth: 1,
-    marginBottom: 12,
+    marginBottom: 6,
     paddingHorizontal: 8,
   },
   inlineError: {
     fontSize: 10,
     color: 'red',
-    marginBottom: 8,
+    marginBottom: 4,
   },
 });
 

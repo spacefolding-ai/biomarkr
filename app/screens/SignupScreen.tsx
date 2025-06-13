@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { handleSignUp } from '../services/auth';
-import { UserPlus } from 'lucide-react-native';
+import { UserPlus, Eye, EyeOff } from 'lucide-react-native';
 import Toast from 'react-native-toast-message';
 
 const signupSchema = z.object({
@@ -18,6 +18,10 @@ const signupSchema = z.object({
     .regex(/[a-z]/, 'Password must contain a lowercase letter')
     .regex(/\d/, 'Password must contain a digit')
     .regex(/[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>\/?]/, 'Password must contain a special character'),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Passwords do not match',
+  path: ['confirmPassword'],
 });
 
 const SignupScreen = () => {
@@ -27,6 +31,8 @@ const SignupScreen = () => {
     mode: 'onChange',
   });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const onSubmit = async (data) => {
     setLoading(true);
@@ -35,7 +41,7 @@ const SignupScreen = () => {
       const password = data.password.trim();
       const fullName = data.fullName;
       await handleSignUp(email, password, fullName);
-      Toast.show({ type: 'success', text1: 'Signup successful! Please log in.' });
+      Toast.show({ type: 'success', text1: 'Signup successful! We have sent you an email to verify your account.' });
       navigation.navigate('Login');
     } catch (error) {
       Toast.show({ type: 'error', text1: 'Signup failed', text2: error.message || 'Please try again.' });
@@ -91,14 +97,23 @@ const SignupScreen = () => {
         defaultValue=""
         render={({ field: { onChange, onBlur, value } }) => (
           <>
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              secureTextEntry
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-            />
+            <View style={{ position: 'relative' }}>
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                secureTextEntry={!showPassword}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+              />
+              <View style={{ position: 'absolute', right: 8, top: 8 }}>
+                {showPassword ? (
+                  <EyeOff size={20} color="#888" onPress={() => setShowPassword(false)} />
+                ) : (
+                  <Eye size={20} color="#888" onPress={() => setShowPassword(true)} />
+                )}
+              </View>
+            </View>
             <Text style={styles.inlineError}>{errors.password ? errors.password.message : ' '}</Text>
             <View style={styles.validationContainer}>
               <View style={styles.validationRow}>
@@ -109,6 +124,33 @@ const SignupScreen = () => {
                 <Text style={styles.validationText}>{/[!@#$%^&*()_\-+=\[\]{};':"\\|,.<>\/?]/.test(value) ? '🟢' : '⚪'} Special character</Text>
               </View>
             </View>
+          </>
+        )}
+      />
+      <Controller
+        control={control}
+        name="confirmPassword"
+        defaultValue=""
+        render={({ field: { onChange, onBlur, value } }) => (
+          <>
+            <View style={{ position: 'relative' }}>
+              <TextInput
+                style={styles.input}
+                placeholder="Confirm Password"
+                secureTextEntry={!showConfirmPassword}
+                onBlur={onBlur}
+                onChangeText={onChange}
+                value={value}
+              />
+              <View style={{ position: 'absolute', right: 8, top: 8 }}>
+                {showConfirmPassword ? (
+                  <EyeOff size={20} color="#888" onPress={() => setShowConfirmPassword(false)} />
+                ) : (
+                  <Eye size={20} color="#888" onPress={() => setShowConfirmPassword(true)} />
+                )}
+              </View>
+            </View>
+            <Text style={styles.inlineError}>{errors.confirmPassword ? errors.confirmPassword.message : ' '}</Text>
           </>
         )}
       />
@@ -131,21 +173,21 @@ const styles = StyleSheet.create({
     height: 40,
     borderColor: 'gray',
     borderWidth: 1,
-    marginBottom: 12,
+    marginBottom: 6,
     paddingHorizontal: 8,
   },
   inlineError: {
     fontSize: 10,
     color: 'red',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   validationContainer: {
-    marginTop: 8,
+    marginTop: 4,
   },
   validationText: {
     fontSize: 12,
     color: 'gray',
-    marginRight: 10,
+    marginRight: 6,
   },
   validationRow: {
     flexDirection: 'row',
