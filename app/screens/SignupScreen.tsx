@@ -1,9 +1,11 @@
-import React from 'react';
-import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, Button, StyleSheet, ActivityIndicator } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { handleSignUp } from '../services/auth';
+import { UserPlus } from 'lucide-react-native';
 
 const signupSchema = z.object({
   fullName: z.string().min(1, 'Full Name is required'),
@@ -18,22 +20,33 @@ const signupSchema = z.object({
 });
 
 const SignupScreen = () => {
+  const navigation = useNavigation<NavigationProp<any>>();
   const { control, handleSubmit, formState: { errors, isValid } } = useForm({
     resolver: zodResolver(signupSchema),
     mode: 'onChange',
   });
+  const [loading, setLoading] = useState(false);
 
   const onSubmit = async (data) => {
+    setLoading(true);
     try {
-      const user = await handleSignUp(data.email, data.password, data.fullName);
-      alert('Account created. Please check your email to verify.');
+      const email = data.email.toLowerCase().trim();
+      const password = data.password.trim();
+      const fullName = data.fullName;
+      await handleSignUp(email, password, fullName);
+      navigation.navigate('Login');
     } catch (error) {
-      alert(error.message);
+      // Optionally handle error (e.g., show error message)
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <View style={styles.container}>
+      <View style={{ alignItems: 'center', marginBottom: 24 }}>
+        <UserPlus size={48} color="#007AFF" />
+      </View>
       <Controller
         control={control}
         name="fullName"
@@ -97,7 +110,11 @@ const SignupScreen = () => {
           </>
         )}
       />
-      <Button title="Sign Up" onPress={handleSubmit(onSubmit)} disabled={!isValid} />
+      {loading ? (
+        <ActivityIndicator size={64} color="#007AFF" style={{ marginVertical: 16 }} />
+      ) : (
+        <Button title="Sign Up" onPress={handleSubmit(onSubmit)} disabled={!isValid || loading} />
+      )}
     </View>
   );
 };

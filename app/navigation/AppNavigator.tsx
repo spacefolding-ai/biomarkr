@@ -9,6 +9,7 @@ import { AppIcon } from '@components/IconRegistry';
 import { createStackNavigator } from '@react-navigation/stack';
 import SignupScreen from '../screens/SignupScreen';
 import LoginScreen from '../screens/LoginScreen';
+import { LogIn, UserPlus } from 'lucide-react-native';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -18,8 +19,20 @@ const AuthTabNavigator = () => (
     id={undefined}
     screenOptions={{ headerShown: false }}
   >
-    <Tab.Screen name="Login" component={LoginScreen} />
-    <Tab.Screen name="Signup" component={SignupScreen} />
+    <Tab.Screen 
+      name="Login" 
+      component={LoginScreen} 
+      options={{
+        tabBarIcon: ({ color, size }) => <LogIn color={color} size={size} />,
+      }}
+    />
+    <Tab.Screen 
+      name="Signup" 
+      component={SignupScreen} 
+      options={{
+        tabBarIcon: ({ color, size }) => <UserPlus color={color} size={size} />,
+      }}
+    />
   </Tab.Navigator>
 );
 
