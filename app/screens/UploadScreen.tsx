@@ -3,17 +3,13 @@ import { View, Text, Button, Image, ActivityIndicator, StyleSheet } from 'react-
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Camera from 'expo-camera';
-import { supabase } from '../services/supabaseClient';
 import Toast from 'react-native-toast-message';
-import { useNormalizeImage } from '../hooks/useNormalizeImage';
-import * as FileSystem from 'expo-file-system';
-import { Base64 } from 'js-base64';
+import { uploadFile } from '../services/upload';
 
 export default function UploadScreen() {
   const [fileUri, setFileUri] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [cameraPermission, requestCameraPermission] = Camera.useCameraPermissions();
-  const normalizeImage = useNormalizeImage();
 
   useEffect(() => {
     requestCameraPermission();
@@ -50,76 +46,12 @@ export default function UploadScreen() {
     }
   };
 
-  // Helper to format date for filename
-  function formatDateForFilename(date) {
-    const pad = (n) => n.toString().padStart(2, '0');
-    return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}_${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
-  }
-
-  // Helper to get server time from Supabase
-  async function getServerTime() {
-    const { data, error } = await supabase.rpc('now');
-    if (error || !data) return new Date();
-    return new Date(data);
-  }
-
-  // Helper to get user's full name from Supabase
-  async function getUserFullName() {
-    const { data: userData } = await supabase.auth.getUser();
-    const userId = userData?.user?.id;
-    if (!userId) return 'upload';
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('full_name')
-      .eq('auth_user_id', userId)
-      .single();
-    return userProfile?.full_name || 'upload';
-  }
-
-  const uploadFile = async () => {
+  const handleUpload = async () => {
     if (!fileUri) return;
 
     try {
       setUploading(true);
-
-      // Normalize image (convert HEIC/HEIF to PNG if needed)
-      const { normalizedUri, fileType, fileName } = await normalizeImage({ uri: fileUri });
-
-      // Get server time and user full name
-      const [serverTime, fullName] = await Promise.all([
-        getServerTime(),
-        getUserFullName(),
-      ]);
-      const safeName = fullName.replace(/\s+/g, '_');
-      const dateStr = formatDateForFilename(serverTime);
-      const ext = fileName.split('.').pop();
-      const uploadFileName = `${dateStr}_${safeName}.${ext}`;
-
-      // Prepare form data
-      const formData = new FormData();
-      formData.append('file', {
-        uri: normalizedUri,
-        type: fileType,
-        name: uploadFileName,
-      } as any);
-
-      // Do NOT set Content-Type header manually!
-      const response = await fetch(
-        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/reports/${uploadFileName}`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`
-          },
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText);
-      }
-
+      await uploadFile(fileUri);
       Toast.show({ type: 'success', text1: 'Success', text2: 'File uploaded successfully' });
       setFileUri(null);
     } catch (error: any) {
@@ -145,7 +77,7 @@ export default function UploadScreen() {
           ) : (
             <Image source={{ uri: fileUri }} style={styles.imagePreview} />
           )}
-          <Button title="Upload to Supabase" onPress={uploadFile} />
+          <Button title="Upload to Supabase" onPress={handleUpload} />
         </>
       )}
 

@@ -4,7 +4,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
-import { supabase } from '../services/supabaseClient';
+import { handleLogin } from '../services/auth';
 import { LogIn, Eye, EyeOff } from 'lucide-react-native';
 import Toast from 'react-native-toast-message';
 
@@ -25,13 +25,7 @@ const LoginScreen = () => {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      const email = data.email.toLowerCase().trim();
-      const password = data.password.trim();
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
+      await handleLogin(data.email, data.password);
       Toast.show({ type: 'success', text1: 'Login successful!' });
       navigation.navigate('Main');
     } catch (error) {

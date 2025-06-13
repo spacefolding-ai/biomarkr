@@ -26,4 +26,17 @@ export async function handleSignUp(email: string, password: string, fullName: st
   }
 
   return data.user;
+}
+
+export async function handleLogin(email: string, password: string) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email.toLowerCase().trim(),
+    password: password.trim(),
+  });
+
+  if (error) {
+    throw error;
+  }
+
+  return data.user;
 } 
