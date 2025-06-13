@@ -1,14 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, Button, Image, ActivityIndicator, Alert, StyleSheet } from 'react-native';
+import { View, Text, Button, Image, ActivityIndicator, StyleSheet } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Camera from 'expo-camera';
 import { supabase } from '../services/supabaseClient';
+import Toast from 'react-native-toast-message';
+import { useNormalizeImage } from '../hooks/useNormalizeImage';
+import * as FileSystem from 'expo-file-system';
+import { Base64 } from 'js-base64';
 
 export default function UploadScreen() {
   const [fileUri, setFileUri] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [cameraPermission, requestCameraPermission] = Camera.useCameraPermissions();
+  const normalizeImage = useNormalizeImage();
 
   useEffect(() => {
     requestCameraPermission();
@@ -16,7 +21,7 @@ export default function UploadScreen() {
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 1,
     });
 
@@ -51,23 +56,39 @@ export default function UploadScreen() {
     try {
       setUploading(true);
 
-      const response = await fetch(fileUri);
-      const blob = await response.blob();
+      // Normalize image (convert HEIC/HEIF to PNG if needed)
+      const { normalizedUri, fileType, fileName } = await normalizeImage({ uri: fileUri });
+      const uploadFileName = `${Date.now()}-${fileName}`;
 
-      const fileName = `${Date.now()}-${fileUri.split('/').pop()}`;
+      // Prepare form data
+      const formData = new FormData();
+      formData.append('file', {
+        uri: normalizedUri,
+        type: fileType,
+        name: uploadFileName,
+      } as any);
 
-      const { error } = await supabase.storage
-        .from('reports') // <-- your Supabase bucket name
-        .upload(fileName, blob, {
-          contentType: blob.type || 'application/octet-stream',
-        });
+      // Do NOT set Content-Type header manually!
+      const response = await fetch(
+        `${process.env.EXPO_PUBLIC_SUPABASE_URL}/storage/v1/object/reports/${uploadFileName}`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY}`
+          },
+          body: formData,
+        }
+      );
 
-      if (error) throw error;
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText);
+      }
 
-      Alert.alert('Success', 'File uploaded successfully');
+      Toast.show({ type: 'success', text1: 'Success', text2: 'File uploaded successfully' });
       setFileUri(null);
     } catch (error: any) {
-      Alert.alert('Upload failed', error.message);
+      Toast.show({ type: 'error', text1: 'Upload failed', text2: error.message });
     } finally {
       setUploading(false);
     }
