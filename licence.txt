@@ -1,0 +1,11 @@
+Copyright (c) 2025 HealthIQ. All rights reserved.
+
+This software and all associated files are proprietary to HealthIQ. Unauthorized copying, distribution, modification, or use of this software in source or binary forms, with or without modification, is strictly prohibited.
+
+No part of this software may be reproduced, distributed, or transmitted in any form or by any means, including photocopying, recording, or other electronic or mechanical methods, without the prior written permission of the copyright owner.
+
+Unauthorized use of this software may result in civil and criminal penalties.
+
+This software is protected under applicable international copyright, trademark, trade secret, and patent laws.
+
+For commercial licensing, please contact: legal@healthiq.ai
