@@ -50,6 +50,32 @@ export default function UploadScreen() {
     }
   };
 
+  // Helper to format date for filename
+  function formatDateForFilename(date) {
+    const pad = (n) => n.toString().padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())}_${pad(date.getHours())}-${pad(date.getMinutes())}-${pad(date.getSeconds())}`;
+  }
+
+  // Helper to get server time from Supabase
+  async function getServerTime() {
+    const { data, error } = await supabase.rpc('now');
+    if (error || !data) return new Date();
+    return new Date(data);
+  }
+
+  // Helper to get user's full name from Supabase
+  async function getUserFullName() {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) return 'upload';
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('full_name')
+      .eq('auth_user_id', userId)
+      .single();
+    return userProfile?.full_name || 'upload';
+  }
+
   const uploadFile = async () => {
     if (!fileUri) return;
 
@@ -58,7 +84,16 @@ export default function UploadScreen() {
 
       // Normalize image (convert HEIC/HEIF to PNG if needed)
       const { normalizedUri, fileType, fileName } = await normalizeImage({ uri: fileUri });
-      const uploadFileName = `${Date.now()}-${fileName}`;
+
+      // Get server time and user full name
+      const [serverTime, fullName] = await Promise.all([
+        getServerTime(),
+        getUserFullName(),
+      ]);
+      const safeName = fullName.replace(/\s+/g, '_');
+      const dateStr = formatDateForFilename(serverTime);
+      const ext = fileName.split('.').pop();
+      const uploadFileName = `${dateStr}_${safeName}.${ext}`;
 
       // Prepare form data
       const formData = new FormData();
