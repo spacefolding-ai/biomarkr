@@ -4,6 +4,7 @@ import AppNavigator from './app/navigation/AppNavigator';
 import { useFonts, Roboto_400Regular, Roboto_500Medium, Roboto_700Bold } from '@expo-google-fonts/roboto';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-url-polyfill/auto';
+import 'react-native-get-random-values';
 import Toast from 'react-native-toast-message';
 
 export default function App() {
