@@ -6,13 +6,14 @@ import * as Camera from 'expo-camera';
 import Toast from 'react-native-toast-message';
 import { uploadFile } from '../services/upload';
 import { normalizeImage, FileInfo } from '../utils/file';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../../context/AuthContext';
 
 export default function UploadScreen() {
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
   const [uploading, setUploading] = useState(false);
   const [cameraPermission, requestCameraPermission] = Camera.useCameraPermissions();
   const { user } = useAuth();
+  console.log('user', user);
 
   useEffect(() => {
     requestCameraPermission();

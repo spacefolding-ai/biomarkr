@@ -2,8 +2,8 @@ import * as FileSystem from 'expo-file-system';
 import { supabase } from '../lib/supabase';
 import { formatDateForFilename } from '../utils/date';
 import { normalizeImage } from '../utils/file';
-import { useAuth } from '../hooks/useAuth';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@env';
+import { User } from '../types/user';
 
 // Helper to get server time from Supabase
 async function getServerTime() {
@@ -67,8 +67,7 @@ function decode(base64: string): Uint8Array {
 }
 
 // Legacy function for backward compatibility
-export async function uploadFileFromUri(fileUri: string): Promise<void> {
-  const user = useAuth.getState().user;
+export async function uploadFileFromUri(fileUri: string, user: User | null): Promise<void> {
   if (!user?.id) {
     throw new Error('User not authenticated');
   }
@@ -77,11 +76,10 @@ export async function uploadFileFromUri(fileUri: string): Promise<void> {
   return uploadFile(fileInfo.normalizedUri, fileInfo.storagePath, fileInfo.fileType);
 }
 
-export async function uploadFileFromUriNew(fileUri: string) {
+export async function uploadFileFromUriNew(fileUri: string, user: User | null) {
   if (!fileUri) throw new Error('No file selected');
 
   // Normalize image (convert HEIC/HEIF to PNG if needed)
-  const user = useAuth.getState().user;
   const { normalizedUri, fileType, fileName } = await normalizeImage(fileUri, user?.id);
 
   // Get server time and user full name
