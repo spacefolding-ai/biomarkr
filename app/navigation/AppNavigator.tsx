@@ -40,7 +40,7 @@ const AppNavigator = () => {
   return (
     <Stack.Navigator id={undefined} screenOptions={{ headerShown: false }}>
       {/* TODO temp disable auth */}
-      {/* <Stack.Screen name="Auth" component={AuthTabNavigator} /> */} 
+      <Stack.Screen name="Auth" component={AuthTabNavigator} /> 
       <Stack.Screen name="Main" component={MainTabNavigator} />
     </Stack.Navigator>
   );
