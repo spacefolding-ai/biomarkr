@@ -1,5 +1,4 @@
 import * as FileSystem from 'expo-file-system';
-import { Platform } from 'react-native';
 import { v4 as uuidv4 } from 'uuid';
 import MimeTypes from 'react-native-mime-types';
 
@@ -30,7 +29,7 @@ export async function normalizeImage(uri: string, userId: string): Promise<FileI
   const fileType = fileName.split('.').pop()?.toLowerCase() || '';
 
   // If it's a HEIC/HEIF image on iOS, convert it to PNG
-  if (Platform.OS === 'ios' && (fileType === 'heic' || fileType === 'heif')) {
+  if (fileType === 'heic' || fileType === 'heif') {
     const newUri = uri.replace(/\.(heic|heif)$/i, '.png');
     await FileSystem.copyAsync({
       from: uri,
@@ -42,6 +41,16 @@ export async function normalizeImage(uri: string, userId: string): Promise<FileI
       fileType: 'image/png',
       fileName: fileName.replace(/\.(heic|heif)$/i, '.png'),
       storagePath
+    };
+  }
+
+  // Ensure correct MIME type for PDF files
+  if (fileType === 'pdf') {
+    return {
+      normalizedUri: uri,
+      fileType: 'application/pdf',
+      fileName,
+      storagePath: generateUniqueFilePath(uri, userId)
     };
   }
 
