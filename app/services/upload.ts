@@ -4,6 +4,7 @@ import { formatDateForFilename } from '../utils/date';
 import { normalizeImage } from '../utils/file';
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from '@env';
 import { User } from '../types/user';
+import { uploadFileAndInsertToDb } from '../utils/upload';
 
 // Helper to get server time from Supabase
 async function getServerTime() {
@@ -25,7 +26,7 @@ async function getUserFullName() {
   return userProfile?.full_name || 'upload';
 }
 
-export async function uploadFile(
+export async function uploadFileToStorage(
   uri: string,
   storagePath: string,
   mimeType: string
@@ -66,14 +67,20 @@ function decode(base64: string): Uint8Array {
   return bytes;
 }
 
-// Legacy function for backward compatibility
-export async function uploadFileFromUri(fileUri: string, user: User | null): Promise<void> {
-  if (!user?.id) {
+// Replace existing upload logic with a call to 'uploadFile'
+export async function uploadFileToSupabase(fileUri: string, user: User | null): Promise<void> {
+  if (!user) {
     throw new Error('User not authenticated');
   }
 
-  const fileInfo = await normalizeImage(fileUri, user.id);
-  return uploadFile(fileInfo.normalizedUri, fileInfo.storagePath, fileInfo.fileType);
+  try {
+    const fileInfo = await normalizeImage(fileUri, user.id);
+    await uploadFileAndInsertToDb(fileInfo.normalizedUri, fileInfo.fileName, user.id);
+    console.log('File uploaded and inserted into database successfully');
+  } catch (error) {
+    console.error('Error during file upload:', error);
+    throw error;
+  }
 }
 
 export async function uploadFileFromUriNew(fileUri: string, user: User | null) {

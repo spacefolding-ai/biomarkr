@@ -4,16 +4,19 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Camera from 'expo-camera';
 import Toast from 'react-native-toast-message';
-import { uploadFile } from '../services/upload';
 import { normalizeImage, FileInfo } from '../utils/file';
 import { useAuth } from '../../context/AuthContext';
+import { uploadFileAndInsertToDb } from '../utils/upload';
 
 export default function UploadScreen() {
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
   const [uploading, setUploading] = useState(false);
   const [cameraPermission, requestCameraPermission] = Camera.useCameraPermissions();
-  const { user } = useAuth();
-  console.log('user', user);
+  const { user, loading } = useAuth();
+  console.log('user', user.id);
+  if (loading) {
+    return <ActivityIndicator size="large" />;
+  }
 
   useEffect(() => {
     requestCameraPermission();
@@ -69,7 +72,7 @@ export default function UploadScreen() {
 
     try {
       setUploading(true);
-      await uploadFile(fileInfo.normalizedUri, fileInfo.storagePath, fileInfo.fileType);
+      await uploadFileAndInsertToDb(fileInfo.normalizedUri, fileInfo.fileName, user.id);
       Toast.show({ type: 'success', text1: 'Success', text2: 'File uploaded successfully' });
       setFileInfo(null);
     } catch (error: any) {
