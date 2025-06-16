@@ -1,4 +1,5 @@
 import { useSupabaseRealtime } from "./useSupabaseRealtime";
+import { useAuth } from "../context/AuthContext";
 
 interface File {
   id: string;
@@ -17,8 +18,18 @@ interface FilesRealtimeOptions {
 }
 
 export function useFilesRealtime(options: FilesRealtimeOptions) {
+  const { session } = useAuth();
+  const userId = session?.user?.id;
+
   useSupabaseRealtime({
-    table: "files",
-    ...options,
+    userId,
+    tables: [
+      {
+        table: "files",
+        onInsert: options.onInsert,
+        onUpdate: options.onUpdate,
+        onDelete: options.onDelete,
+      },
+    ],
   });
 }

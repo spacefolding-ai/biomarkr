@@ -1,4 +1,5 @@
 import { useSupabaseRealtime } from "./useSupabaseRealtime";
+import { useAuth } from "../context/AuthContext";
 
 interface LabReport {
   id: string;
@@ -19,8 +20,18 @@ interface LabReportsRealtimeOptions {
 }
 
 export function useLabReportsRealtime(options: LabReportsRealtimeOptions) {
+  const { session } = useAuth();
+  const userId = session?.user?.id;
+
   useSupabaseRealtime({
-    table: "lab_reports",
-    ...options,
+    userId,
+    tables: [
+      {
+        table: "lab_reports",
+        onInsert: options.onInsert,
+        onUpdate: options.onUpdate,
+        onDelete: options.onDelete,
+      },
+    ],
   });
 }

@@ -1,4 +1,5 @@
 import { useSupabaseRealtime } from "./useSupabaseRealtime";
+import { useAuth } from "../context/AuthContext";
 
 interface Biomarker {
   id: string;
@@ -19,8 +20,18 @@ interface BiomarkersRealtimeOptions {
 }
 
 export function useBiomarkersRealtime(options: BiomarkersRealtimeOptions) {
+  const { session } = useAuth();
+  const userId = session?.user?.id;
+
   useSupabaseRealtime({
-    table: "biomarkers",
-    ...options,
+    userId,
+    tables: [
+      {
+        table: "biomarkers",
+        onInsert: options.onInsert,
+        onUpdate: options.onUpdate,
+        onDelete: options.onDelete,
+      },
+    ],
   });
 }

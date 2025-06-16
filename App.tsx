@@ -12,12 +12,19 @@ import "react-native-url-polyfill/auto";
 import "react-native-get-random-values";
 import Toast from "react-native-toast-message";
 import { AuthProvider } from "./app/context/AuthContext";
+import { useFilesRealtime } from "./app/hooks/useFilesRealtime";
 
 export default function App() {
   const [fontsLoaded] = useFonts({
     Roboto_400Regular,
     Roboto_500Medium,
     Roboto_700Bold,
+  });
+
+  useFilesRealtime({
+    onInsert: (payload) => console.log("File inserted:", payload),
+    onUpdate: (payload) => console.log("File updated:", payload),
+    onDelete: (payload) => console.log("File deleted:", payload),
   });
 
   if (!fontsLoaded) {
