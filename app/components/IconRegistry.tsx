@@ -1,14 +1,21 @@
-import React from 'react';
+import React from "react";
 import {
   Home,
-  List,
+  BookHeart,
   UploadCloud,
   FlaskConical,
   Settings,
   FileText,
-} from 'lucide-react-native';
+  Ellipsis,
+} from "lucide-react-native";
 
-type IconName = 'overview' | 'parameters' | 'upload' | 'lab' | 'settings' | 'file';
+type IconName =
+  | "overview"
+  | "health-lab"
+  | "upload"
+  | "lab-assistant"
+  | "file"
+  | "more";
 
 interface IconProps {
   name: IconName;
@@ -16,20 +23,20 @@ interface IconProps {
   color?: string;
 }
 
-export function AppIcon({ name, size = 24, color = 'black' }: IconProps) {
+export function AppIcon({ name, size = 24, color = "black" }: IconProps) {
   switch (name) {
-    case 'overview':
+    case "overview":
       return <Home size={size} color={color} />;
-    case 'parameters':
-      return <List size={size} color={color} />;
-    case 'upload':
+    case "health-lab":
+      return <BookHeart size={size} color={color} />;
+    case "upload":
       return <UploadCloud size={size} color={color} />;
-    case 'lab':
+    case "lab-assistant":
       return <FlaskConical size={size} color={color} />;
-    case 'settings':
-      return <Settings size={size} color={color} />;
-    case 'file':
+    case "file":
       return <FileText size={size} color={color} />;
+    case "more":
+      return <Ellipsis size={size} color={color} />;
     default:
       return <Home size={size} color={color} />;
   }

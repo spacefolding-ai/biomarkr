@@ -21,7 +21,7 @@ export default function UploadScreen() {
   const [cameraPermission, requestCameraPermission] =
     Camera.useCameraPermissions();
   const { user, loading } = useAuth();
-  console.log("user", user.id);
+
   if (loading) {
     return <ActivityIndicator size="large" />;
   }
@@ -106,19 +106,27 @@ export default function UploadScreen() {
     }
   };
 
+  const handleCancel = () => {
+    setFileInfo(null);
+    // Navigate back to the previous screen
+  };
+
   return (
     <View style={styles.container}>
-      <Button title="Pick Image from Gallery" onPress={pickImage} />
-      <View style={styles.spacer} />
-      <Button title="Pick Document (PDF, Image)" onPress={pickDocument} />
-      <View style={styles.spacer} />
-      <Button title="Take Photo (Camera)" onPress={takePhoto} />
-      <View style={styles.spacer} />
-
-      {fileInfo && (
+      {!fileInfo ? (
         <>
+          <Button title="Pick Image from Gallery" onPress={pickImage} />
+          <View style={styles.spacer} />
+          <Button title="Pick Document (PDF, Image)" onPress={pickDocument} />
+          <View style={styles.spacer} />
+          <Button title="Take Photo (Camera)" onPress={takePhoto} />
+        </>
+      ) : (
+        <View style={styles.centeredContent}>
           {fileInfo.fileType.startsWith("application/pdf") ? (
-            <Text>PDF selected: {fileInfo.fileName}</Text>
+            <Text style={styles.centeredText}>
+              PDF selected: {fileInfo.fileName}
+            </Text>
           ) : (
             <Image
               source={{ uri: fileInfo.normalizedUri }}
@@ -128,8 +136,11 @@ export default function UploadScreen() {
           <Text style={styles.pathText}>
             Storage path: {fileInfo.storagePath}
           </Text>
-          <Button title="Upload to Supabase" onPress={handleUpload} />
-        </>
+          <View style={styles.buttonRow}>
+            <Button title="Upload" onPress={handleUpload} />
+            <Button title="Cancel" onPress={handleCancel} />
+          </View>
+        </View>
       )}
 
       {uploading && (
@@ -146,4 +157,12 @@ const styles = StyleSheet.create({
   spacer: { marginVertical: 10 },
   imagePreview: { width: 200, height: 200, marginVertical: 10 },
   pathText: { marginVertical: 10, fontSize: 12, color: "#666" },
+  centeredContent: { flex: 1, justifyContent: "center", alignItems: "center" },
+  centeredText: { textAlign: "center", marginVertical: 10 },
+  buttonRow: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    width: "100%",
+    marginVertical: 10,
+  },
 });
