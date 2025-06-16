@@ -1,6 +1,0 @@
-2025-06-11 16:17:20.454 xcodebuild[82044:3300112] Writing error result bundle to /var/folders/04/w7jp6tqn69x6tnn67tndf56r0000gn/T/ResultBundle_2025-11-06_16-17-0020.xcresult
-xcodebuild: error: Unable to find a destination matching the provided destination specifier:
-		{ id:5992875A-6561-490D-83A8-E4F9680C48A9 }
-
-	Ineligible destinations for the "healthiq" scheme:
-		{ platform:iOS, id:dvtdevice-DVTiPhonePlaceholder-iphoneos:placeholder, name:Any iOS Device, error:iOS 18.5 is not installed. To use with Xcode, first download and install the platform }
