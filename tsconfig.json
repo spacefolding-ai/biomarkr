@@ -8,5 +8,5 @@
     "esModuleInterop": true
   },
   "extends": "expo/tsconfig.base",
-  "include": ["app/**/*", "context/**/*"]
+  "include": ["app/**/*", "app/context/**/*"]
 }

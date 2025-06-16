@@ -1,19 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Button, Image, ActivityIndicator, StyleSheet } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import * as DocumentPicker from 'expo-document-picker';
-import * as Camera from 'expo-camera';
-import Toast from 'react-native-toast-message';
-import { normalizeImage, FileInfo } from '../utils/file';
-import { useAuth } from '../../context/AuthContext';
-import { uploadFileAndInsertToDb } from '../services/upload';
+import React, { useState, useEffect } from "react";
+import {
+  View,
+  Text,
+  Button,
+  Image,
+  ActivityIndicator,
+  StyleSheet,
+} from "react-native";
+import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
+import * as Camera from "expo-camera";
+import Toast from "react-native-toast-message";
+import { normalizeImage, FileInfo } from "../utils/file";
+import { useAuth } from "../context/AuthContext";
+import { uploadFileAndInsertToDb } from "../services/upload";
 
 export default function UploadScreen() {
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [cameraPermission, requestCameraPermission] = Camera.useCameraPermissions();
+  const [cameraPermission, requestCameraPermission] =
+    Camera.useCameraPermissions();
   const { user, loading } = useAuth();
-  console.log('user', user.id);
+  console.log("user", user.id);
   if (loading) {
     return <ActivityIndicator size="large" />;
   }
@@ -24,7 +32,11 @@ export default function UploadScreen() {
 
   const processFile = async (uri: string) => {
     if (!user?.id) {
-      Toast.show({ type: 'error', text1: 'Error', text2: 'User not authenticated' });
+      Toast.show({
+        type: "error",
+        text1: "Error",
+        text2: "User not authenticated",
+      });
       return;
     }
 
@@ -32,7 +44,7 @@ export default function UploadScreen() {
       const info = await normalizeImage(uri, user.id);
       setFileInfo(info);
     } catch (error: any) {
-      Toast.show({ type: 'error', text1: 'Error', text2: error.message });
+      Toast.show({ type: "error", text1: "Error", text2: error.message });
     }
   };
 
@@ -49,7 +61,7 @@ export default function UploadScreen() {
 
   const pickDocument = async () => {
     const result = await DocumentPicker.getDocumentAsync({
-      type: ['application/pdf', 'image/*'],
+      type: ["application/pdf", "image/*"],
     });
 
     if (result.assets && result.assets.length > 0) {
@@ -72,11 +84,23 @@ export default function UploadScreen() {
 
     try {
       setUploading(true);
-      await uploadFileAndInsertToDb(fileInfo.normalizedUri, fileInfo.fileName, user.id);
-      Toast.show({ type: 'success', text1: 'Success', text2: 'File uploaded successfully' });
+      await uploadFileAndInsertToDb(
+        fileInfo.normalizedUri,
+        fileInfo.fileName,
+        user.id
+      );
+      Toast.show({
+        type: "success",
+        text1: "Success",
+        text2: "File uploaded successfully",
+      });
       setFileInfo(null);
     } catch (error: any) {
-      Toast.show({ type: 'error', text1: 'Upload failed', text2: error.message });
+      Toast.show({
+        type: "error",
+        text1: "Upload failed",
+        text2: error.message,
+      });
     } finally {
       setUploading(false);
     }
@@ -93,12 +117,17 @@ export default function UploadScreen() {
 
       {fileInfo && (
         <>
-          {fileInfo.fileType.startsWith('application/pdf') ? (
+          {fileInfo.fileType.startsWith("application/pdf") ? (
             <Text>PDF selected: {fileInfo.fileName}</Text>
           ) : (
-            <Image source={{ uri: fileInfo.normalizedUri }} style={styles.imagePreview} />
+            <Image
+              source={{ uri: fileInfo.normalizedUri }}
+              style={styles.imagePreview}
+            />
           )}
-          <Text style={styles.pathText}>Storage path: {fileInfo.storagePath}</Text>
+          <Text style={styles.pathText}>
+            Storage path: {fileInfo.storagePath}
+          </Text>
           <Button title="Upload to Supabase" onPress={handleUpload} />
         </>
       )}
@@ -113,8 +142,8 @@ export default function UploadScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', padding: 20 },
+  container: { flex: 1, justifyContent: "center", padding: 20 },
   spacer: { marginVertical: 10 },
   imagePreview: { width: 200, height: 200, marginVertical: 10 },
-  pathText: { marginVertical: 10, fontSize: 12, color: '#666' },
+  pathText: { marginVertical: 10, fontSize: 12, color: "#666" },
 });
