@@ -1,23 +1,87 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  RefreshControl,
+  ActivityIndicator,
+} from "react-native";
+import { supabase } from "../services/supabaseClient";
+import { format } from "date-fns";
 
-const BiomarkersScreen = () => {
+interface BiomarkerItem {
+  id: string;
+  report_id: string;
+  user_id: string;
+  marker_name: string;
+  value: number;
+  unit: string;
+  reference_range: string;
+  abnormal_flag: string | null;
+  created_at: string;
+  report_date: string;
+}
+
+interface BiomarkersScreenProps {
+  biomarkers: BiomarkerItem[];
+  refreshing: boolean;
+  onRefresh: () => void;
+}
+
+const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
+  biomarkers,
+  refreshing,
+  onRefresh,
+}) => {
+  const renderBiomarkerItem = ({ item }: { item: BiomarkerItem }) => (
+    <View
+      style={{
+        flexDirection: "row",
+        justifyContent: "space-between",
+        padding: 16,
+        borderBottomWidth: 1,
+        borderColor: "#eee",
+      }}
+    >
+      <Text style={{ fontWeight: "bold" }}>{item.marker_name}</Text>
+      <View style={{ flexDirection: "row", alignItems: "center" }}>
+        <View
+          style={{
+            flexDirection: "column",
+            alignItems: "flex-end",
+            marginRight: 8,
+          }}
+        >
+          <Text>
+            {item.value} {item.unit}
+          </Text>
+          <Text style={{ color: "#666" }}>
+            {format(new Date(item.report_date), "d MMM yyyy")}
+          </Text>
+        </View>
+        {item.abnormal_flag === null ? (
+          <Text style={{ color: "green" }}>●</Text>
+        ) : item.abnormal_flag.toLowerCase() === "high" ? (
+          <Text style={{ color: "orange" }}>▲</Text>
+        ) : (
+          <Text style={{ color: "orange" }}>▼</Text>
+        )}
+      </View>
+    </View>
+  );
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.text}>Biomarkers</Text>
+    <View style={{ flex: 1, backgroundColor: "white" }}>
+      <FlatList
+        data={biomarkers}
+        keyExtractor={(item) => item.id}
+        renderItem={renderBiomarkerItem}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      />
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  text: {
-    fontSize: 24,
-  },
-});
 
 export default BiomarkersScreen;

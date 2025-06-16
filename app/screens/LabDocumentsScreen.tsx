@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { supabase } from "../services/supabaseClient";
-import { useFilesRealtime } from "../hooks/useFilesRealtime";
 
 interface FileItem {
   id: string;
@@ -19,43 +18,18 @@ interface FileItem {
   lab_report_id?: string;
 }
 
-export default function LabDocumentsScreen() {
-  const [files, setFiles] = useState<FileItem[]>([]);
-  const [refreshing, setRefreshing] = useState(false);
+interface LabDocumentsScreenProps {
+  files: FileItem[];
+  refreshing: boolean;
+  onRefresh: () => void;
+}
 
-  const loadFiles = async () => {
-    const { data, error } = await supabase
-      .from("files")
-      .select("*")
-      .order("uploaded_at", { ascending: false });
-
-    if (data) setFiles(data);
-    if (error) console.error("Failed to load files:", error);
-  };
-
-  useEffect(() => {
-    loadFiles();
-  }, []);
-
-  useFilesRealtime({
-    onInsert: (payload) => {
-      const newFile = payload.new as FileItem;
-      setFiles((prev) => [newFile, ...prev]);
-    },
-
-    onUpdate: (payload) => {
-      const updatedFile = payload.new as FileItem;
-      setFiles((prev) =>
-        prev.map((file) => (file.id === updatedFile.id ? updatedFile : file))
-      );
-    },
-  });
-
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await loadFiles();
-    setRefreshing(false);
-  }, []);
+const LabDocumentsScreen: React.FC<LabDocumentsScreenProps> = ({
+  files,
+  refreshing,
+  onRefresh,
+}) => {
+  const [localFiles, setLocalFiles] = useState<FileItem[]>([]);
 
   const renderFileItem = ({ item }: { item: FileItem }) => (
     <View style={{ padding: 16, borderBottomWidth: 1, borderColor: "#eee" }}>
@@ -63,7 +37,7 @@ export default function LabDocumentsScreen() {
       <Text>{new Date(item.uploaded_at).toLocaleString()}</Text>
 
       {item.extraction_status === "pending" ? (
-        <Text style={{ color: "orange" }}>Loading...</Text>
+        <Text style={{ color: "orange" }}>Analyzing...</Text>
       ) : (
         <Text style={{ color: "green" }}>Extracted ✅</Text>
       )}
@@ -82,4 +56,6 @@ export default function LabDocumentsScreen() {
       />
     </View>
   );
-}
+};
+
+export default LabDocumentsScreen;
