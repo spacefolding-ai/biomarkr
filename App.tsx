@@ -4,7 +4,9 @@ import AppNavigator from './app/navigation/AppNavigator';
 import { useFonts, Roboto_400Regular, Roboto_500Medium, Roboto_700Bold } from '@expo-google-fonts/roboto';
 import { ActivityIndicator, View } from 'react-native';
 import 'react-native-url-polyfill/auto';
+import 'react-native-get-random-values';
 import Toast from 'react-native-toast-message';
+import { AuthProvider } from './context/AuthContext';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -22,9 +24,11 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <AppNavigator />
-      <Toast />
-    </NavigationContainer>
+    <AuthProvider>
+      <NavigationContainer>
+        <AppNavigator />
+        <Toast />
+      </NavigationContainer>
+    </AuthProvider>
   );
 }

@@ -9,7 +9,6 @@ import { UserPlus, Eye, EyeOff } from 'lucide-react-native';
 import Toast from 'react-native-toast-message';
 
 const signupSchema = z.object({
-  fullName: z.string().min(1, 'Full Name is required'),
   email: z.string().email('Invalid email address'),
   password: z
     .string()
@@ -39,9 +38,8 @@ const SignupScreen = () => {
     try {
       const email = data.email.toLowerCase().trim();
       const password = data.password.trim();
-      const fullName = data.fullName;
-      await handleSignUp(email, password, fullName);
-      Toast.show({ type: 'success', text1: 'Signup successful! We have sent you an email to verify your account.' });
+      await handleSignUp(email, password);
+      Toast.show({ type: 'success', text1: 'Signup successful!', text2: 'We have sent you an email to verify your account.' });
       navigation.navigate('Login');
     } catch (error) {
       Toast.show({ type: 'error', text1: 'Signup failed', text2: error.message || 'Please try again.' });
@@ -55,23 +53,6 @@ const SignupScreen = () => {
       <View style={{ alignItems: 'center', marginBottom: 24 }}>
         <UserPlus size={48} color="#007AFF" />
       </View>
-      <Controller
-        control={control}
-        name="fullName"
-        defaultValue=""
-        render={({ field: { onChange, onBlur, value } }) => (
-          <>
-            <TextInput
-              style={styles.input}
-              placeholder="Full Name"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-            />
-            <Text style={styles.inlineError}>{errors.fullName ? errors.fullName.message : ' '}</Text>
-          </>
-        )}
-      />
       <Controller
         control={control}
         name="email"
@@ -105,6 +86,9 @@ const SignupScreen = () => {
                 onBlur={onBlur}
                 onChangeText={onChange}
                 value={value}
+                textContentType="none"
+                autoComplete="off"
+                importantForAutofill="no"
               />
               <View style={{ position: 'absolute', right: 8, top: 8 }}>
                 {showPassword ? (
@@ -141,6 +125,9 @@ const SignupScreen = () => {
                 onBlur={onBlur}
                 onChangeText={onChange}
                 value={value}
+                textContentType="none"
+                autoComplete="off"
+                importantForAutofill="no"
               />
               <View style={{ position: 'absolute', right: 8, top: 8 }}>
                 {showConfirmPassword ? (

@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "baseUrl": ".",
+    "baseUrl": "./",
     "paths": {
-      "*": ["*"],
-      "@components/*": ["app/components/*"]
+      "*": ["node_modules/*", "app/types/*"]
     },
     "jsx": "react-native",
     "esModuleInterop": true
   },
-  "extends": "expo/tsconfig.base"
+  "extends": "expo/tsconfig.base",
+  "include": ["app/**/*", "context/**/*"]
 }

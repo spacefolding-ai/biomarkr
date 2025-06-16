@@ -4,16 +4,37 @@ import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as Camera from 'expo-camera';
 import Toast from 'react-native-toast-message';
-import { uploadFile } from '../services/upload';
+import { normalizeImage, FileInfo } from '../utils/file';
+import { useAuth } from '../../context/AuthContext';
+import { uploadFileAndInsertToDb } from '../services/upload';
 
 export default function UploadScreen() {
-  const [fileUri, setFileUri] = useState<string | null>(null);
+  const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
   const [uploading, setUploading] = useState(false);
   const [cameraPermission, requestCameraPermission] = Camera.useCameraPermissions();
+  const { user, loading } = useAuth();
+  console.log('user', user.id);
+  if (loading) {
+    return <ActivityIndicator size="large" />;
+  }
 
   useEffect(() => {
     requestCameraPermission();
   }, []);
+
+  const processFile = async (uri: string) => {
+    if (!user?.id) {
+      Toast.show({ type: 'error', text1: 'Error', text2: 'User not authenticated' });
+      return;
+    }
+
+    try {
+      const info = await normalizeImage(uri, user.id);
+      setFileInfo(info);
+    } catch (error: any) {
+      Toast.show({ type: 'error', text1: 'Error', text2: error.message });
+    }
+  };
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -22,7 +43,7 @@ export default function UploadScreen() {
     });
 
     if (!result.canceled) {
-      setFileUri(result.assets[0].uri);
+      await processFile(result.assets[0].uri);
     }
   };
 
@@ -32,7 +53,7 @@ export default function UploadScreen() {
     });
 
     if (result.assets && result.assets.length > 0) {
-      setFileUri(result.assets[0].uri);
+      await processFile(result.assets[0].uri);
     }
   };
 
@@ -42,18 +63,18 @@ export default function UploadScreen() {
     });
 
     if (!result.canceled) {
-      setFileUri(result.assets[0].uri);
+      await processFile(result.assets[0].uri);
     }
   };
 
   const handleUpload = async () => {
-    if (!fileUri) return;
+    if (!fileInfo || !user?.id) return;
 
     try {
       setUploading(true);
-      await uploadFile(fileUri);
+      await uploadFileAndInsertToDb(fileInfo.normalizedUri, fileInfo.fileName, user.id);
       Toast.show({ type: 'success', text1: 'Success', text2: 'File uploaded successfully' });
-      setFileUri(null);
+      setFileInfo(null);
     } catch (error: any) {
       Toast.show({ type: 'error', text1: 'Upload failed', text2: error.message });
     } finally {
@@ -70,13 +91,14 @@ export default function UploadScreen() {
       <Button title="Take Photo (Camera)" onPress={takePhoto} />
       <View style={styles.spacer} />
 
-      {fileUri && (
+      {fileInfo && (
         <>
-          {fileUri.endsWith('.pdf') ? (
-            <Text>PDF selected: {fileUri.split('/').pop()}</Text>
+          {fileInfo.fileType.startsWith('application/pdf') ? (
+            <Text>PDF selected: {fileInfo.fileName}</Text>
           ) : (
-            <Image source={{ uri: fileUri }} style={styles.imagePreview} />
+            <Image source={{ uri: fileInfo.normalizedUri }} style={styles.imagePreview} />
           )}
+          <Text style={styles.pathText}>Storage path: {fileInfo.storagePath}</Text>
           <Button title="Upload to Supabase" onPress={handleUpload} />
         </>
       )}
@@ -94,4 +116,5 @@ const styles = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', padding: 20 },
   spacer: { marginVertical: 10 },
   imagePreview: { width: 200, height: 200, marginVertical: 10 },
+  pathText: { marginVertical: 10, fontSize: 12, color: '#666' },
 });
