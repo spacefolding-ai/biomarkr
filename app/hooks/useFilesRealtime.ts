@@ -11,10 +11,15 @@ interface File {
   extraction_status: string;
 }
 
+interface RealtimePayload<T> {
+  new: T;
+  old?: T;
+}
+
 interface FilesRealtimeOptions {
-  onInsert?: (payload: File) => void;
-  onUpdate?: (payload: File) => void;
-  onDelete?: (payload: File) => void;
+  onInsert?: (payload: RealtimePayload<File>) => void;
+  onUpdate?: (payload: RealtimePayload<File>) => void;
+  onDelete?: (payload: RealtimePayload<File>) => void;
 }
 
 export function useFilesRealtime(options: FilesRealtimeOptions) {

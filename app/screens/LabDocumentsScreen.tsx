@@ -1,60 +1,71 @@
-import React from "react";
-import { View, Text, StyleSheet, ScrollView } from "react-native";
-import { FontAwesome } from "@expo/vector-icons";
+import React, { useEffect, useState } from "react";
+import { View, Text, FlatList, ActivityIndicator } from "react-native";
+import { supabase } from "../services/supabaseClient";
+import { useFilesRealtime } from "../hooks/useFilesRealtime";
 
-const LabDocumentsScreen = () => {
-  return (
-    <ScrollView contentContainerStyle={styles.scrollContainer}>
-      {[...Array(10)].map((_, index) => (
-        <View key={index} style={styles.itemContainer}>
-          <FontAwesome
-            name="file-image-o"
-            size={50}
-            color="#0000FF"
-            style={styles.icon}
-          />
-          <View style={styles.textContainer}>
-            <Text style={styles.reportDate}>Report Date</Text>
-            <Text style={styles.description}>Description</Text>
-            <Text style={styles.status}>Extraction Status</Text>
-          </View>
-        </View>
-      ))}
-    </ScrollView>
+interface FileItem {
+  id: string;
+  user_id: string;
+  file_path: string;
+  original_file_name: string;
+  uploaded_at: string;
+  extraction_status: string;
+  lab_report_id?: string;
+}
+
+export default function LabDocumentsScreen() {
+  const [files, setFiles] = useState<FileItem[]>([]);
+
+  // Initial load of files when screen mounts
+  useEffect(() => {
+    const loadFiles = async () => {
+      const { data, error } = await supabase
+        .from("files")
+        .select("*")
+        .order("uploaded_at", { ascending: false });
+
+      if (data) setFiles(data);
+      if (error) console.error("Failed to load files:", error);
+    };
+
+    loadFiles();
+  }, []);
+
+  // Realtime hook
+  useFilesRealtime({
+    onInsert: (payload) => {
+      const newFile = payload.new as FileItem;
+      setFiles((prev) => [newFile, ...prev]);
+    },
+
+    onUpdate: (payload) => {
+      const updatedFile = payload.new as FileItem;
+      setFiles((prev) =>
+        prev.map((file) => (file.id === updatedFile.id ? updatedFile : file))
+      );
+    },
+  });
+
+  const renderFileItem = ({ item }: { item: FileItem }) => (
+    <View style={{ padding: 16, borderBottomWidth: 1, borderColor: "#eee" }}>
+      <Text>{item.original_file_name}</Text>
+      <Text>{new Date(item.uploaded_at).toLocaleString()}</Text>
+
+      {item.extraction_status === "pending" ? (
+        <Text style={{ color: "orange" }}>Loading...</Text>
+      ) : (
+        <Text style={{ color: "green" }}>Extracted ✅</Text>
+      )}
+    </View>
   );
-};
 
-const styles = StyleSheet.create({
-  scrollContainer: {
-    padding: 10,
-  },
-  itemContainer: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 10,
-    padding: 10,
-    backgroundColor: "#f9f9f9",
-    borderRadius: 5,
-  },
-  icon: {
-    marginRight: 10,
-  },
-  textContainer: {
-    flex: 1,
-  },
-  reportDate: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  description: {
-    fontSize: 18,
-    color: "#555",
-    fontWeight: "bold",
-  },
-  status: {
-    fontSize: 14,
-    color: "#007BFF",
-  },
-});
-
-export default LabDocumentsScreen;
+  return (
+    <View style={{ flex: 1, backgroundColor: "white" }}>
+      <FlatList
+        data={files}
+        keyExtractor={(item) => item.id}
+        renderItem={renderFileItem}
+      />
+    </View>
+  );
+}
