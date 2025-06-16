@@ -10,7 +10,7 @@ import {
 
 type IconName =
   | "overview"
-  | "lab-reports"
+  | "health-lab"
   | "upload"
   | "lab-assistant"
   | "settings"
@@ -26,7 +26,7 @@ export function AppIcon({ name, size = 24, color = "black" }: IconProps) {
   switch (name) {
     case "overview":
       return <Home size={size} color={color} />;
-    case "lab-reports":
+    case "health-lab":
       return <BookHeart size={size} color={color} />;
     case "upload":
       return <UploadCloud size={size} color={color} />;

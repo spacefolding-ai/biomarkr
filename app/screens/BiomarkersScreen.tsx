@@ -1,10 +1,10 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 
-const LabReportsScreen = () => {
+const BiomarkersScreen = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Lab Reports</Text>
+      <Text style={styles.text}>Blood Markers</Text>
     </View>
   );
 };
@@ -20,4 +20,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LabReportsScreen;
+export default BiomarkersScreen;

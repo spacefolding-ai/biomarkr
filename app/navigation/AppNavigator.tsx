@@ -9,7 +9,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import SignupScreen from "../screens/SignupScreen";
 import LoginScreen from "../screens/LoginScreen";
 import { LogIn, UserPlus } from "lucide-react-native";
-import LabReportsScreen from "../screens/LabReportsScreen";
+import HealthLabScreen from "../screens/HealthLabScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -55,8 +55,8 @@ const MainTabNavigator = () => (
           case "Overview":
             iconName = "overview";
             break;
-          case "Lab Reports":
-            iconName = "lab-reports";
+          case "Health Lab":
+            iconName = "health-lab";
             break;
           case "Upload":
             iconName = "upload";
@@ -74,7 +74,7 @@ const MainTabNavigator = () => (
     })}
   >
     <Tab.Screen name="Overview" component={OverviewScreen} />
-    <Tab.Screen name="Lab Reports" component={LabReportsScreen} />
+    <Tab.Screen name="Health Lab" component={HealthLabScreen} />
     <Tab.Screen name="Upload" component={UploadScreen} />
     <Tab.Screen name="Lab Assistant" component={LabAssistantScreen} />
     <Tab.Screen name="Settings" component={SettingsScreen} />
