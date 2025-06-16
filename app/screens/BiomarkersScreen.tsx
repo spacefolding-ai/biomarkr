@@ -4,7 +4,7 @@ import { View, Text, StyleSheet } from "react-native";
 const BiomarkersScreen = () => {
   return (
     <View style={styles.container}>
-      <Text style={styles.text}>Blood Markers</Text>
+      <Text style={styles.text}>Biomarkers</Text>
     </View>
   );
 };
