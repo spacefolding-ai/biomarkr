@@ -6,7 +6,7 @@ import * as Camera from 'expo-camera';
 import Toast from 'react-native-toast-message';
 import { normalizeImage, FileInfo } from '../utils/file';
 import { useAuth } from '../../context/AuthContext';
-import { uploadFileAndInsertToDb } from '../utils/upload';
+import { uploadFileAndInsertToDb } from '../services/upload';
 
 export default function UploadScreen() {
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);

@@ -1,7 +1,11 @@
-import { supabase } from '../services/supabaseClient';
+import { supabase } from './supabaseClient';
 import * as FileSystem from 'expo-file-system';
 
-export async function uploadFileToStorage(uri: string, storagePath: string, mimeType: string): Promise<void> {
+export async function uploadFileToStorage(
+  uri: string,
+  storagePath: string,
+  mimeType: string
+): Promise<{ id: string; path: string; fullPath: string }> {
   try {
     const fileInfo = await FileSystem.getInfoAsync(uri);
     if (!fileInfo.exists) {
@@ -12,7 +16,7 @@ export async function uploadFileToStorage(uri: string, storagePath: string, mime
       encoding: FileSystem.EncodingType.Base64,
     });
 
-    const { error } = await supabase.storage
+    const { data, error } = await supabase.storage
       .from('uploads')
       .upload(storagePath, decode(fileContent), {
         contentType: mimeType,
@@ -22,6 +26,8 @@ export async function uploadFileToStorage(uri: string, storagePath: string, mime
     if (error) {
       throw error;
     }
+
+    return data;
   } catch (error: any) {
     console.error('Upload error:', error);
     throw new Error(error.message || 'Failed to upload file');

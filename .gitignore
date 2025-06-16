@@ -27,3 +27,5 @@ coverage/
 node_modules
 /temp
 .env
+ios/
+.expo/
