@@ -1,5 +1,11 @@
-import React, { useEffect, useState } from "react";
-import { View, Text, FlatList, ActivityIndicator } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  FlatList,
+  RefreshControl,
+  ActivityIndicator,
+} from "react-native";
 import { supabase } from "../services/supabaseClient";
 import { useFilesRealtime } from "../hooks/useFilesRealtime";
 
@@ -15,23 +21,22 @@ interface FileItem {
 
 export default function LabDocumentsScreen() {
   const [files, setFiles] = useState<FileItem[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Initial load of files when screen mounts
+  const loadFiles = async () => {
+    const { data, error } = await supabase
+      .from("files")
+      .select("*")
+      .order("uploaded_at", { ascending: false });
+
+    if (data) setFiles(data);
+    if (error) console.error("Failed to load files:", error);
+  };
+
   useEffect(() => {
-    const loadFiles = async () => {
-      const { data, error } = await supabase
-        .from("files")
-        .select("*")
-        .order("uploaded_at", { ascending: false });
-
-      if (data) setFiles(data);
-      if (error) console.error("Failed to load files:", error);
-    };
-
     loadFiles();
   }, []);
 
-  // Realtime hook
   useFilesRealtime({
     onInsert: (payload) => {
       const newFile = payload.new as FileItem;
@@ -45,6 +50,12 @@ export default function LabDocumentsScreen() {
       );
     },
   });
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadFiles();
+    setRefreshing(false);
+  }, []);
 
   const renderFileItem = ({ item }: { item: FileItem }) => (
     <View style={{ padding: 16, borderBottomWidth: 1, borderColor: "#eee" }}>
@@ -65,6 +76,9 @@ export default function LabDocumentsScreen() {
         data={files}
         keyExtractor={(item) => item.id}
         renderItem={renderFileItem}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       />
     </View>
   );
