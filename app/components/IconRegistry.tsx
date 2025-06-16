@@ -6,6 +6,7 @@ import {
   FlaskConical,
   Settings,
   FileText,
+  Ellipsis,
 } from "lucide-react-native";
 
 type IconName =
@@ -13,8 +14,8 @@ type IconName =
   | "health-lab"
   | "upload"
   | "lab-assistant"
-  | "settings"
-  | "file";
+  | "file"
+  | "more";
 
 interface IconProps {
   name: IconName;
@@ -32,10 +33,10 @@ export function AppIcon({ name, size = 24, color = "black" }: IconProps) {
       return <UploadCloud size={size} color={color} />;
     case "lab-assistant":
       return <FlaskConical size={size} color={color} />;
-    case "settings":
-      return <Settings size={size} color={color} />;
     case "file":
       return <FileText size={size} color={color} />;
+    case "more":
+      return <Ellipsis size={size} color={color} />;
     default:
       return <Home size={size} color={color} />;
   }

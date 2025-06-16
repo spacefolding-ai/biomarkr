@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, SafeAreaView } from "react-native";
+import { SafeAreaView } from "react-native";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import BiomarkersScreen from "./BiomarkersScreen";
 import LabDocumentsScreen from "./LabDocumentsScreen";
