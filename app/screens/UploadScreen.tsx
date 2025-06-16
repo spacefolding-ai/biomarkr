@@ -21,7 +21,7 @@ export default function UploadScreen() {
   const [cameraPermission, requestCameraPermission] =
     Camera.useCameraPermissions();
   const { user, loading } = useAuth();
-  console.log("user", user.id);
+
   if (loading) {
     return <ActivityIndicator size="large" />;
   }
