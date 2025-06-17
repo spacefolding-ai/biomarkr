@@ -33,7 +33,7 @@ export async function uploadFileAndInsertToDb(
   const { error: insertError } = await supabase.from("files").insert({
     user_id: userId,
     file_path: filePath,
-    original_file_name: fileName,
+    file_name: uniqueFileName,
     extraction_status: "pending",
     uploaded_at: new Date().toISOString(),
   });
