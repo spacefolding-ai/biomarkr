@@ -62,18 +62,19 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
 
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "flex-end",
-          padding: 16,
-        }}
-      >
-        <TouchableOpacity onPress={toggleModal}>
-          <Text style={{ color: "blue" }}>{filter}</Text>
-        </TouchableOpacity>
-      </View>
-
+      {reports.length > 0 && (
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "flex-end",
+            padding: 16,
+          }}
+        >
+          <TouchableOpacity onPress={toggleModal}>
+            <Text style={{ color: "blue" }}>{filter}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       <FlatList
         data={reports}
         keyExtractor={(item) => item.id}
@@ -82,7 +83,6 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       />
-
       <Modal
         animationType="slide"
         transparent={true}
@@ -104,7 +104,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
           >
             <Button
               title="By date Added"
-              onPress={() => applyFilter("By date Added")}
+              onPress={() => applyFilter("By date added")}
             />
             <Button
               title="By document date"
