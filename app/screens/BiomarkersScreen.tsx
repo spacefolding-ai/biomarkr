@@ -44,6 +44,7 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
         padding: 16,
         borderBottomWidth: 1,
         borderColor: "#eee",
+        width: "100%",
       }}
     >
       <Text style={{ fontWeight: "bold" }}>{item.marker_name}</Text>
