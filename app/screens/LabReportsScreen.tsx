@@ -87,7 +87,13 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
     <View style={{ flex: 1, backgroundColor: "white" }}>
       {reports.length === 0 ? (
         <View
-          style={{ alignItems: "center", marginTop: 32, paddingHorizontal: 16 }}
+          style={{
+            flex: 1,
+            alignItems: "center",
+            marginTop: 32,
+            paddingHorizontal: 16,
+            justifyContent: "center",
+          }}
         >
           <Text style={{ fontSize: 18, fontWeight: "bold", color: "#000" }}>
             No Lab Results

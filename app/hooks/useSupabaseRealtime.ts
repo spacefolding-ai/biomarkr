@@ -19,6 +19,8 @@ export const useSupabaseRealtime = ({
   tables,
 }: UseSupabaseRealtimeProps) => {
   useEffect(() => {
+    console.log("useSupabaseRealtime initialized with userId:", userId);
+
     const channels = tables.map(
       ({ table, schema = "public", onInsert, onUpdate, onDelete }) => {
         const channelName = `realtime:${schema}:${table}`;
@@ -27,42 +29,48 @@ export const useSupabaseRealtime = ({
         console.log(`Subscribing to channel: ${channelName}`);
 
         if (onInsert) {
-          console.log(`Setting up INSERT handler for table: ${table}`);
           channel.on(
             "postgres_changes",
             { event: "INSERT", schema, table },
             (payload) => {
+              console.log(`INSERT event received for table: ${table}`, payload);
               if (payload.new?.user_id === userId) {
-                console.log(`${table} INSERT`, payload);
+                console.log("User ID matches, triggering onInsert");
                 onInsert(payload);
+              } else {
+                console.log("User ID does not match, ignoring event");
               }
             }
           );
         }
 
         if (onUpdate) {
-          console.log(`Setting up UPDATE handler for table: ${table}`);
           channel.on(
             "postgres_changes",
             { event: "UPDATE", schema, table },
             (payload) => {
+              console.log(`UPDATE event received for table: ${table}`, payload);
               if (payload.new?.user_id === userId) {
-                console.log(`${table} UPDATE`, payload);
+                console.log("User ID matches, triggering onUpdate");
                 onUpdate(payload);
+              } else {
+                console.log("User ID does not match, ignoring event");
               }
             }
           );
         }
 
         if (onDelete) {
-          console.log(`Setting up DELETE handler for table: ${table}`);
           channel.on(
             "postgres_changes",
             { event: "DELETE", schema, table },
             (payload) => {
+              console.log(`DELETE event received for table: ${table}`, payload);
               if (payload.old?.user_id === userId) {
-                console.log(`${table} DELETE`, payload);
+                console.log("User ID matches, triggering onDelete");
                 onDelete(payload);
+              } else {
+                console.log("User ID does not match, ignoring event");
               }
             }
           );

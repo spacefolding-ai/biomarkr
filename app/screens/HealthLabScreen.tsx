@@ -41,6 +41,7 @@ const HealthLabScreen = () => {
 
   useBiomarkersRealtime({
     onInsert: (payload) => {
+      console.log("onInsert biomarkers", payload);
       setBiomarkers((prev) => [payload, ...prev]);
     },
     onUpdate: (payload) => {
@@ -48,16 +49,23 @@ const HealthLabScreen = () => {
         prev.map((item) => (item.id === payload.id ? payload : item))
       );
     },
+    onDelete: (payload) => {
+      setBiomarkers((prev) => prev.filter((item) => item.id !== payload.id));
+    },
   });
 
   useLabReportsRealtime({
     onInsert: (payload) => {
+      console.log("onInsert reports", payload);
       setReports((prev) => [payload, ...prev]);
     },
     onUpdate: (payload) => {
       setReports((prev) =>
         prev.map((item) => (item.id === payload.id ? payload : item))
       );
+    },
+    onDelete: (payload) => {
+      setReports((prev) => prev.filter((item) => item.id !== payload.id));
     },
   });
 
