@@ -49,6 +49,9 @@ const HealthLabScreen = () => {
         prev.map((item) => (item.id === payload.id ? payload : item))
       );
     },
+    onDelete: (payload) => {
+      setBiomarkers((prev) => prev.filter((item) => item.id !== payload.id));
+    },
   });
 
   useLabReportsRealtime({
@@ -60,6 +63,9 @@ const HealthLabScreen = () => {
       setReports((prev) =>
         prev.map((item) => (item.id === payload.id ? payload : item))
       );
+    },
+    onDelete: (payload) => {
+      setReports((prev) => prev.filter((item) => item.id !== payload.id));
     },
   });
 
