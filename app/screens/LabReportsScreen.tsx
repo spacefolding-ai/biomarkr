@@ -5,8 +5,10 @@ import {
   FlatList,
   RefreshControl,
   ActivityIndicator,
+  TouchableOpacity,
+  Modal,
+  Button,
 } from "react-native";
-import { supabase } from "../services/supabaseClient";
 import { LabReport } from "../types/LabReport";
 import { format } from "date-fns";
 
@@ -21,6 +23,18 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
   refreshing,
   onRefresh,
 }) => {
+  const [filter, setFilter] = useState("By date Added");
+  const [isModalVisible, setModalVisible] = useState(false);
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
+
+  const applyFilter = (selectedFilter: string) => {
+    setFilter(selectedFilter);
+    toggleModal();
+  };
+
   const renderReportItem = ({ item }: { item: LabReport }) => (
     <View
       style={{
@@ -48,6 +62,18 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
 
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "flex-end",
+          padding: 16,
+        }}
+      >
+        <TouchableOpacity onPress={toggleModal}>
+          <Text style={{ color: "blue" }}>{filter}</Text>
+        </TouchableOpacity>
+      </View>
+
       <FlatList
         data={reports}
         keyExtractor={(item) => item.id}
@@ -56,6 +82,37 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       />
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={isModalVisible}
+        onRequestClose={toggleModal}
+      >
+        <TouchableOpacity
+          style={{ flex: 1, justifyContent: "flex-end" }}
+          activeOpacity={1}
+          onPressOut={toggleModal}
+        >
+          <View
+            style={{
+              backgroundColor: "white",
+              padding: 20,
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+            }}
+          >
+            <Button
+              title="By date Added"
+              onPress={() => applyFilter("By date Added")}
+            />
+            <Button
+              title="By document date"
+              onPress={() => applyFilter("By document date")}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };

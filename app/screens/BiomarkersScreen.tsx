@@ -6,7 +6,6 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from "react-native";
-import { supabase } from "../services/supabaseClient";
 import { format } from "date-fns";
 import { BiomarkerItem } from "../types/BiomarkerItem";
 
