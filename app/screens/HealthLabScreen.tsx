@@ -2,16 +2,16 @@ import React, { useEffect, useState, useCallback } from "react";
 import { SafeAreaView } from "react-native";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import BiomarkersScreen from "./BiomarkersScreen";
-import LabDocumentsScreen from "./LabDocumentsScreen";
+import LabReportsScreen from "./LabReportsScreen";
 import { supabase } from "../services/supabaseClient";
 import { useBiomarkersRealtime } from "../hooks/useBiomarkersRealtime";
-import { useFilesRealtime } from "../hooks/useFilesRealtime";
+import { useLabReportsRealtime } from "../hooks/useLabReportsRealtime";
 
 const Tab = createMaterialTopTabNavigator();
 
 const HealthLabScreen = () => {
   const [biomarkers, setBiomarkers] = useState([]);
-  const [files, setFiles] = useState([]);
+  const [reports, setReports] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadBiomarkers = async () => {
@@ -24,19 +24,19 @@ const HealthLabScreen = () => {
     if (error) console.error("Failed to load biomarkers:", error);
   };
 
-  const loadFiles = async () => {
+  const loadLabReports = async () => {
     const { data, error } = await supabase
-      .from("files")
+      .from("lab_reports")
       .select("*")
-      .order("uploaded_at", { ascending: false });
+      .order("report_date", { ascending: false });
 
-    if (data) setFiles(data);
-    if (error) console.error("Failed to load files:", error);
+    if (data) setReports(data);
+    if (error) console.error("Failed to load lab reports:", error);
   };
 
   useEffect(() => {
     loadBiomarkers();
-    loadFiles();
+    loadLabReports();
   }, []);
 
   useBiomarkersRealtime({
@@ -50,15 +50,13 @@ const HealthLabScreen = () => {
     },
   });
 
-  useFilesRealtime({
+  useLabReportsRealtime({
     onInsert: (payload) => {
-      const newFile = payload.new;
-      setFiles((prev) => [newFile, ...prev]);
+      setReports((prev) => [payload, ...prev]);
     },
     onUpdate: (payload) => {
-      const updatedFile = payload.new;
-      setFiles((prev) =>
-        prev.map((item) => (item.id === updatedFile.id ? updatedFile : item))
+      setReports((prev) =>
+        prev.map((item) => (item.id === payload.id ? payload : item))
       );
     },
   });
@@ -66,7 +64,7 @@ const HealthLabScreen = () => {
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadBiomarkers();
-    await loadFiles();
+    await loadLabReports();
     setRefreshing(false);
   }, []);
 
@@ -80,8 +78,8 @@ const HealthLabScreen = () => {
   );
 
   const LabReportsTab = (props) => (
-    <LabDocumentsScreen
-      files={files}
+    <LabReportsScreen
+      reports={reports}
       refreshing={refreshing}
       onRefresh={onRefresh}
       {...props}

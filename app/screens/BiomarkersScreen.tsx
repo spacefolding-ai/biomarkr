@@ -8,19 +8,7 @@ import {
 } from "react-native";
 import { supabase } from "../services/supabaseClient";
 import { format } from "date-fns";
-
-interface BiomarkerItem {
-  id: string;
-  report_id: string;
-  user_id: string;
-  marker_name: string;
-  value: number;
-  unit: string;
-  reference_range: string;
-  abnormal_flag: string | null;
-  created_at: string;
-  report_date: string;
-}
+import { BiomarkerItem } from "../types/BiomarkerItem";
 
 interface BiomarkersScreenProps {
   biomarkers: BiomarkerItem[];
@@ -38,6 +26,7 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
       style={{
         flexDirection: "row",
         justifyContent: "space-between",
+        alignItems: "center",
         padding: 16,
         borderBottomWidth: 1,
         borderColor: "#eee",
