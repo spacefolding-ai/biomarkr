@@ -20,7 +20,7 @@ export default function UploadScreen() {
   const [uploading, setUploading] = useState(false);
   const [cameraPermission, requestCameraPermission] =
     Camera.useCameraPermissions();
-  const { user, loading } = useAuth();
+  const { user, loading, session } = useAuth();
 
   if (loading) {
     return <ActivityIndicator size="large" />;
@@ -49,13 +49,20 @@ export default function UploadScreen() {
   };
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-    });
+    try {
+      console.log("User object:", user);
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 1,
+      });
 
-    if (!result.canceled) {
-      await processFile(result.assets[0].uri);
+      if (!result.canceled) {
+        await processFile(result.assets[0].uri);
+      } else {
+        console.log("Image picking was canceled");
+      }
+    } catch (error) {
+      console.error("Error picking image:", error);
     }
   };
 
@@ -80,7 +87,13 @@ export default function UploadScreen() {
   };
 
   const handleUpload = async () => {
-    if (!fileInfo || !user?.id) return;
+    if (!fileInfo || !user?.id) {
+      console.log("Upload failed: Missing fileInfo or user ID");
+      return;
+    }
+
+    console.log("Uploading file:", fileInfo);
+    console.log("User ID:", user.id);
 
     try {
       setUploading(true);
@@ -115,11 +128,23 @@ export default function UploadScreen() {
     <View style={styles.container}>
       {!fileInfo ? (
         <>
-          <Button title="Pick Image from Gallery" onPress={pickImage} />
+          <Button
+            title="Pick Image from Gallery"
+            onPress={pickImage}
+            disabled={!session}
+          />
           <View style={styles.spacer} />
-          <Button title="Pick Document (PDF, Image)" onPress={pickDocument} />
+          <Button
+            title="Pick Document (PDF, Image)"
+            onPress={pickDocument}
+            disabled={!session}
+          />
           <View style={styles.spacer} />
-          <Button title="Take Photo (Camera)" onPress={takePhoto} />
+          <Button
+            title="Take Photo (Camera)"
+            onPress={takePhoto}
+            disabled={!session}
+          />
         </>
       ) : (
         <View style={styles.centeredContent}>

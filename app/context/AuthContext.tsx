@@ -29,7 +29,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     const { data: listener } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
+        console.log("Auth state change event:", event);
+        console.log("Auth state change session:", session);
+        if (session) {
+          console.log("Session is valid, updating state...");
+        } else {
+          console.log("Session is null, user is not authenticated.");
+        }
         setSession(session);
         setUser(session?.user ?? null);
       }

@@ -24,7 +24,10 @@ export const useSupabaseRealtime = ({
         const channelName = `realtime:${schema}:${table}`;
         const channel = supabase.channel(channelName);
 
+        console.log(`Subscribing to channel: ${channelName}`);
+
         if (onInsert) {
+          console.log(`Setting up INSERT handler for table: ${table}`);
           channel.on(
             "postgres_changes",
             { event: "INSERT", schema, table },
@@ -38,6 +41,7 @@ export const useSupabaseRealtime = ({
         }
 
         if (onUpdate) {
+          console.log(`Setting up UPDATE handler for table: ${table}`);
           channel.on(
             "postgres_changes",
             { event: "UPDATE", schema, table },
@@ -51,6 +55,7 @@ export const useSupabaseRealtime = ({
         }
 
         if (onDelete) {
+          console.log(`Setting up DELETE handler for table: ${table}`);
           channel.on(
             "postgres_changes",
             { event: "DELETE", schema, table },
