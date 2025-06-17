@@ -1,23 +1,35 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, ActivityIndicator } from 'react-native';
-import { useForm, Controller } from 'react-hook-form';
-import { z } from 'zod';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
-import { handleLogin } from '../services/auth';
-import { LogIn, Eye, EyeOff } from 'lucide-react-native';
-import Toast from 'react-native-toast-message';
+import React, { useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  ActivityIndicator,
+} from "react-native";
+import { useForm, Controller } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useNavigation, NavigationProp } from "@react-navigation/native";
+import { handleLogin } from "../services/auth";
+import { LogIn, Eye, EyeOff } from "lucide-react-native";
+import Toast from "react-native-toast-message";
+import { signInWithGoogle } from "../services/auth";
 
 const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  email: z.string().email("Invalid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
 const LoginScreen = () => {
   const navigation = useNavigation<NavigationProp<any>>();
-  const { control, handleSubmit, formState: { errors, isValid } } = useForm({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = useForm({
     resolver: zodResolver(loginSchema),
-    mode: 'onChange',
+    mode: "onChange",
   });
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -26,17 +38,22 @@ const LoginScreen = () => {
     setLoading(true);
     try {
       await handleLogin(data.email, data.password);
-      Toast.show({ type: 'success', text1: 'Login successful!' });
-      navigation.navigate('Main');
+      Toast.show({ type: "success", text1: "Login successful!" });
+      navigation.navigate("Main");
     } catch (error) {
-      if (error?.code === 'email_not_confirmed') {
+      if (error?.code === "email_not_confirmed") {
         Toast.show({
-          type: 'error',
-          text1: 'Email not confirmed',
-          text2: 'Please check your email for a confirmation link before logging in.'
+          type: "error",
+          text1: "Email not confirmed",
+          text2:
+            "Please check your email for a confirmation link before logging in.",
         });
       } else {
-        Toast.show({ type: 'error', text1: 'Login failed', text2: error.message || 'Please try again.' });
+        Toast.show({
+          type: "error",
+          text1: "Login failed",
+          text2: error.message || "Please try again.",
+        });
       }
     } finally {
       setLoading(false);
@@ -45,7 +62,7 @@ const LoginScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={{ alignItems: 'center', marginBottom: 24 }}>
+      <View style={{ alignItems: "center", marginBottom: 24 }}>
         <LogIn size={48} color="#007AFF" />
       </View>
       <Controller
@@ -63,7 +80,9 @@ const LoginScreen = () => {
               onChangeText={onChange}
               value={value}
             />
-            <Text style={styles.inlineError}>{errors.email ? errors.email.message : ' '}</Text>
+            <Text style={styles.inlineError}>
+              {errors.email ? errors.email.message : " "}
+            </Text>
           </>
         )}
       />
@@ -73,7 +92,7 @@ const LoginScreen = () => {
         defaultValue=""
         render={({ field: { onChange, onBlur, value } }) => (
           <>
-            <View style={{ position: 'relative' }}>
+            <View style={{ position: "relative" }}>
               <TextInput
                 style={styles.input}
                 placeholder="Password"
@@ -82,23 +101,45 @@ const LoginScreen = () => {
                 onChangeText={onChange}
                 value={value}
               />
-              <View style={{ position: 'absolute', right: 8, top: 8 }}>
+              <View style={{ position: "absolute", right: 8, top: 8 }}>
                 {showPassword ? (
-                  <EyeOff size={20} color="#888" onPress={() => setShowPassword(false)} />
+                  <EyeOff
+                    size={20}
+                    color="#888"
+                    onPress={() => setShowPassword(false)}
+                  />
                 ) : (
-                  <Eye size={20} color="#888" onPress={() => setShowPassword(true)} />
+                  <Eye
+                    size={20}
+                    color="#888"
+                    onPress={() => setShowPassword(true)}
+                  />
                 )}
               </View>
             </View>
-            <Text style={styles.inlineError}>{errors.password ? errors.password.message : ' '}</Text>
+            <Text style={styles.inlineError}>
+              {errors.password ? errors.password.message : " "}
+            </Text>
           </>
         )}
       />
       {loading ? (
-        <ActivityIndicator size={64} color="#007AFF" style={{ marginVertical: 16 }} />
+        <ActivityIndicator
+          size={64}
+          color="#007AFF"
+          style={{ marginVertical: 16 }}
+        />
       ) : (
-        <Button title="Login" onPress={handleSubmit(onSubmit)} disabled={!isValid || loading} />
+        <Button
+          title="Login"
+          onPress={handleSubmit(onSubmit)}
+          disabled={!isValid || loading}
+        />
       )}
+      <Button
+        title="Continue with Google"
+        onPress={() => signInWithGoogle(navigation)}
+      />
     </View>
   );
 };
@@ -106,21 +147,21 @@ const LoginScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 16,
   },
   input: {
     height: 40,
-    borderColor: 'gray',
+    borderColor: "gray",
     borderWidth: 1,
     marginBottom: 6,
     paddingHorizontal: 8,
   },
   inlineError: {
     fontSize: 10,
-    color: 'red',
+    color: "red",
     marginBottom: 4,
   },
 });
 
-export default LoginScreen; 
+export default LoginScreen;

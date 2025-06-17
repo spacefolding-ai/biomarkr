@@ -4,11 +4,8 @@
     "slug": "healthiq",
     "version": "1.0.0",
     "jsEngine": "hermes",
-    "platforms": [
-      "ios",
-      "android",
-      "web"
-    ],
+    "scheme": "healthiq",
+    "platforms": ["ios", "android", "web"],
     "ios": {
       "bundleIdentifier": "com.anonymous.healthiq",
       "supportsTablet": true
@@ -19,8 +16,6 @@
         "backgroundColor": "#FFFFFF"
       }
     },
-    "plugins": [
-      "expo-font"
-    ]
+    "plugins": ["expo-font"]
   }
 }
