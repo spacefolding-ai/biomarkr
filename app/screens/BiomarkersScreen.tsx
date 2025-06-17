@@ -5,9 +5,12 @@ import {
   FlatList,
   RefreshControl,
   ActivityIndicator,
+  TouchableOpacity,
+  TextInput,
 } from "react-native";
 import { format } from "date-fns";
 import { BiomarkerItem } from "../types/BiomarkerItem";
+import { Ionicons } from "@expo/vector-icons";
 
 interface BiomarkersScreenProps {
   biomarkers: BiomarkerItem[];
@@ -20,6 +23,18 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
   refreshing,
   onRefresh,
 }) => {
+  const [searchVisible, setSearchVisible] = useState(false);
+  const [searchText, setSearchText] = useState("");
+
+  const filteredBiomarkers = biomarkers.filter((biomarker) =>
+    biomarker.marker_name.toLowerCase().includes(searchText.toLowerCase())
+  );
+
+  const toggleSearch = () => {
+    setSearchVisible(!searchVisible);
+    setSearchText("");
+  };
+
   const renderBiomarkerItem = ({ item }: { item: BiomarkerItem }) => (
     <View
       style={{
@@ -60,13 +75,62 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
 
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          paddingHorizontal: 16,
+          paddingVertical: 8,
+          marginTop: 16,
+        }}
+      >
+        {searchVisible && (
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              borderColor: "#ccc",
+              borderWidth: 1,
+              borderRadius: 8,
+              padding: 8,
+              flex: 1,
+              marginRight: 8,
+            }}
+          >
+            <Ionicons
+              name="search"
+              size={16}
+              color="#ccc"
+              style={{ marginRight: 5 }}
+            />
+            <TextInput
+              style={{ flex: 1 }}
+              placeholder="Search by biomarker name"
+              value={searchText}
+              onChangeText={setSearchText}
+            />
+          </View>
+        )}
+        <TouchableOpacity
+          onPress={toggleSearch}
+          style={{ justifyContent: "center", paddingVertical: 8 }}
+        >
+          {searchVisible ? (
+            <Text style={{ color: "red" }}>Cancel</Text>
+          ) : (
+            <Ionicons name="search" size={24} color="black" />
+          )}
+        </TouchableOpacity>
+      </View>
       <FlatList
-        data={biomarkers}
+        data={searchVisible ? filteredBiomarkers : biomarkers}
         keyExtractor={(item) => item.id}
         renderItem={renderBiomarkerItem}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        contentContainerStyle={{ paddingTop: 0 }}
       />
     </View>
   );
