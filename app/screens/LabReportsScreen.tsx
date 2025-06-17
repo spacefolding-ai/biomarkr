@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -26,51 +26,69 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
   const [filter, setFilter] = useState("By date Added");
   const [isModalVisible, setModalVisible] = useState(false);
 
-  const toggleModal = () => {
-    setModalVisible(!isModalVisible);
-  };
+  const toggleModal = () => setModalVisible(!isModalVisible);
 
   const applyFilter = (selectedFilter: string) => {
     setFilter(selectedFilter);
     toggleModal();
   };
 
+  const sortedReports = [...reports].sort((a, b) => {
+    if (filter === "By document date") {
+      return (
+        new Date(b.report_date).getTime() - new Date(a.report_date).getTime()
+      );
+    } else {
+      return (
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+    }
+  });
+
   const renderReportItem = ({ item }: { item: LabReport }) => (
     <View
       style={{
         flexDirection: "row",
-        padding: 16,
+        justifyContent: "space-between",
+        alignItems: "center",
+        paddingVertical: 12,
+        paddingHorizontal: 16,
         borderBottomWidth: 1,
         borderColor: "#eee",
-        justifyContent: "space-between",
       }}
     >
-      <View style={{ flex: 1 }}>
-        <Text>{item.laboratory_name}</Text>
-        <Text>{item.description}</Text>
-        <Text>{format(new Date(item.report_date), "d MMM yyyy")}</Text>
+      <View style={{ flex: 3 }}>
+        <Text style={{ fontWeight: "bold" }}>{item.laboratory_name}</Text>
+        <Text style={{ color: "#444" }}>{item.description}</Text>
+        <Text style={{ color: "#888" }}>
+          {format(new Date(item.report_date), "d MMM yyyy")}
+        </Text>
       </View>
-      <View style={{ justifyContent: "center", alignItems: "flex-end" }}>
+      <View style={{ flex: 1, alignItems: "flex-end" }}>
         {item.extraction_status === "pending" ? (
-          <Text style={{ color: "orange" }}>Analyzing...</Text>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            <ActivityIndicator
+              size="small"
+              color="orange"
+              style={{ marginRight: 5 }}
+            />
+            <Text style={{ color: "orange" }}>Analyzing...</Text>
+          </View>
         ) : (
-          <Text style={{ color: "green" }}>Extracted ✅</Text>
+          <Text style={{ color: "green", fontWeight: "bold" }}>
+            Extracted ✅
+          </Text>
         )}
       </View>
     </View>
   );
 
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: "white",
-        justifyContent: "center",
-        alignItems: "center",
-      }}
-    >
+    <View style={{ flex: 1, backgroundColor: "white" }}>
       {reports.length === 0 ? (
-        <View style={{ alignItems: "center" }}>
+        <View
+          style={{ alignItems: "center", marginTop: 32, paddingHorizontal: 16 }}
+        >
           <Text style={{ fontSize: 18, fontWeight: "bold", color: "#000" }}>
             No Lab Results
           </Text>
@@ -80,27 +98,30 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
         </View>
       ) : (
         <>
-          {reports.length > 0 && (
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "flex-end",
-                padding: 16,
-              }}
-            >
-              <TouchableOpacity onPress={toggleModal}>
-                <Text style={{ color: "blue" }}>{filter}</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+          {/* Filter */}
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "flex-end",
+              padding: 16,
+            }}
+          >
+            <TouchableOpacity onPress={toggleModal}>
+              <Text style={{ color: "blue" }}>{filter}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Report List */}
           <FlatList
-            data={reports}
+            data={sortedReports}
             keyExtractor={(item) => item.id}
             renderItem={renderReportItem}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
           />
+
+          {/* Filter Modal */}
           <Modal
             animationType="slide"
             transparent={true}
@@ -122,7 +143,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
               >
                 <Button
                   title="By date Added"
-                  onPress={() => applyFilter("By date added")}
+                  onPress={() => applyFilter("By date Added")}
                 />
                 <Button
                   title="By document date"
