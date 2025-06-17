@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { supabase } from "../services/supabaseClient";
 import { LabReport } from "../types/LabReport";
+import { format } from "date-fns";
 
 interface LabReportsScreenProps {
   reports: LabReport[];
@@ -21,15 +22,27 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
   onRefresh,
 }) => {
   const renderReportItem = ({ item }: { item: LabReport }) => (
-    <View style={{ padding: 16, borderBottomWidth: 1, borderColor: "#eee" }}>
-      <Text>{item.laboratory_name}</Text>
-      <Text>{new Date(item.report_date).toLocaleString()}</Text>
-      <Text>{item.description}</Text>
-      {item.extraction_status === "pending" ? (
-        <Text style={{ color: "orange" }}>Analyzing...</Text>
-      ) : (
-        <Text style={{ color: "green" }}>Extracted ✅</Text>
-      )}
+    <View
+      style={{
+        flexDirection: "row",
+        padding: 16,
+        borderBottomWidth: 1,
+        borderColor: "#eee",
+        justifyContent: "space-between",
+      }}
+    >
+      <View style={{ flex: 1 }}>
+        <Text>{item.laboratory_name}</Text>
+        <Text>{item.description}</Text>
+        <Text>{format(new Date(item.report_date), "d MMM yyyy")}</Text>
+      </View>
+      <View style={{ justifyContent: "center", alignItems: "flex-end" }}>
+        {item.extraction_status === "pending" ? (
+          <Text style={{ color: "orange" }}>Analyzing...</Text>
+        ) : (
+          <Text style={{ color: "green" }}>Extracted ✅</Text>
+        )}
+      </View>
     </View>
   );
 
