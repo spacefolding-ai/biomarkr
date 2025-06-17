@@ -24,16 +24,12 @@ export const useSupabaseRealtime = ({
         const channelName = `realtime:${schema}:${table}`;
         const channel = supabase.channel(channelName);
 
-        console.log(`Subscribing to channel: ${channelName}`);
-
         if (onInsert) {
-          console.log(`Setting up INSERT handler for table: ${table}`);
           channel.on(
             "postgres_changes",
             { event: "INSERT", schema, table },
             (payload) => {
               if (payload.new?.user_id === userId) {
-                console.log(`${table} INSERT`, payload);
                 onInsert(payload);
               }
             }
@@ -41,13 +37,11 @@ export const useSupabaseRealtime = ({
         }
 
         if (onUpdate) {
-          console.log(`Setting up UPDATE handler for table: ${table}`);
           channel.on(
             "postgres_changes",
             { event: "UPDATE", schema, table },
             (payload) => {
               if (payload.new?.user_id === userId) {
-                console.log(`${table} UPDATE`, payload);
                 onUpdate(payload);
               }
             }
@@ -55,13 +49,11 @@ export const useSupabaseRealtime = ({
         }
 
         if (onDelete) {
-          console.log(`Setting up DELETE handler for table: ${table}`);
           channel.on(
             "postgres_changes",
             { event: "DELETE", schema, table },
             (payload) => {
               if (payload.old?.user_id === userId) {
-                console.log(`${table} DELETE`, payload);
                 onDelete(payload);
               }
             }

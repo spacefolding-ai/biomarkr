@@ -41,6 +41,7 @@ const HealthLabScreen = () => {
 
   useBiomarkersRealtime({
     onInsert: (payload) => {
+      console.log("onInsert biomarkers", payload);
       setBiomarkers((prev) => [payload, ...prev]);
     },
     onUpdate: (payload) => {
@@ -52,6 +53,7 @@ const HealthLabScreen = () => {
 
   useLabReportsRealtime({
     onInsert: (payload) => {
+      console.log("onInsert reports", payload);
       setReports((prev) => [payload, ...prev]);
     },
     onUpdate: (payload) => {
