@@ -61,58 +61,78 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
   );
 
   return (
-    <View style={{ flex: 1, backgroundColor: "white" }}>
-      {reports.length > 0 && (
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "flex-end",
-            padding: 16,
-          }}
-        >
-          <TouchableOpacity onPress={toggleModal}>
-            <Text style={{ color: "blue" }}>{filter}</Text>
-          </TouchableOpacity>
+    <View
+      style={{
+        flex: 1,
+        backgroundColor: "white",
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      {reports.length === 0 ? (
+        <View style={{ alignItems: "center" }}>
+          <Text style={{ fontSize: 18, fontWeight: "bold", color: "#000" }}>
+            No Lab Results
+          </Text>
+          <Text style={{ textAlign: "center", color: "#666", marginTop: 8 }}>
+            Take a photo or upload an image or PDF of your lab report
+          </Text>
         </View>
-      )}
-      <FlatList
-        data={reports}
-        keyExtractor={(item) => item.id}
-        renderItem={renderReportItem}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      />
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={isModalVisible}
-        onRequestClose={toggleModal}
-      >
-        <TouchableOpacity
-          style={{ flex: 1, justifyContent: "flex-end" }}
-          activeOpacity={1}
-          onPressOut={toggleModal}
-        >
-          <View
-            style={{
-              backgroundColor: "white",
-              padding: 20,
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
-            }}
+      ) : (
+        <>
+          {reports.length > 0 && (
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                padding: 16,
+              }}
+            >
+              <TouchableOpacity onPress={toggleModal}>
+                <Text style={{ color: "blue" }}>{filter}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          <FlatList
+            data={reports}
+            keyExtractor={(item) => item.id}
+            renderItem={renderReportItem}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+          />
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={isModalVisible}
+            onRequestClose={toggleModal}
           >
-            <Button
-              title="By date Added"
-              onPress={() => applyFilter("By date added")}
-            />
-            <Button
-              title="By document date"
-              onPress={() => applyFilter("By document date")}
-            />
-          </View>
-        </TouchableOpacity>
-      </Modal>
+            <TouchableOpacity
+              style={{ flex: 1, justifyContent: "flex-end" }}
+              activeOpacity={1}
+              onPressOut={toggleModal}
+            >
+              <View
+                style={{
+                  backgroundColor: "white",
+                  padding: 20,
+                  borderTopLeftRadius: 20,
+                  borderTopRightRadius: 20,
+                }}
+              >
+                <Button
+                  title="By date Added"
+                  onPress={() => applyFilter("By date added")}
+                />
+                <Button
+                  title="By document date"
+                  onPress={() => applyFilter("By document date")}
+                />
+              </View>
+            </TouchableOpacity>
+          </Modal>
+        </>
+      )}
     </View>
   );
 };
