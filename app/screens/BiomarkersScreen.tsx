@@ -1,10 +1,9 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   FlatList,
   RefreshControl,
-  ActivityIndicator,
   TouchableOpacity,
   TextInput,
 } from "react-native";
@@ -26,8 +25,9 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
 
-  const filteredBiomarkers = biomarkers.filter((biomarker) =>
-    biomarker.marker_name.toLowerCase().includes(searchText.toLowerCase())
+  // ✅ Removed fallback to empty string
+  const filteredBiomarkers = biomarkers.filter((b) =>
+    b.marker_name.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const toggleSearch = () => {
@@ -59,16 +59,18 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
           <Text>
             {item.value} {item.unit}
           </Text>
+
           <Text style={{ color: "#666" }}>
             {format(new Date(item.report_date), "d MMM yyyy")}
           </Text>
         </View>
-        {item.abnormal_flag === null ? (
-          <Text style={{ color: "green" }}>●</Text>
-        ) : item.abnormal_flag.toLowerCase() === "high" ? (
+
+        {item.abnormal_flag === "high" ? (
           <Text style={{ color: "orange" }}>▲</Text>
-        ) : (
+        ) : item.abnormal_flag === "low" ? (
           <Text style={{ color: "orange" }}>▼</Text>
+        ) : (
+          <Text style={{ color: "green" }}>●</Text>
         )}
       </View>
     </View>
@@ -145,6 +147,7 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
               )}
             </TouchableOpacity>
           </View>
+
           <FlatList
             data={searchVisible ? filteredBiomarkers : biomarkers}
             keyExtractor={(item) => item.id}

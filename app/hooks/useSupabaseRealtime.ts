@@ -19,27 +19,23 @@ export const useSupabaseRealtime = ({
   tables,
 }: UseSupabaseRealtimeProps) => {
   useEffect(() => {
-    console.log("useSupabaseRealtime initialized with userId:", userId);
+    console.log("🔄 useSupabaseRealtime initialized with userId:", userId);
 
-    const channels = tables.map(
+    const subscriptions = tables.map(
       ({ table, schema = "public", onInsert, onUpdate, onDelete }) => {
+        console.log("schema", schema);
         const channelName = `realtime:${schema}:${table}`;
         const channel = supabase.channel(channelName);
 
-        console.log(`Subscribing to channel: ${channelName}`);
+        console.log(`📡 Subscribing to: ${channelName}`);
 
         if (onInsert) {
           channel.on(
             "postgres_changes",
             { event: "INSERT", schema, table },
             (payload) => {
-              console.log(`INSERT event received for table: ${table}`, payload);
-              if (payload.new?.user_id === userId) {
-                console.log("User ID matches, triggering onInsert");
-                onInsert(payload);
-              } else {
-                console.log("User ID does not match, ignoring event");
-              }
+              console.log(`[INSERT] ${table}:`, payload);
+              if (payload.new?.user_id === userId) onInsert(payload);
             }
           );
         }
@@ -49,13 +45,8 @@ export const useSupabaseRealtime = ({
             "postgres_changes",
             { event: "UPDATE", schema, table },
             (payload) => {
-              console.log(`UPDATE event received for table: ${table}`, payload);
-              if (payload.new?.user_id === userId) {
-                console.log("User ID matches, triggering onUpdate");
-                onUpdate(payload);
-              } else {
-                console.log("User ID does not match, ignoring event");
-              }
+              console.log(`[UPDATE] ${table}:`, payload);
+              if (payload.new?.user_id === userId) onUpdate(payload);
             }
           );
         }
@@ -65,13 +56,8 @@ export const useSupabaseRealtime = ({
             "postgres_changes",
             { event: "DELETE", schema, table },
             (payload) => {
-              console.log(`DELETE event received for table: ${table}`, payload);
-              if (payload.old?.user_id === userId) {
-                console.log("User ID matches, triggering onDelete");
-                onDelete(payload);
-              } else {
-                console.log("User ID does not match, ignoring event");
-              }
+              console.log(`[DELETE] ${table}:`, payload);
+              if (payload.old?.user_id === userId) onDelete(payload);
             }
           );
         }
@@ -82,7 +68,10 @@ export const useSupabaseRealtime = ({
     );
 
     return () => {
-      channels.forEach((ch) => supabase.removeChannel(ch));
+      subscriptions.forEach(async (ch) => {
+        console.log(`🛑 Unsubscribing from: ${ch.topic}`);
+        await ch.unsubscribe();
+      });
     };
-  }, [userId, tables]);
+  }, []);
 };

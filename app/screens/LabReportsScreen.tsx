@@ -104,7 +104,6 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
         </View>
       ) : (
         <>
-          {/* Filter */}
           <View
             style={{
               flexDirection: "row",
@@ -117,7 +116,6 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
             </TouchableOpacity>
           </View>
 
-          {/* Report List */}
           <FlatList
             data={sortedReports}
             keyExtractor={(item) => item.id}
@@ -127,7 +125,6 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
             }
           />
 
-          {/* Filter Modal */}
           <Modal
             animationType="slide"
             transparent={true}

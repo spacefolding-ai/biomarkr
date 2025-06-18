@@ -53,7 +53,7 @@ const SignupScreen = () => {
   const onSubmit = async (data) => {
     setLoading(true);
     try {
-      const email = data.email.toLowerCase().trim();
+      const email = data.email?.toLowerCase().trim();
       const password = data.password.trim();
       await handleSignUp(email, password);
       Toast.show({
