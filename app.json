@@ -1,17 +1,17 @@
 {
   "expo": {
-    "name": "healthiq",
-    "slug": "healthiq",
+    "name": "biomarkr",
+    "slug": "biomarkr",
     "version": "1.0.0",
     "jsEngine": "hermes",
-    "scheme": "healthiq",
+    "scheme": "biomarkr",
     "platforms": ["ios", "android", "web"],
     "ios": {
-      "bundleIdentifier": "com.anonymous.healthiq",
+      "bundleIdentifier": "com.anonymous.biomarkr",
       "supportsTablet": true
     },
     "android": {
-      "package": "com.anonymous.healthiq",
+      "package": "com.anonymous.biomarkr",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF"
       }

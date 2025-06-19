@@ -1,5 +1,5 @@
 {
-  "name": "healthiq",
+  "name": "biomarkr",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -11,15 +11,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/spacefolding-ai/healthiq.git"
+    "url": "git+https://github.com/spacefolding-ai/biomarkr.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/spacefolding-ai/healthiq/issues"
+    "url": "https://github.com/spacefolding-ai/biomarkr/issues"
   },
-  "homepage": "https://github.com/spacefolding-ai/healthiq#readme",
+  "homepage": "https://github.com/spacefolding-ai/biomarkr#readme",
   "description": "",
   "dependencies": {
     "@expo-google-fonts/roboto": "^0.4.0",
