@@ -1,6 +1,6 @@
-# HealthIQ SaaS - React Native Expo App
+# Biomarkr SaaS - React Native Expo App
 
-This repository contains the official React Native Expo client app for HealthIQ — a SaaS platform for medical lab reports extraction, blood marker tracking, and AI-powered analysis.
+This repository contains the official React Native Expo client app for Biomarkr — a SaaS platform for medical lab reports extraction, blood marker tracking, and AI-powered analysis.
 
 ---
 
@@ -137,5 +137,4 @@ npx expo start --config-env development
 ## 🚀 SaaS Founder:
 
 You are executing SaaS the correct way.\
-💥 HealthIQ AI Pipeline coming next.
-
+💥 Biomarkr AI Pipeline coming next.

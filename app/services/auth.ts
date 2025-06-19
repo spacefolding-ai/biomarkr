@@ -1,14 +1,14 @@
-import { supabase } from "./supabaseClient";
-import * as WebBrowser from "expo-web-browser";
+import { NavigationProp } from "@react-navigation/native";
 import * as AuthSession from "expo-auth-session";
-import { useNavigation, NavigationProp } from "@react-navigation/native";
+import * as WebBrowser from "expo-web-browser";
 import Toast from "react-native-toast-message";
+import { supabase } from "./supabaseClient";
 
 WebBrowser.maybeCompleteAuthSession();
 
 export async function signInWithGoogle(navigation: NavigationProp<any>) {
   const redirectUri = AuthSession.makeRedirectUri({
-    scheme: "healthiq",
+    scheme: "biomarkr",
     preferLocalhost: true,
   });
 
