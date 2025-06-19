@@ -23,8 +23,8 @@ export const useSupabaseRealtime = ({
 
     const subscriptions = tables.map(
       ({ table, schema = "public", onInsert, onUpdate, onDelete }) => {
-        console.log("schema", schema);
         const channelName = `realtime:${schema}:${table}`;
+        console.log("schema", schema);
         const channel = supabase.channel(channelName);
 
         console.log(`📡 Subscribing to: ${channelName}`);

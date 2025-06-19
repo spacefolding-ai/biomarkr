@@ -1,5 +1,5 @@
-import { supabase } from './supabaseClient';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from "expo-file-system";
+import { supabase } from "./supabaseClient";
 
 export async function uploadFileToStorage(
   uri: string,
@@ -9,7 +9,7 @@ export async function uploadFileToStorage(
   try {
     const fileInfo = await FileSystem.getInfoAsync(uri);
     if (!fileInfo.exists) {
-      throw new Error('File does not exist');
+      throw new Error("File does not exist");
     }
 
     const fileContent = await FileSystem.readAsStringAsync(uri, {
@@ -17,7 +17,7 @@ export async function uploadFileToStorage(
     });
 
     const { data, error } = await supabase.storage
-      .from('uploads')
+      .from("uploads")
       .upload(storagePath, decode(fileContent), {
         contentType: mimeType,
         upsert: true,
@@ -29,8 +29,8 @@ export async function uploadFileToStorage(
 
     return data;
   } catch (error: any) {
-    console.error('Upload error:', error);
-    throw new Error(error.message || 'Failed to upload file');
+    console.error("Upload error:", error);
+    throw new Error(error.message || "Failed to upload file");
   }
 }
 
@@ -42,4 +42,4 @@ function decode(base64: string): Uint8Array {
     bytes[i] = binaryString.charCodeAt(i);
   }
   return bytes;
-} 
+}
