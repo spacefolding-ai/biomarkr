@@ -1,15 +1,15 @@
+import { Ionicons } from "@expo/vector-icons";
+import { format } from "date-fns";
 import React, { useState } from "react";
 import {
-  View,
-  Text,
   FlatList,
   RefreshControl,
-  TouchableOpacity,
+  Text,
   TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { format } from "date-fns";
 import { BiomarkerItem } from "../types/BiomarkerItem";
-import { Ionicons } from "@expo/vector-icons";
 
 interface BiomarkersScreenProps {
   biomarkers: BiomarkerItem[];
@@ -25,9 +25,8 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
 
-  // ✅ Removed fallback to empty string
   const filteredBiomarkers = biomarkers.filter((b) =>
-    b.marker_name.toLowerCase().includes(searchText.toLowerCase())
+    (b.marker_name?.toLowerCase() || "").includes(searchText?.toLowerCase())
   );
 
   const toggleSearch = () => {
@@ -47,7 +46,7 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
         width: "100%",
       }}
     >
-      <Text style={{ fontWeight: "bold" }}>{item.marker_name}</Text>
+      <Text style={{ fontWeight: "bold" }}>{item?.marker_name}</Text>
       <View style={{ flexDirection: "row", alignItems: "center" }}>
         <View
           style={{
@@ -57,17 +56,17 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
           }}
         >
           <Text>
-            {item.value} {item.unit}
+            {item?.value} {item?.unit}
           </Text>
 
           <Text style={{ color: "#666" }}>
-            {format(new Date(item.report_date), "d MMM yyyy")}
+            {format(new Date(item?.report_date), "d MMM yyyy")}
           </Text>
         </View>
 
-        {item.abnormal_flag === "high" ? (
+        {item?.abnormal_flag === "high" ? (
           <Text style={{ color: "orange" }}>▲</Text>
-        ) : item.abnormal_flag === "low" ? (
+        ) : item?.abnormal_flag === "low" ? (
           <Text style={{ color: "orange" }}>▼</Text>
         ) : (
           <Text style={{ color: "green" }}>●</Text>
@@ -150,7 +149,7 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
 
           <FlatList
             data={searchVisible ? filteredBiomarkers : biomarkers}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item, index) => `${item?.id}-${index}`}
             renderItem={renderBiomarkerItem}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

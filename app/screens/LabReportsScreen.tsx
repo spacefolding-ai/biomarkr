@@ -1,16 +1,16 @@
+import { format } from "date-fns";
 import React, { useState } from "react";
 import {
-  View,
-  Text,
-  FlatList,
-  RefreshControl,
   ActivityIndicator,
-  TouchableOpacity,
-  Modal,
   Button,
+  FlatList,
+  Modal,
+  RefreshControl,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { LabReport } from "../types/LabReport";
-import { format } from "date-fns";
 
 interface LabReportsScreenProps {
   reports: LabReport[];
@@ -58,14 +58,14 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
       }}
     >
       <View style={{ flex: 3 }}>
-        <Text style={{ fontWeight: "bold" }}>{item.laboratory_name}</Text>
-        <Text style={{ color: "#444" }}>{item.description}</Text>
+        <Text style={{ fontWeight: "bold" }}>{item?.laboratory_name}</Text>
+        <Text style={{ color: "#444" }}>{item?.description}</Text>
         <Text style={{ color: "#888" }}>
-          {format(new Date(item.report_date), "d MMM yyyy")}
+          {format(new Date(item?.report_date), "d MMM yyyy")}
         </Text>
       </View>
       <View style={{ flex: 1, alignItems: "flex-end" }}>
-        {item.extraction_status === "pending" ? (
+        {item?.extraction_status === "pending" ? (
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <ActivityIndicator
               size="small"
@@ -118,7 +118,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
 
           <FlatList
             data={sortedReports}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item, index) => `${item?.id}-${index}`}
             renderItem={renderReportItem}
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
