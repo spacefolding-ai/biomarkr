@@ -3,6 +3,7 @@ import { View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
+  withSequence,
   withTiming,
 } from "react-native-reanimated";
 import { ExtractionStatus } from "../types/ExtractionStatus.enum";
@@ -16,14 +17,14 @@ const getProgress = (status: ExtractionStatus): number => {
     case "pending":
       return 0;
     case "processing":
-      return 33;
+      return 98;
     case "saving":
-      return 66;
+      return 99;
     case "done":
       return 100;
     case "error":
     case "unsupported":
-      return 100;
+      return 99.5;
     default:
       return 0;
   }
@@ -33,7 +34,16 @@ const ExtractionProgressBar: React.FC<Props> = ({ status }) => {
   const progress = useSharedValue(0);
 
   useEffect(() => {
-    progress.value = withTiming(getProgress(status), { duration: 500 });
+    const target = getProgress(status);
+    if (status === "processing") {
+      progress.value = withSequence(
+        withTiming(30, { duration: 5000 }),
+        withTiming(60, { duration: 5000 }),
+        withTiming(target, { duration: 15000 })
+      );
+    } else {
+      progress.value = withTiming(target, { duration: 20000 });
+    }
   }, [status]);
 
   const animatedStyle = useAnimatedStyle(() => ({

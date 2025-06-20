@@ -78,22 +78,23 @@ const HealthLabScreen = () => {
 
   useLabReportsRealtime({
     onInsert: (payload: RealtimePostgresInsertPayload<LabReport>) => {
-      const newReport = payload.new;
-      console.log("onInsert reports", payload);
+      console.log("onInsert reports", payload.new);
       setReports((prev: LabReport[]) => {
         const existingIds = new Set(prev.map((item) => item.id));
-        if (!existingIds.has(newReport.id)) {
-          return [newReport, ...prev];
+        if (!existingIds.has(payload.new.id)) {
+          return [payload.new, ...prev];
         }
         return prev;
       });
     },
     onUpdate: (payload: RealtimePostgresUpdatePayload<LabReport>) => {
+      console.log("onUpdate reports", payload.new);
       setReports((prev: LabReport[]) =>
         prev.map((item) => (item.id === payload.new.id ? payload.new : item))
       );
     },
     onDelete: (payload: RealtimePostgresDeletePayload<LabReport>) => {
+      console.log("onDelete reports", payload.old);
       setReports((prev: LabReport[]) =>
         prev.filter((item) => item.id !== payload.old.id)
       );

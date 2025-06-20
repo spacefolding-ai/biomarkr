@@ -52,9 +52,9 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
   };
 
   const renderReportItem = ({ item }: { item: LabReport }) => {
-    // if (!item.laboratory_name || !item.report_date || !item.extraction_status) {
-    //   return null;
-    // }
+    if (!item) {
+      return null;
+    }
     return (
       <View
         style={{
@@ -79,8 +79,22 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
           </View>
         ) : (
           <View style={{ flex: 3 }}>
-            <ExtractionProgressBar status={item.extraction_status} />
+            <ExtractionProgressBar status={item?.extraction_status} />
+            <Text style={{ fontWeight: "bold", marginTop: 8 }}>
+              {
+                <Text>
+                  {item?.extraction_status.charAt(0).toUpperCase() +
+                    item?.extraction_status.slice(1)}
+                </Text>
+              }
+              ...
+            </Text>
           </View>
+        )}
+        {item?.extraction_status === ExtractionStatus.Done && (
+          <Text style={{ color: "green", fontSize: 12, marginLeft: 10 }}>
+            Extracted ✅
+          </Text>
         )}
       </View>
     );
