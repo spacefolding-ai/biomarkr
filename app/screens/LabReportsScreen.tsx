@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import React, { memo, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Button,
@@ -23,6 +23,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
   refreshing,
   onRefresh,
 }) => {
+  console.log("LabReportsScreen", reports);
   const [filter, setFilter] = useState("By date Added");
   const [isModalVisible, setModalVisible] = useState(false);
 
@@ -51,11 +52,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
 
   const renderReportItem = ({ item }: { item: LabReport }) => {
     if (!item.laboratory_name || !item.report_date || !item.report_date) {
-      return (
-        <View style={{ padding: 16 }}>
-          <Text style={{ color: "#aaa" }}>Loading lab report...</Text>
-        </View>
-      );
+      return null;
     }
     return (
       <View
@@ -141,6 +138,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
                 onRefresh={handleRefresh}
               />
             }
+            extraData={reports}
           />
 
           <Modal
@@ -179,4 +177,4 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
   );
 };
 
-export default memo(LabReportsScreen);
+export default LabReportsScreen;

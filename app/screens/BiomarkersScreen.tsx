@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { format } from "date-fns";
-import React, { memo, useState } from "react";
+import React, { useState } from "react";
 import {
   FlatList,
   RefreshControl,
@@ -22,6 +22,7 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
   refreshing,
   onRefresh,
 }) => {
+  console.log("BiomarkersScreen", biomarkers);
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
 
@@ -40,12 +41,9 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
 
   const renderBiomarkerItem = ({ item }: { item: Biomarker }) => {
     if (!item.marker_name || !item.value || !item.unit || !item.report_date) {
-      return (
-        <View style={{ padding: 16 }}>
-          <Text style={{ color: "#aaa" }}>Loading biomarker...</Text>
-        </View>
-      );
+      return null;
     }
+
     return (
       <View
         style={{
@@ -173,6 +171,7 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
               />
             }
             contentContainerStyle={{ paddingTop: 0 }}
+            extraData={biomarkers}
           />
         </>
       )}
@@ -180,4 +179,4 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
   );
 };
 
-export default memo(BiomarkersScreen);
+export default BiomarkersScreen;

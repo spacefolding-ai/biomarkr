@@ -1,3 +1,8 @@
+import {
+  RealtimePostgresDeletePayload,
+  RealtimePostgresInsertPayload,
+  RealtimePostgresUpdatePayload,
+} from "@supabase/supabase-js";
 import { useEffect } from "react";
 import { supabase } from "../services/supabaseClient";
 
@@ -14,6 +19,10 @@ interface UseSupabaseRealtimeProps {
   tables: RealtimeTableConfig[];
 }
 
+interface WithUserId {
+  user_id: string;
+}
+
 export const useSupabaseRealtime = ({
   userId,
   tables,
@@ -22,7 +31,19 @@ export const useSupabaseRealtime = ({
     console.log("🔄 useSupabaseRealtime initialized with userId:", userId);
 
     const subscriptions = tables.map(
-      ({ table, schema = "public", onInsert, onUpdate, onDelete }) => {
+      <T extends WithUserId>({
+        table,
+        schema = "public",
+        onInsert,
+        onUpdate,
+        onDelete,
+      }: {
+        table: string;
+        schema?: string;
+        onInsert?: (payload: RealtimePostgresInsertPayload<T>) => void;
+        onUpdate?: (payload: RealtimePostgresUpdatePayload<T>) => void;
+        onDelete?: (payload: RealtimePostgresDeletePayload<T>) => void;
+      }) => {
         const channelName = `realtime:${schema}:${table}`;
         console.log("schema", schema);
         const channel = supabase.channel(channelName);
@@ -33,7 +54,7 @@ export const useSupabaseRealtime = ({
           channel.on(
             "postgres_changes",
             { event: "INSERT", schema, table },
-            (payload) => {
+            (payload: RealtimePostgresInsertPayload<T>) => {
               console.log(`[INSERT] ${table}:`, payload);
               if (payload.new?.user_id === userId) onInsert(payload);
             }
@@ -44,7 +65,7 @@ export const useSupabaseRealtime = ({
           channel.on(
             "postgres_changes",
             { event: "UPDATE", schema, table },
-            (payload) => {
+            (payload: RealtimePostgresUpdatePayload<T>) => {
               console.log(`[UPDATE] ${table}:`, payload);
               if (payload.new?.user_id === userId) onUpdate(payload);
             }
@@ -55,7 +76,7 @@ export const useSupabaseRealtime = ({
           channel.on(
             "postgres_changes",
             { event: "DELETE", schema, table },
-            (payload) => {
+            (payload: RealtimePostgresDeletePayload<T>) => {
               console.log(`[DELETE] ${table}:`, payload);
               if (payload.old?.user_id === userId) onDelete(payload);
             }

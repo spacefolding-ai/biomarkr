@@ -1,22 +1,16 @@
-import { useSupabaseRealtime } from "./useSupabaseRealtime";
+import {
+  RealtimePostgresDeletePayload,
+  RealtimePostgresInsertPayload,
+  RealtimePostgresUpdatePayload,
+} from "@supabase/supabase-js";
 import { useAuth } from "../context/AuthContext";
-
-interface Biomarker {
-  id: string;
-  report_id: string;
-  user_id: string;
-  marker_name: string;
-  value: number;
-  unit: string;
-  reference_range: string;
-  abnormal_flag: string | null;
-  created_at: string;
-}
+import { Biomarker } from "../types/Biomarker";
+import { useSupabaseRealtime } from "./useSupabaseRealtime";
 
 interface BiomarkersRealtimeOptions {
-  onInsert?: (payload: Biomarker) => void;
-  onUpdate?: (payload: Biomarker) => void;
-  onDelete?: (payload: Biomarker) => void;
+  onInsert?: (payload: RealtimePostgresInsertPayload<Biomarker>) => void;
+  onUpdate?: (payload: RealtimePostgresUpdatePayload<Biomarker>) => void;
+  onDelete?: (payload: RealtimePostgresDeletePayload<Biomarker>) => void;
 }
 
 export function useBiomarkersRealtime(options: BiomarkersRealtimeOptions) {

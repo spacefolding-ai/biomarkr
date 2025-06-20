@@ -1,22 +1,16 @@
-import { useSupabaseRealtime } from "./useSupabaseRealtime";
+import {
+  RealtimePostgresDeletePayload,
+  RealtimePostgresInsertPayload,
+  RealtimePostgresUpdatePayload,
+} from "@supabase/supabase-js";
 import { useAuth } from "../context/AuthContext";
-
-interface LabReport {
-  id: string;
-  user_id: string;
-  patient_name: string;
-  patient_dob: string;
-  patient_gender: string;
-  laboratory_name: string;
-  report_date: string;
-  description: string;
-  created_at: string;
-}
+import { LabReport } from "../types/LabReport";
+import { useSupabaseRealtime } from "./useSupabaseRealtime";
 
 interface LabReportsRealtimeOptions {
-  onInsert?: (payload: LabReport) => void;
-  onUpdate?: (payload: LabReport) => void;
-  onDelete?: (payload: LabReport) => void;
+  onInsert?: (payload: RealtimePostgresInsertPayload<LabReport>) => void;
+  onUpdate?: (payload: RealtimePostgresUpdatePayload<LabReport>) => void;
+  onDelete?: (payload: RealtimePostgresDeletePayload<LabReport>) => void;
 }
 
 export function useLabReportsRealtime(options: LabReportsRealtimeOptions) {

@@ -1,6 +1,11 @@
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
+import {
+  RealtimePostgresDeletePayload,
+  RealtimePostgresInsertPayload,
+  RealtimePostgresUpdatePayload,
+} from "@supabase/supabase-js";
 import React, { useCallback, useEffect, useState } from "react";
-import { SafeAreaView } from "react-native";
+import { ActivityIndicator, SafeAreaView } from "react-native";
 import { useBiomarkersRealtime } from "../hooks/useBiomarkersRealtime";
 import { useLabReportsRealtime } from "../hooks/useLabReportsRealtime";
 import { supabase } from "../services/supabaseClient";
@@ -15,6 +20,7 @@ const HealthLabScreen = () => {
   const [biomarkers, setBiomarkers] = useState<Biomarker[]>([] as Biomarker[]);
   const [reports, setReports] = useState<LabReport[]>([] as LabReport[]);
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const loadBiomarkers = async () => {
     const { data, error } = await supabase
@@ -36,46 +42,73 @@ const HealthLabScreen = () => {
     if (error) console.error("Failed to load lab reports:", error);
   };
 
+  const loadAll = async () => {
+    setLoading(true);
+    await loadBiomarkers();
+    await loadLabReports();
+    setLoading(false);
+  };
+
   useEffect(() => {
-    loadBiomarkers();
-    loadLabReports();
-  }, [setBiomarkers, setReports]);
+    loadAll();
+  }, []);
 
   useBiomarkersRealtime({
-    onInsert: (payload) => {
-      console.log("onInsert biomarkers", payload);
-      setBiomarkers((prev) => [payload, ...prev]);
+    onInsert: (payload: RealtimePostgresInsertPayload<Biomarker>) => {
+      console.log("onInsert biomarkers", payload.new);
+      setBiomarkers((prev: Biomarker[]) => {
+        const existingIds = new Set(prev.map((item) => item.id));
+        if (!existingIds.has(payload.new.id)) {
+          return [payload.new, ...prev];
+        }
+        return prev;
+      });
     },
-    onUpdate: (payload) => {
-      setBiomarkers((prev) =>
-        prev.map((item) => (item.id === payload.id ? payload : item))
+    onUpdate: (payload: RealtimePostgresUpdatePayload<Biomarker>) => {
+      setBiomarkers((prev: Biomarker[]) =>
+        prev.map((item) => (item.id === payload.new.id ? payload.new : item))
       );
     },
-    onDelete: (payload) => {
-      setBiomarkers((prev) => prev.filter((item) => item.id !== payload.id));
+    onDelete: (payload: RealtimePostgresDeletePayload<Biomarker>) => {
+      setBiomarkers((prev: Biomarker[]) =>
+        prev.filter((item) => item.id !== payload.old.id)
+      );
     },
   });
 
   useLabReportsRealtime({
-    onInsert: (payload) => {
+    onInsert: (payload: RealtimePostgresInsertPayload<LabReport>) => {
+      const newReport = payload.new;
       console.log("onInsert reports", payload);
-      setReports((prev) => [payload, ...prev]);
+      setReports((prev: LabReport[]) => {
+        const existingIds = new Set(prev.map((item) => item.id));
+        if (!existingIds.has(newReport.id)) {
+          return [newReport, ...prev];
+        }
+        return prev;
+      });
     },
-    onUpdate: (payload) => {
-      setReports((prev) =>
-        prev.map((item) => (item.id === payload.id ? payload : item))
+    onUpdate: (payload: RealtimePostgresUpdatePayload<LabReport>) => {
+      setReports((prev: LabReport[]) =>
+        prev.map((item) => (item.id === payload.new.id ? payload.new : item))
       );
     },
-    onDelete: (payload) => {
-      setReports((prev) => prev.filter((item) => item.id !== payload.id));
+    onDelete: (payload: RealtimePostgresDeletePayload<LabReport>) => {
+      setReports((prev: LabReport[]) =>
+        prev.filter((item) => item.id !== payload.old.id)
+      );
     },
   });
 
   const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    await loadBiomarkers();
-    await loadLabReports();
-    setRefreshing(false);
+    try {
+      setRefreshing(true);
+      await loadAll();
+    } catch (error) {
+      throw new Error("Failed to refresh:", error);
+    } finally {
+      setRefreshing(false);
+    }
   }, []);
 
   const BiomarkersTab = (props) => (
@@ -95,6 +128,16 @@ const HealthLabScreen = () => {
       {...props}
     />
   );
+
+  if (loading) {
+    return (
+      <SafeAreaView
+        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+      >
+        <ActivityIndicator size="large" color="#007AFF" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
