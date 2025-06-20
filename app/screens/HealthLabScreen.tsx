@@ -139,7 +139,7 @@ const HealthLabScreen = () => {
         })}
       >
         <Tab.Screen name="Biomarkers" component={BiomarkersTab} />
-        <Tab.Screen name="Lab Reports" component={LabReportsTab} />
+        <Tab.Screen name="LabReports" component={LabReportsTab} />
       </Tab.Navigator>
     </SafeAreaView>
   );

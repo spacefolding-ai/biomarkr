@@ -1,19 +1,22 @@
-import React, { useState, useEffect } from "react";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+import * as Camera from "expo-camera";
+import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  Text,
+  ActivityIndicator,
   Button,
   Image,
-  ActivityIndicator,
   StyleSheet,
+  Text,
+  View,
 } from "react-native";
-import * as ImagePicker from "expo-image-picker";
-import * as DocumentPicker from "expo-document-picker";
-import * as Camera from "expo-camera";
 import Toast from "react-native-toast-message";
-import { normalizeImage, FileInfo } from "../utils/file";
 import { useAuth } from "../context/AuthContext";
+import { RootStackParamList } from "../navigation/types";
 import { uploadFileAndInsertToDb } from "../services/upload";
+import { FileInfo, normalizeImage } from "../utils/file";
 
 export default function UploadScreen() {
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
@@ -21,6 +24,7 @@ export default function UploadScreen() {
   const [cameraPermission, requestCameraPermission] =
     Camera.useCameraPermissions();
   const { user, loading, session } = useAuth();
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   if (loading) {
     return <ActivityIndicator size="large" />;
@@ -108,6 +112,9 @@ export default function UploadScreen() {
         text2: "File uploaded successfully",
       });
       setFileInfo(null);
+      navigation.navigate("HealthLab", {
+        screen: "LabReports",
+      });
     } catch (error: any) {
       Toast.show({
         type: "error",

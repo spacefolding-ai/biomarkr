@@ -1,18 +1,19 @@
-import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import OverviewScreen from "../screens/OverviewScreen";
-import UploadScreen from "../screens/UploadScreen";
-import LabAssistantScreen from "../screens/LabAssistantScreen";
-import { AppIcon } from "../components/IconRegistry";
 import { createStackNavigator } from "@react-navigation/stack";
-import SignupScreen from "../screens/SignupScreen";
-import LoginScreen from "../screens/LoginScreen";
-import { LogIn, UserPlus, MoreHorizontal } from "lucide-react-native";
+import { LogIn, UserPlus } from "lucide-react-native";
+import React from "react";
+import { AppIcon, IconName } from "../components/IconRegistry";
 import HealthLabScreen from "../screens/HealthLabScreen";
+import LabAssistantScreen from "../screens/LabAssistantScreen";
+import LoginScreen from "../screens/LoginScreen";
 import MoreScreen from "../screens/MoreScreen";
+import OverviewScreen from "../screens/OverviewScreen";
+import SignupScreen from "../screens/SignupScreen";
+import UploadScreen from "../screens/UploadScreen";
+import { RootStackParamList } from "./types"; // Import the RootStackParamList
 
 const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
+const Stack = createStackNavigator<RootStackParamList>(); // Use the RootStackParamList
 
 const AuthTabNavigator = () => (
   <Tab.Navigator id={undefined} screenOptions={{ headerShown: false }}>
@@ -36,7 +37,6 @@ const AuthTabNavigator = () => (
 const AppNavigator = () => {
   return (
     <Stack.Navigator id={undefined} screenOptions={{ headerShown: false }}>
-      {/* TODO temp disable auth */}
       <Stack.Screen name="Auth" component={AuthTabNavigator} />
       <Stack.Screen name="Main" component={MainTabNavigator} />
     </Stack.Navigator>
@@ -49,23 +49,20 @@ const MainTabNavigator = () => (
     screenOptions={({ route }) => ({
       headerShown: false,
       tabBarIcon: ({ color, size }) => {
-        let iconName: any = "overview";
+        let iconName: IconName = "overview";
 
         switch (route.name) {
           case "Overview":
             iconName = "overview";
             break;
-          case "Health Lab":
+          case "HealthLab":
             iconName = "health-lab";
             break;
           case "Upload":
             iconName = "upload";
             break;
-          case "Lab Assistant":
+          case "LabAssistant":
             iconName = "lab-assistant";
-            break;
-          case "Settings":
-            iconName = "settings";
             break;
           case "More":
             iconName = "more";
@@ -77,9 +74,9 @@ const MainTabNavigator = () => (
     })}
   >
     <Tab.Screen name="Overview" component={OverviewScreen} />
-    <Tab.Screen name="Health Lab" component={HealthLabScreen} />
+    <Tab.Screen name="HealthLab" component={HealthLabScreen} />
     <Tab.Screen name="Upload" component={UploadScreen} />
-    <Tab.Screen name="Lab Assistant" component={LabAssistantScreen} />
+    <Tab.Screen name="LabAssistant" component={LabAssistantScreen} />
     <Tab.Screen name="More" component={MoreScreen} />
   </Tab.Navigator>
 );

@@ -1,15 +1,14 @@
-import React from "react";
 import {
-  Home,
   BookHeart,
-  UploadCloud,
-  FlaskConical,
-  Settings,
-  FileText,
   Ellipsis,
+  FileText,
+  FlaskConical,
+  Home,
+  UploadCloud,
 } from "lucide-react-native";
+import React from "react";
 
-type IconName =
+export type IconName =
   | "overview"
   | "health-lab"
   | "upload"
