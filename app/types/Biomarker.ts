@@ -8,4 +8,5 @@ export interface Biomarker {
   reference_range: string;
   abnormal_flag: string | null;
   created_at: string;
+  report_date: string;
 }

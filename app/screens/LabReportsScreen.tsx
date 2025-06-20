@@ -45,43 +45,58 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
     }
   });
 
-  const renderReportItem = ({ item }: { item: LabReport }) => (
-    <View
-      style={{
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        borderBottomWidth: 1,
-        borderColor: "#eee",
-      }}
-    >
-      <View style={{ flex: 3 }}>
-        <Text style={{ fontWeight: "bold" }}>{item?.laboratory_name}</Text>
-        <Text style={{ color: "#444" }}>{item?.description}</Text>
-        <Text style={{ color: "#888" }}>
-          {format(new Date(item?.report_date), "d MMM yyyy")}
-        </Text>
+  const handleRefresh = () => {
+    onRefresh();
+  };
+
+  const renderReportItem = ({ item }: { item: LabReport }) => {
+    if (!item.laboratory_name || !item.report_date || !item.report_date) {
+      return (
+        <View style={{ padding: 16 }}>
+          <Text style={{ color: "#aaa" }}>Loading lab report...</Text>
+        </View>
+      );
+    }
+    return (
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingVertical: 12,
+          paddingHorizontal: 16,
+          borderBottomWidth: 1,
+          borderColor: "#eee",
+        }}
+      >
+        <View style={{ flex: 3 }}>
+          <Text style={{ fontWeight: "bold" }}>{item?.laboratory_name}</Text>
+          <Text style={{ color: "#444" }}>{item?.description}</Text>
+          {item?.report_date && !isNaN(Date.parse(item.report_date)) && (
+            <Text style={{ color: "#888" }}>
+              {format(new Date(item.report_date), "d MMM yyyy")}
+            </Text>
+          )}
+        </View>
+        <View style={{ flex: 1, alignItems: "flex-end" }}>
+          {item?.extraction_status === "pending" ? (
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <ActivityIndicator
+                size="small"
+                color="orange"
+                style={{ marginRight: 5 }}
+              />
+              <Text style={{ color: "orange" }}>Analyzing...</Text>
+            </View>
+          ) : (
+            <Text style={{ color: "green", fontWeight: "bold" }}>
+              Extracted ✅
+            </Text>
+          )}
+        </View>
       </View>
-      <View style={{ flex: 1, alignItems: "flex-end" }}>
-        {item?.extraction_status === "pending" ? (
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <ActivityIndicator
-              size="small"
-              color="orange"
-              style={{ marginRight: 5 }}
-            />
-            <Text style={{ color: "orange" }}>Analyzing...</Text>
-          </View>
-        ) : (
-          <Text style={{ color: "green", fontWeight: "bold" }}>
-            Extracted ✅
-          </Text>
-        )}
-      </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
@@ -121,7 +136,10 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
             keyExtractor={(item, index) => `${item?.id}-${index}`}
             renderItem={renderReportItem}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+              />
             }
           />
 

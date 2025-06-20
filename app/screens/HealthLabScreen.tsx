@@ -1,17 +1,19 @@
-import React, { useEffect, useState, useCallback } from "react";
-import { SafeAreaView } from "react-native";
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import BiomarkersScreen from "./BiomarkersScreen";
-import LabReportsScreen from "./LabReportsScreen";
-import { supabase } from "../services/supabaseClient";
+import React, { useCallback, useEffect, useState } from "react";
+import { SafeAreaView } from "react-native";
 import { useBiomarkersRealtime } from "../hooks/useBiomarkersRealtime";
 import { useLabReportsRealtime } from "../hooks/useLabReportsRealtime";
+import { supabase } from "../services/supabaseClient";
+import { Biomarker } from "../types/Biomarker";
+import { LabReport } from "../types/LabReport";
+import BiomarkersScreen from "./BiomarkersScreen";
+import LabReportsScreen from "./LabReportsScreen";
 
 const Tab = createMaterialTopTabNavigator();
 
 const HealthLabScreen = () => {
-  const [biomarkers, setBiomarkers] = useState([]);
-  const [reports, setReports] = useState([]);
+  const [biomarkers, setBiomarkers] = useState<Biomarker[]>([] as Biomarker[]);
+  const [reports, setReports] = useState<LabReport[]>([] as LabReport[]);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadBiomarkers = async () => {
@@ -37,7 +39,7 @@ const HealthLabScreen = () => {
   useEffect(() => {
     loadBiomarkers();
     loadLabReports();
-  }, []);
+  }, [setBiomarkers, setReports]);
 
   useBiomarkersRealtime({
     onInsert: (payload) => {
@@ -96,7 +98,13 @@ const HealthLabScreen = () => {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <Tab.Navigator>
+      <Tab.Navigator
+        screenOptions={({ route }) => ({
+          tabBarOnPress: ({ navigation, defaultHandler }) => {
+            defaultHandler();
+          },
+        })}
+      >
         <Tab.Screen name="Biomarkers" component={BiomarkersTab} />
         <Tab.Screen name="Lab Reports" component={LabReportsTab} />
       </Tab.Navigator>

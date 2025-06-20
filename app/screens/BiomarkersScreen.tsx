@@ -9,10 +9,10 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { BiomarkerItem } from "../types/BiomarkerItem";
+import { Biomarker } from "../types/Biomarker";
 
 interface BiomarkersScreenProps {
-  biomarkers: BiomarkerItem[];
+  biomarkers: Biomarker[];
   refreshing: boolean;
   onRefresh: () => void;
 }
@@ -34,46 +34,61 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
     setSearchText("");
   };
 
-  const renderBiomarkerItem = ({ item }: { item: BiomarkerItem }) => (
-    <View
-      style={{
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        padding: 16,
-        borderBottomWidth: 1,
-        borderColor: "#eee",
-        width: "100%",
-      }}
-    >
-      <Text style={{ fontWeight: "bold" }}>{item?.marker_name}</Text>
-      <View style={{ flexDirection: "row", alignItems: "center" }}>
-        <View
-          style={{
-            flexDirection: "column",
-            alignItems: "flex-end",
-            marginRight: 8,
-          }}
-        >
-          <Text>
-            {item?.value} {item?.unit}
-          </Text>
+  const handleRefresh = () => {
+    onRefresh();
+  };
 
-          <Text style={{ color: "#666" }}>
-            {format(new Date(item?.report_date), "d MMM yyyy")}
-          </Text>
+  const renderBiomarkerItem = ({ item }: { item: Biomarker }) => {
+    if (!item.marker_name || !item.value || !item.unit || !item.report_date) {
+      return (
+        <View style={{ padding: 16 }}>
+          <Text style={{ color: "#aaa" }}>Loading biomarker...</Text>
         </View>
+      );
+    }
+    return (
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: 16,
+          borderBottomWidth: 1,
+          borderColor: "#eee",
+          width: "100%",
+        }}
+      >
+        <Text style={{ fontWeight: "bold" }}>{item?.marker_name}</Text>
+        <View style={{ flexDirection: "row", alignItems: "center" }}>
+          <View
+            style={{
+              flexDirection: "column",
+              alignItems: "flex-end",
+              marginRight: 8,
+            }}
+          >
+            <Text>
+              {item?.value} {item?.unit}
+            </Text>
 
-        {item?.abnormal_flag === "high" ? (
-          <Text style={{ color: "orange" }}>▲</Text>
-        ) : item?.abnormal_flag === "low" ? (
-          <Text style={{ color: "orange" }}>▼</Text>
-        ) : (
-          <Text style={{ color: "green" }}>●</Text>
-        )}
+            {item?.report_date && !isNaN(Date.parse(item.report_date)) && (
+              <Text style={{ color: "#666" }}>
+                {format(new Date(item.report_date), "d MMM yyyy")}
+              </Text>
+            )}
+          </View>
+
+          {item?.abnormal_flag === "high" ? (
+            <Text style={{ color: "orange" }}>▲</Text>
+          ) : item?.abnormal_flag === "low" ? (
+            <Text style={{ color: "orange" }}>▼</Text>
+          ) : (
+            <Text style={{ color: "green" }}>●</Text>
+          )}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View
@@ -152,7 +167,10 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
             keyExtractor={(item, index) => `${item?.id}-${index}`}
             renderItem={renderBiomarkerItem}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+              />
             }
             contentContainerStyle={{ paddingTop: 0 }}
           />
