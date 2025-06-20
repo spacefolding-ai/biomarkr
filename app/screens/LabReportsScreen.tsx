@@ -51,9 +51,9 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
   };
 
   const renderReportItem = ({ item }: { item: LabReport }) => {
-    if (!item.laboratory_name || !item.report_date || !item.report_date) {
-      return null;
-    }
+    // if (!item.laboratory_name || !item.report_date || !item.extraction_status) {
+    //   return null;
+    // }
     return (
       <View
         style={{

@@ -40,9 +40,9 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
   };
 
   const renderBiomarkerItem = ({ item }: { item: Biomarker }) => {
-    if (!item.marker_name || !item.value || !item.unit || !item.report_date) {
-      return null;
-    }
+    // if (!item.marker_name || !item.value || !item.unit || !item.report_date) {
+    //   return null;
+    // }
 
     return (
       <View

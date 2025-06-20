@@ -138,3 +138,14 @@ npx expo start --config-env development
 
 You are executing SaaS the correct way.\
 💥 Biomarkr AI Pipeline coming next.
+
+## Lab Report Extraction Status
+
+| Status      | When it Happens                                   | UI Label Example          |
+| ----------- | ------------------------------------------------- | ------------------------- |
+| pending     | After file upload, before any processing starts   | "Waiting to start…"       |
+| processing  | During OCR/parsing/analysis (combined step)       | "Analyzing your report…"  |
+| saving      | After analysis, while saving biomarkers to DB     | "Saving results…"         |
+| done        | Everything succeeded and data is stored           | "Completed ✅"            |
+| error       | Something failed during any step                  | "Something went wrong ❌" |
+| unsupported | File type/structure is not recognized or unusable | "Unsupported format ⚠️"   |
