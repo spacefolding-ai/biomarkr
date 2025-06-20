@@ -5,7 +5,7 @@ import {
   RealtimePostgresUpdatePayload,
 } from "@supabase/supabase-js";
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, SafeAreaView } from "react-native";
+import { SafeAreaView } from "react-native";
 import { useBiomarkersRealtime } from "../hooks/useBiomarkersRealtime";
 import { useLabReportsRealtime } from "../hooks/useLabReportsRealtime";
 import { supabase } from "../services/supabaseClient";
@@ -128,16 +128,6 @@ const HealthLabScreen = () => {
       {...props}
     />
   );
-
-  if (loading) {
-    return (
-      <SafeAreaView
-        style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
-      >
-        <ActivityIndicator size="large" color="#007AFF" />
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
