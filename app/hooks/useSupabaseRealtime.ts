@@ -45,7 +45,15 @@ export const useSupabaseRealtime = ({
         onDelete?: (payload: RealtimePostgresDeletePayload<T>) => void;
       }) => {
         const channelName = `realtime:${schema}:${table}`;
-        console.log("schema", schema);
+        const existing = supabase
+          .getChannels()
+          .find((ch) => ch.topic === channelName);
+
+        // 🧠 Prevent multiple subscriptions
+        if (existing) {
+          console.warn(`⚠️ Already subscribed to: ${channelName}`);
+          return existing;
+        }
         const channel = supabase.channel(channelName);
 
         console.log(`📡 Subscribing to: ${channelName}`);
@@ -94,5 +102,5 @@ export const useSupabaseRealtime = ({
         await ch.unsubscribe();
       });
     };
-  }, []);
+  }, [userId, tables]);
 };

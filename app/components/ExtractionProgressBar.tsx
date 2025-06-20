@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View } from "react-native";
+import { Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -17,17 +17,25 @@ const getProgress = (status: ExtractionStatus): number => {
     case "pending":
       return 0;
     case "processing":
-      return 98;
-    case "saving":
-      return 99;
+      return 95;
     case "done":
       return 100;
     case "error":
     case "unsupported":
-      return 99.5;
     default:
       return 0;
   }
+};
+
+const capitalizeFirstLetter = (string: string) => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
+const getStatusText = (status: ExtractionStatus, progress: number) => {
+  if (status === "processing" && progress >= 95) {
+    return "Analyzing...";
+  }
+  return capitalizeFirstLetter(status) + "...";
 };
 
 const ExtractionProgressBar: React.FC<Props> = ({ status }) => {
@@ -70,6 +78,9 @@ const ExtractionProgressBar: React.FC<Props> = ({ status }) => {
           animatedStyle,
         ]}
       />
+      <Text style={{ marginTop: 4, textAlign: "center", color: "#555" }}>
+        {getStatusText(status, progress.value)}
+      </Text>
     </View>
   );
 };

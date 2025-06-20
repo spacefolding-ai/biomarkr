@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { format } from "date-fns";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   FlatList,
   RefreshControl,
@@ -35,9 +35,9 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
     setSearchText("");
   };
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     onRefresh();
-  };
+  }, [onRefresh]);
 
   const renderBiomarkerItem = ({ item }: { item: Biomarker }) => {
     // if (!item.marker_name || !item.value || !item.unit || !item.report_date) {
@@ -162,7 +162,7 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
 
           <FlatList
             data={searchVisible ? filteredBiomarkers : biomarkers}
-            keyExtractor={(item, index) => `${item?.id}-${index}`}
+            keyExtractor={(item) => `${item?.id}-${item?.created_at}`}
             renderItem={renderBiomarkerItem}
             refreshControl={
               <RefreshControl

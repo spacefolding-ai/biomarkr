@@ -55,13 +55,13 @@ const MainTabNavigator = () => (
           case "Overview":
             iconName = "overview";
             break;
-          case "HealthLab":
+          case "Health Lab":
             iconName = "health-lab";
             break;
           case "Upload":
             iconName = "upload";
             break;
-          case "LabAssistant":
+          case "Lab Assistant":
             iconName = "lab-assistant";
             break;
           case "More":
@@ -74,9 +74,9 @@ const MainTabNavigator = () => (
     })}
   >
     <Tab.Screen name="Overview" component={OverviewScreen} />
-    <Tab.Screen name="HealthLab" component={HealthLabScreen} />
+    <Tab.Screen name="Health Lab" component={HealthLabScreen} />
     <Tab.Screen name="Upload" component={UploadScreen} />
-    <Tab.Screen name="LabAssistant" component={LabAssistantScreen} />
+    <Tab.Screen name="Lab Assistant" component={LabAssistantScreen} />
     <Tab.Screen name="More" component={MoreScreen} />
   </Tab.Navigator>
 );

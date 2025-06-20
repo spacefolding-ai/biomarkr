@@ -112,8 +112,8 @@ export default function UploadScreen() {
         text2: "File uploaded successfully",
       });
       setFileInfo(null);
-      navigation.navigate("HealthLab", {
-        screen: "LabReports",
+      navigation.navigate("Health Lab", {
+        screen: "Lab Reports",
       });
     } catch (error: any) {
       Toast.show({

@@ -1,14 +1,6 @@
 import { format } from "date-fns";
-import React, { useState } from "react";
-import {
-  Button,
-  FlatList,
-  Modal,
-  RefreshControl,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React, { useCallback } from "react";
+import { FlatList, RefreshControl, Text, View } from "react-native";
 import ExtractionProgressBar from "../components/ExtractionProgressBar";
 import { ExtractionStatus } from "../types/ExtractionStatus.enum";
 import { LabReport } from "../types/LabReport";
@@ -25,36 +17,33 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
   onRefresh,
 }) => {
   console.log("LabReportsScreen", reports);
-  const [filter, setFilter] = useState("By date Added");
-  const [isModalVisible, setModalVisible] = useState(false);
+  // const [filter, setFilter] = useState("By date Added");
+  // const [isModalVisible, setModalVisible] = useState(false);
 
-  const toggleModal = () => setModalVisible(!isModalVisible);
+  // const toggleModal = () => setModalVisible(!isModalVisible);
 
-  const applyFilter = (selectedFilter: string) => {
-    setFilter(selectedFilter);
-    toggleModal();
-  };
+  // const applyFilter = (selectedFilter: string) => {
+  //   setFilter(selectedFilter);
+  //   toggleModal();
+  // };
 
-  const sortedReports = [...reports].sort((a, b) => {
-    if (filter === "By document date") {
-      return (
-        new Date(b.report_date).getTime() - new Date(a.report_date).getTime()
-      );
-    } else {
-      return (
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
-    }
-  });
+  // const sortedReports = [...reports].sort((a, b) => {
+  //   if (filter === "By document date") {
+  //     return (
+  //       new Date(b.report_date).getTime() - new Date(a.report_date).getTime()
+  //     );
+  //   } else {
+  //     return (
+  //       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  //     );
+  //   }
+  // });
 
-  const handleRefresh = () => {
+  const handleRefresh = useCallback(() => {
     onRefresh();
-  };
+  }, [onRefresh]);
 
   const renderReportItem = ({ item }: { item: LabReport }) => {
-    if (!item) {
-      return null;
-    }
     return (
       <View
         style={{
@@ -67,34 +56,30 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
           borderColor: "#eee",
         }}
       >
-        {item?.extraction_status === ExtractionStatus.Done ? (
-          <View style={{ flex: 3 }}>
-            <Text style={{ fontWeight: "bold" }}>{item?.laboratory_name}</Text>
-            <Text style={{ color: "#444" }}>{item?.description}</Text>
-            {item?.report_date && !isNaN(Date.parse(item.report_date)) && (
-              <Text style={{ color: "#888" }}>
-                {format(new Date(item.report_date), "d MMM yyyy")}
+        {item?.extraction_status === ExtractionStatus.Done && (
+          <>
+            <View style={{ flex: 3 }}>
+              <Text style={{ fontWeight: "bold" }}>
+                {item?.laboratory_name}
               </Text>
-            )}
-          </View>
-        ) : (
+              <Text style={{ color: "#444" }}>{item?.description}</Text>
+              {item?.report_date && !isNaN(Date.parse(item.report_date)) && (
+                <Text style={{ color: "#888" }}>
+                  {format(new Date(item.report_date), "d MMM yyyy")}
+                </Text>
+              )}
+            </View>
+            <Text style={{ color: "green", fontSize: 12, marginLeft: 10 }}>
+              Extracted ✅
+            </Text>
+          </>
+        )}
+
+        {item?.extraction_status !== ExtractionStatus.Done && (
           <View style={{ flex: 3 }}>
             <ExtractionProgressBar status={item?.extraction_status} />
-            <Text style={{ fontWeight: "bold", marginTop: 8 }}>
-              {
-                <Text>
-                  {item?.extraction_status.charAt(0).toUpperCase() +
-                    item?.extraction_status.slice(1)}
-                </Text>
-              }
-              ...
-            </Text>
+            <Text style={{ marginTop: 8, color: "#555" }}>Analyzing...</Text>
           </View>
-        )}
-        {item?.extraction_status === ExtractionStatus.Done && (
-          <Text style={{ color: "green", fontSize: 12, marginLeft: 10 }}>
-            Extracted ✅
-          </Text>
         )}
       </View>
     );
@@ -121,7 +106,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
         </View>
       ) : (
         <>
-          <View
+          {/* <View
             style={{
               flexDirection: "row",
               justifyContent: "flex-end",
@@ -131,11 +116,11 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
             <TouchableOpacity onPress={toggleModal}>
               <Text style={{ color: "blue" }}>{filter}</Text>
             </TouchableOpacity>
-          </View>
+          </View> */}
 
           <FlatList
-            data={sortedReports}
-            keyExtractor={(item, index) => `${item?.id}-${index}`}
+            data={reports}
+            keyExtractor={(item) => `${item?.id}-${item?.created_at}`}
             renderItem={renderReportItem}
             refreshControl={
               <RefreshControl
@@ -146,7 +131,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
             extraData={reports}
           />
 
-          <Modal
+          {/* <Modal
             animationType="slide"
             transparent={true}
             visible={isModalVisible}
@@ -175,7 +160,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
                 />
               </View>
             </TouchableOpacity>
-          </Modal>
+          </Modal> */}
         </>
       )}
     </View>

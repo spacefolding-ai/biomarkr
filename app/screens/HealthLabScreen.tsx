@@ -1,9 +1,4 @@
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import {
-  RealtimePostgresDeletePayload,
-  RealtimePostgresInsertPayload,
-  RealtimePostgresUpdatePayload,
-} from "@supabase/supabase-js";
 import React, { useCallback, useEffect, useState } from "react";
 import { SafeAreaView } from "react-native";
 import { useBiomarkersRealtime } from "../hooks/useBiomarkersRealtime";
@@ -33,10 +28,8 @@ const HealthLabScreen = () => {
   };
 
   const loadLabReports = async () => {
-    const { data, error } = await supabase
-      .from("lab_reports")
-      .select("*")
-      .order("report_date", { ascending: false });
+    const { data, error } = await supabase.from("lab_reports").select("*");
+    // .order("report_date", { ascending: false });
 
     if (data) setReports(data);
     if (error) console.error("Failed to load lab reports:", error);
@@ -54,50 +47,48 @@ const HealthLabScreen = () => {
   }, []);
 
   useBiomarkersRealtime({
-    onInsert: (payload: RealtimePostgresInsertPayload<Biomarker>) => {
-      console.log("onInsert biomarkers", payload.new);
-      setBiomarkers((prev: Biomarker[]) => {
-        const existingIds = new Set(prev.map((item) => item.id));
-        if (!existingIds.has(payload.new.id)) {
-          return [payload.new, ...prev];
-        }
-        return prev;
-      });
-    },
-    onUpdate: (payload: RealtimePostgresUpdatePayload<Biomarker>) => {
-      setBiomarkers((prev: Biomarker[]) =>
-        prev.map((item) => (item.id === payload.new.id ? payload.new : item))
+    onInsert: ({ new: newBiomarker }) => {
+      console.log("onInsert biomarkers", newBiomarker);
+      setBiomarkers((prev) =>
+        prev.some((item) => item.id === newBiomarker.id)
+          ? prev
+          : [newBiomarker, ...prev]
       );
     },
-    onDelete: (payload: RealtimePostgresDeletePayload<Biomarker>) => {
-      setBiomarkers((prev: Biomarker[]) =>
-        prev.filter((item) => item.id !== payload.old.id)
+    onUpdate: ({ new: updatedBiomarker }) => {
+      setBiomarkers((prev) =>
+        prev.map((item) =>
+          item.id === updatedBiomarker.id ? updatedBiomarker : item
+        )
+      );
+    },
+    onDelete: ({ old: deletedBiomarker }) => {
+      setBiomarkers((prev) =>
+        prev.filter((item) => item.id !== deletedBiomarker.id)
       );
     },
   });
 
   useLabReportsRealtime({
-    onInsert: (payload: RealtimePostgresInsertPayload<LabReport>) => {
-      console.log("onInsert reports", payload.new);
-      setReports((prev: LabReport[]) => {
-        const existingIds = new Set(prev.map((item) => item.id));
-        if (!existingIds.has(payload.new.id)) {
-          return [payload.new, ...prev];
-        }
-        return prev;
-      });
-    },
-    onUpdate: (payload: RealtimePostgresUpdatePayload<LabReport>) => {
-      console.log("onUpdate reports", payload.new);
-      setReports((prev: LabReport[]) =>
-        prev.map((item) => (item.id === payload.new.id ? payload.new : item))
+    onInsert: ({ new: newReport }) => {
+      console.log("onInsert reports", newReport);
+      setReports((prev) =>
+        prev.some((item) => item.id === newReport.id)
+          ? prev
+          : [newReport, ...prev]
       );
     },
-    onDelete: (payload: RealtimePostgresDeletePayload<LabReport>) => {
-      console.log("onDelete reports", payload.old);
-      setReports((prev: LabReport[]) =>
-        prev.filter((item) => item.id !== payload.old.id)
+    onUpdate: ({ new: updatedReport }) => {
+      console.log("onUpdate reports", updatedReport);
+      setReports((prev) =>
+        prev.map((item) =>
+          item.id === updatedReport.id ? updatedReport : item
+        )
       );
+    },
+    onDelete: ({ old: deletedReport }) => {
+      console.log("onDelete reports", deletedReport);
+      setReports((prev) => prev.filter((item) => item.id !== deletedReport.id));
     },
   });
 
@@ -106,7 +97,7 @@ const HealthLabScreen = () => {
       setRefreshing(true);
       await loadAll();
     } catch (error) {
-      throw new Error("Failed to refresh:", error);
+      console.error("Failed to refresh:", error);
     } finally {
       setRefreshing(false);
     }
@@ -140,7 +131,7 @@ const HealthLabScreen = () => {
         })}
       >
         <Tab.Screen name="Biomarkers" component={BiomarkersTab} />
-        <Tab.Screen name="LabReports" component={LabReportsTab} />
+        <Tab.Screen name="Lab Reports" component={LabReportsTab} />
       </Tab.Navigator>
     </SafeAreaView>
   );
