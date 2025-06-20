@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { format } from "date-fns";
-import React, { useState } from "react";
+import React, { memo, useState } from "react";
 import {
   FlatList,
   RefreshControl,
@@ -162,4 +162,4 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
   );
 };
 
-export default BiomarkersScreen;
+export default memo(BiomarkersScreen);

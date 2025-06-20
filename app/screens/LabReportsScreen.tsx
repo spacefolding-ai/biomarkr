@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import React, { useState } from "react";
+import React, { memo, useState } from "react";
 import {
   ActivityIndicator,
   Button,
@@ -161,4 +161,4 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
   );
 };
 
-export default LabReportsScreen;
+export default memo(LabReportsScreen);
