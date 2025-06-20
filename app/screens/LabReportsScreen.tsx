@@ -1,7 +1,6 @@
 import { format } from "date-fns";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Button,
   FlatList,
   Modal,
@@ -10,6 +9,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import ExtractionProgressBar from "../components/ExtractionProgressBar";
+import { ExtractionStatus } from "../types/ExtractionStatus.enum";
 import { LabReport } from "../types/LabReport";
 
 interface LabReportsScreenProps {
@@ -66,31 +67,21 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
           borderColor: "#eee",
         }}
       >
-        <View style={{ flex: 3 }}>
-          <Text style={{ fontWeight: "bold" }}>{item?.laboratory_name}</Text>
-          <Text style={{ color: "#444" }}>{item?.description}</Text>
-          {item?.report_date && !isNaN(Date.parse(item.report_date)) && (
-            <Text style={{ color: "#888" }}>
-              {format(new Date(item.report_date), "d MMM yyyy")}
-            </Text>
-          )}
-        </View>
-        <View style={{ flex: 1, alignItems: "flex-end" }}>
-          {item?.extraction_status === "pending" ? (
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <ActivityIndicator
-                size="small"
-                color="orange"
-                style={{ marginRight: 5 }}
-              />
-              <Text style={{ color: "orange" }}>Analyzing...</Text>
-            </View>
-          ) : (
-            <Text style={{ color: "green", fontWeight: "bold" }}>
-              Extracted ✅
-            </Text>
-          )}
-        </View>
+        {item?.extraction_status === ExtractionStatus.Done ? (
+          <View style={{ flex: 3 }}>
+            <Text style={{ fontWeight: "bold" }}>{item?.laboratory_name}</Text>
+            <Text style={{ color: "#444" }}>{item?.description}</Text>
+            {item?.report_date && !isNaN(Date.parse(item.report_date)) && (
+              <Text style={{ color: "#888" }}>
+                {format(new Date(item.report_date), "d MMM yyyy")}
+              </Text>
+            )}
+          </View>
+        ) : (
+          <View style={{ flex: 3 }}>
+            <ExtractionProgressBar status={item.extraction_status} />
+          </View>
+        )}
       </View>
     );
   };

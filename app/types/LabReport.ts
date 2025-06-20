@@ -1,3 +1,5 @@
+import { ExtractionStatus } from "./ExtractionStatus.enum";
+
 export interface LabReport {
   id: string;
   user_id: string;
@@ -8,6 +10,6 @@ export interface LabReport {
   report_date: string;
   description: string;
   created_at: string;
-  extraction_status: string;
+  extraction_status: ExtractionStatus;
   file_name: string;
 }
