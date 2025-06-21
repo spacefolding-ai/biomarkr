@@ -3,28 +3,31 @@ import {
   RealtimePostgresInsertPayload,
   RealtimePostgresUpdatePayload,
 } from "@supabase/supabase-js";
-import { useAuthStore } from "../store/useAuthStore";
+import { useLabReportsStore } from "../store/useLabReportsStore";
 import { LabReport } from "../types/LabReport";
 import { useSupabaseRealtime } from "./useSupabaseRealtime";
 
-interface LabReportsRealtimeOptions {
-  onInsert?: (payload: RealtimePostgresInsertPayload<LabReport>) => void;
-  onUpdate?: (payload: RealtimePostgresUpdatePayload<LabReport>) => void;
-  onDelete?: (payload: RealtimePostgresDeletePayload<LabReport>) => void;
-}
-
-export function useLabReportsRealtime(options: LabReportsRealtimeOptions) {
-  const { session } = useAuthStore();
-  const userId = session?.user?.id;
+export function useLabReportsRealtime() {
+  const { userId, addReport, updateReport, deleteReport } =
+    useLabReportsStore();
 
   useSupabaseRealtime({
-    userId,
+    userId: userId,
     tables: [
       {
         table: "lab_reports",
-        onInsert: options.onInsert,
-        onUpdate: options.onUpdate,
-        onDelete: options.onDelete,
+        onInsert: (payload: RealtimePostgresInsertPayload<LabReport>) => {
+          console.log("[Realtime] Insert lab report", payload.new);
+          addReport(payload.new);
+        },
+        onUpdate: (payload: RealtimePostgresUpdatePayload<LabReport>) => {
+          console.log("[Realtime] Update lab report", payload.new);
+          updateReport(payload.new);
+        },
+        onDelete: (payload: RealtimePostgresDeletePayload<LabReport>) => {
+          console.log("[Realtime] Delete lab report", payload.old);
+          deleteReport(payload.old.id);
+        },
       },
     ],
   });

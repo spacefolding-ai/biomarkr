@@ -1,11 +1,9 @@
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import React, { useCallback, useEffect, useState } from "react";
 import { SafeAreaView } from "react-native";
-import { useBiomarkersRealtime } from "../hooks/useBiomarkersRealtime";
-import { useLabReportsRealtime } from "../hooks/useLabReportsRealtime";
 import { supabase } from "../services/supabaseClient";
 import { useBiomarkersStore } from "../store/useBiomarkersStore";
-import { LabReport } from "../types/LabReport";
+import { useLabReportsStore } from "../store/useLabReportsStore";
 import BiomarkersScreen from "./BiomarkersScreen";
 import LabReportsScreen from "./LabReportsScreen";
 
@@ -13,7 +11,7 @@ const Tab = createMaterialTopTabNavigator();
 
 const HealthLabScreen = () => {
   const { biomarkers, setBiomarkers } = useBiomarkersStore();
-  const [reports, setReports] = useState<LabReport[]>([] as LabReport[]);
+  const { reports, setReports } = useLabReportsStore();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -39,8 +37,7 @@ const HealthLabScreen = () => {
 
   const loadAll = async () => {
     setLoading(true);
-    await loadBiomarkers();
-    await loadLabReports();
+    await Promise.all([loadBiomarkers(), loadLabReports()]);
     setLoading(false);
   };
 
@@ -51,30 +48,6 @@ const HealthLabScreen = () => {
       console.log("HealthLabScreen unmounted");
     };
   }, []);
-
-  useLabReportsRealtime({
-    onInsert: ({ new: newReport }) => {
-      console.log("onInsert reports", newReport);
-      setReports((prev) => [newReport, ...prev]);
-    },
-    onUpdate: ({ new: updatedReport }) => {
-      console.log("onUpdate reports", updatedReport);
-      setReports((prev) => {
-        if (prev.length === 0) {
-          return [updatedReport];
-        }
-        return prev.map((item) =>
-          item.id === updatedReport.id ? updatedReport : item
-        );
-      });
-    },
-    onDelete: ({ old: deletedReport }) => {
-      console.log("onDelete reports", deletedReport);
-      setReports((prev) => prev.filter((item) => item.id !== deletedReport.id));
-    },
-  });
-
-  useBiomarkersRealtime();
 
   const onRefresh = useCallback(async () => {
     try {

@@ -1,18 +1,19 @@
-import React from "react";
-import { View, Button, StyleSheet } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { RootStackParamList } from "../navigation/types";
-import { handleLogout as performLogout } from "../services/auth";
+import React from "react";
+import { Button, StyleSheet, View } from "react-native";
 import Toast from "react-native-toast-message";
+import { RootStackParamList } from "../navigation/types";
+import { useAuthStore } from "../store/useAuthStore";
 
 const MoreScreen = () => {
   const navigation =
     useNavigation<StackNavigationProp<RootStackParamList, "More">>();
+  const { logout } = useAuthStore();
 
   const handleLogout = async () => {
     try {
-      await performLogout();
+      logout();
       Toast.show({
         type: "success",
         text1: "Logged out",
