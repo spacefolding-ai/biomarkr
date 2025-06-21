@@ -10,8 +10,12 @@ import { ActivityIndicator, View } from "react-native";
 import "react-native-get-random-values";
 import Toast from "react-native-toast-message";
 import "react-native-url-polyfill/auto";
+import { useBiomarkersRealtime } from "./app/hooks/useBiomarkersRealtime";
+import { useLabReportsRealtime } from "./app/hooks/useLabReportsRealtime";
 import AppNavigator from "./app/navigation/AppNavigator";
 import { useAuthStore } from "./app/store/useAuthStore";
+import { useBiomarkersStore } from "./app/store/useBiomarkersStore";
+import { useLabReportsStore } from "./app/store/useLabReportsStore";
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -20,8 +24,19 @@ export default function App() {
     Roboto_700Bold,
   });
 
+  const { user, session, initAuth } = useAuthStore();
+  const { setUserId: setBiomarkersUserId } = useBiomarkersStore();
+  const { setUserId: setLabReportsUserId } = useLabReportsStore();
+
+  useBiomarkersRealtime();
+  useLabReportsRealtime();
+
   useEffect(() => {
-    useAuthStore.getState().initAuth();
+    initAuth();
+    if (user && session) {
+      setBiomarkersUserId(user.id);
+      setLabReportsUserId(user.id);
+    }
   }, []);
 
   if (!fontsLoaded) {

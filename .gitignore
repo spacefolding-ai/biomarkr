@@ -28,4 +28,5 @@ node_modules
 /temp
 .env
 ios/
+android/
 .expo/
