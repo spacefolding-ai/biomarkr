@@ -23,7 +23,7 @@ interface FilesRealtimeOptions {
 }
 
 export function useFilesRealtime(options: FilesRealtimeOptions) {
-  const { user, session, loading, initAuth } = useAuthStore();
+  const { session } = useAuthStore();
   const userId = session?.user?.id;
 
   useSupabaseRealtime({

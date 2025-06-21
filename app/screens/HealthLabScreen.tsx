@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native";
 import { useBiomarkersRealtime } from "../hooks/useBiomarkersRealtime";
 import { useLabReportsRealtime } from "../hooks/useLabReportsRealtime";
 import { supabase } from "../services/supabaseClient";
-import { Biomarker } from "../types/Biomarker";
+import { useBiomarkersStore } from "../store/useBiomarkersStore";
 import { LabReport } from "../types/LabReport";
 import BiomarkersScreen from "./BiomarkersScreen";
 import LabReportsScreen from "./LabReportsScreen";
@@ -12,7 +12,7 @@ import LabReportsScreen from "./LabReportsScreen";
 const Tab = createMaterialTopTabNavigator();
 
 const HealthLabScreen = () => {
-  const [biomarkers, setBiomarkers] = useState<Biomarker[]>([] as Biomarker[]);
+  const { biomarkers, setBiomarkers } = useBiomarkersStore();
   const [reports, setReports] = useState<LabReport[]>([] as LabReport[]);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -74,28 +74,7 @@ const HealthLabScreen = () => {
     },
   });
 
-  useBiomarkersRealtime({
-    onInsert: ({ new: newBiomarker }) => {
-      console.log("onInsert biomarkers", newBiomarker);
-      setBiomarkers((prev) => {
-        return prev.some((item) => item.id === newBiomarker.id)
-          ? prev
-          : [newBiomarker, ...prev];
-      });
-    },
-    onUpdate: ({ new: updatedBiomarker }) => {
-      setBiomarkers((prev) =>
-        prev.map((item) =>
-          item.id === updatedBiomarker.id ? updatedBiomarker : item
-        )
-      );
-    },
-    onDelete: ({ old: deletedBiomarker }) => {
-      setBiomarkers((prev) =>
-        prev.filter((item) => item.id !== deletedBiomarker.id)
-      );
-    },
-  });
+  useBiomarkersRealtime();
 
   const onRefresh = useCallback(async () => {
     try {

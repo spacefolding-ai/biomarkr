@@ -14,7 +14,7 @@ interface LabReportsRealtimeOptions {
 }
 
 export function useLabReportsRealtime(options: LabReportsRealtimeOptions) {
-  const { user, session, loading, initAuth } = useAuthStore();
+  const { session } = useAuthStore();
   const userId = session?.user?.id;
 
   useSupabaseRealtime({

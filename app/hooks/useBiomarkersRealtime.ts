@@ -3,29 +3,32 @@ import {
   RealtimePostgresInsertPayload,
   RealtimePostgresUpdatePayload,
 } from "@supabase/supabase-js";
-import { useAuthStore } from "../store/useAuthStore";
+import { useBiomarkersStore } from "../store/useBiomarkersStore";
 import { Biomarker } from "../types/Biomarker";
 import { useSupabaseRealtime } from "./useSupabaseRealtime";
 
-interface BiomarkersRealtimeOptions {
-  onInsert?: (payload: RealtimePostgresInsertPayload<Biomarker>) => void;
-  onUpdate?: (payload: RealtimePostgresUpdatePayload<Biomarker>) => void;
-  onDelete?: (payload: RealtimePostgresDeletePayload<Biomarker>) => void;
-}
-
-export function useBiomarkersRealtime(options: BiomarkersRealtimeOptions) {
-  const { user, session, loading, initAuth } = useAuthStore();
-  const userId = session?.user?.id;
+export const useBiomarkersRealtime = () => {
+  const { addBiomarker, updateBiomarker, deleteBiomarker, userId } =
+    useBiomarkersStore();
 
   useSupabaseRealtime({
-    userId,
+    userId: userId,
     tables: [
       {
         table: "biomarkers",
-        onInsert: options.onInsert,
-        onUpdate: options.onUpdate,
-        onDelete: options.onDelete,
+        onInsert: (payload: RealtimePostgresInsertPayload<Biomarker>) => {
+          console.log("[Realtime] Insert biomarker", payload.new);
+          addBiomarker(payload.new);
+        },
+        onUpdate: (payload: RealtimePostgresUpdatePayload<Biomarker>) => {
+          console.log("[Realtime] Update biomarker", payload.new);
+          updateBiomarker(payload.new);
+        },
+        onDelete: (payload: RealtimePostgresDeletePayload<Biomarker>) => {
+          console.log("[Realtime] Delete biomarker", payload.old);
+          deleteBiomarker(payload.old.id);
+        },
       },
     ],
   });
-}
+};

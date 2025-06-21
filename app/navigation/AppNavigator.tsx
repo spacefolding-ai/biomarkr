@@ -10,10 +10,10 @@ import MoreScreen from "../screens/MoreScreen";
 import OverviewScreen from "../screens/OverviewScreen";
 import SignupScreen from "../screens/SignupScreen";
 import UploadScreen from "../screens/UploadScreen";
-import { RootStackParamList } from "./types"; // Import the RootStackParamList
+import { RootStackParamList } from "./types";
 
 const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator<RootStackParamList>(); // Use the RootStackParamList
+const Stack = createStackNavigator<RootStackParamList>();
 
 const AuthTabNavigator = () => (
   <Tab.Navigator id={undefined} screenOptions={{ headerShown: false }}>

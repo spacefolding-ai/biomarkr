@@ -12,6 +12,7 @@ import Toast from "react-native-toast-message";
 import "react-native-url-polyfill/auto";
 import AppNavigator from "./app/navigation/AppNavigator";
 import { useAuthStore } from "./app/store/useAuthStore";
+import { useBiomarkersStore } from "./app/store/useBiomarkersStore";
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -20,8 +21,13 @@ export default function App() {
     Roboto_700Bold,
   });
 
+  const { user, session, initAuth } = useAuthStore();
+
   useEffect(() => {
-    useAuthStore.getState().initAuth();
+    initAuth();
+    if (user && session) {
+      useBiomarkersStore.getState().setUserId(user.id);
+    }
   }, []);
 
   if (!fontsLoaded) {
