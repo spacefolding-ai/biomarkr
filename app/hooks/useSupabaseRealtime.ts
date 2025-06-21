@@ -102,5 +102,5 @@ export const useSupabaseRealtime = ({
         await ch.unsubscribe();
       });
     };
-  }, [userId, tables]);
+  }, []);
 };

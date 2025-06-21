@@ -43,7 +43,11 @@ const HealthLabScreen = () => {
   };
 
   useEffect(() => {
+    console.log("HealthLabScreen mounted");
     loadAll();
+    return () => {
+      console.log("HealthLabScreen unmounted");
+    };
   }, []);
 
   useBiomarkersRealtime({
