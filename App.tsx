@@ -1,17 +1,17 @@
-import React from "react";
-import { NavigationContainer } from "@react-navigation/native";
-import AppNavigator from "./app/navigation/AppNavigator";
 import {
-  useFonts,
   Roboto_400Regular,
   Roboto_500Medium,
   Roboto_700Bold,
+  useFonts,
 } from "@expo-google-fonts/roboto";
+import { NavigationContainer } from "@react-navigation/native";
+import React, { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
-import "react-native-url-polyfill/auto";
 import "react-native-get-random-values";
 import Toast from "react-native-toast-message";
-import { AuthProvider } from "./app/context/AuthContext";
+import "react-native-url-polyfill/auto";
+import AppNavigator from "./app/navigation/AppNavigator";
+import { useAuthStore } from "./app/store/useAuthStore";
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -19,6 +19,10 @@ export default function App() {
     Roboto_500Medium,
     Roboto_700Bold,
   });
+
+  useEffect(() => {
+    useAuthStore.getState().initAuth();
+  }, []);
 
   if (!fontsLoaded) {
     return (
@@ -29,11 +33,9 @@ export default function App() {
   }
 
   return (
-    <AuthProvider>
-      <NavigationContainer>
-        <AppNavigator />
-        <Toast />
-      </NavigationContainer>
-    </AuthProvider>
+    <NavigationContainer>
+      <AppNavigator />
+      <Toast />
+    </NavigationContainer>
   );
 }

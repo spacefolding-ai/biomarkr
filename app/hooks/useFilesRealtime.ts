@@ -1,5 +1,5 @@
+import { useAuthStore } from "../store/useAuthStore";
 import { useSupabaseRealtime } from "./useSupabaseRealtime";
-import { useAuth } from "../context/AuthContext";
 
 interface File {
   id: string;
@@ -23,7 +23,7 @@ interface FilesRealtimeOptions {
 }
 
 export function useFilesRealtime(options: FilesRealtimeOptions) {
-  const { session } = useAuth();
+  const { user, session, loading, initAuth } = useAuthStore();
   const userId = session?.user?.id;
 
   useSupabaseRealtime({

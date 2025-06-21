@@ -3,7 +3,7 @@ import {
   RealtimePostgresInsertPayload,
   RealtimePostgresUpdatePayload,
 } from "@supabase/supabase-js";
-import { useAuth } from "../context/AuthContext";
+import { useAuthStore } from "../store/useAuthStore";
 import { Biomarker } from "../types/Biomarker";
 import { useSupabaseRealtime } from "./useSupabaseRealtime";
 
@@ -14,7 +14,7 @@ interface BiomarkersRealtimeOptions {
 }
 
 export function useBiomarkersRealtime(options: BiomarkersRealtimeOptions) {
-  const { session } = useAuth();
+  const { user, session, loading, initAuth } = useAuthStore();
   const userId = session?.user?.id;
 
   useSupabaseRealtime({

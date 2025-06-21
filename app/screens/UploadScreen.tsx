@@ -13,9 +13,9 @@ import {
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
-import { useAuth } from "../context/AuthContext";
 import { RootStackParamList } from "../navigation/types";
 import { uploadFileAndInsertToDb } from "../services/upload";
+import { useAuthStore } from "../store/useAuthStore";
 import { FileInfo, normalizeImage } from "../utils/file";
 
 export default function UploadScreen() {
@@ -23,7 +23,7 @@ export default function UploadScreen() {
   const [uploading, setUploading] = useState(false);
   const [cameraPermission, requestCameraPermission] =
     Camera.useCameraPermissions();
-  const { user, loading, session } = useAuth();
+  const { user, session, loading, initAuth } = useAuthStore();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   if (loading) {
