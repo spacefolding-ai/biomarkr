@@ -28,8 +28,10 @@ const HealthLabScreen = () => {
   };
 
   const loadLabReports = async () => {
-    const { data, error } = await supabase.from("lab_reports").select("*");
-    // .order("report_date", { ascending: false });
+    const { data, error } = await supabase
+      .from("lab_reports")
+      .select("*")
+      .order("report_date", { ascending: false });
 
     if (data) setReports(data);
     if (error) console.error("Failed to load lab reports:", error);
@@ -50,14 +52,36 @@ const HealthLabScreen = () => {
     };
   }, []);
 
+  useLabReportsRealtime({
+    onInsert: ({ new: newReport }) => {
+      console.log("onInsert reports", newReport);
+      setReports((prev) => [newReport, ...prev]);
+    },
+    onUpdate: ({ new: updatedReport }) => {
+      console.log("onUpdate reports", updatedReport);
+      setReports((prev) => {
+        if (prev.length === 0) {
+          return [updatedReport];
+        }
+        return prev.map((item) =>
+          item.id === updatedReport.id ? updatedReport : item
+        );
+      });
+    },
+    onDelete: ({ old: deletedReport }) => {
+      console.log("onDelete reports", deletedReport);
+      setReports((prev) => prev.filter((item) => item.id !== deletedReport.id));
+    },
+  });
+
   useBiomarkersRealtime({
     onInsert: ({ new: newBiomarker }) => {
       console.log("onInsert biomarkers", newBiomarker);
-      setBiomarkers((prev) =>
-        prev.some((item) => item.id === newBiomarker.id)
+      setBiomarkers((prev) => {
+        return prev.some((item) => item.id === newBiomarker.id)
           ? prev
-          : [newBiomarker, ...prev]
-      );
+          : [newBiomarker, ...prev];
+      });
     },
     onUpdate: ({ new: updatedBiomarker }) => {
       setBiomarkers((prev) =>
@@ -70,29 +94,6 @@ const HealthLabScreen = () => {
       setBiomarkers((prev) =>
         prev.filter((item) => item.id !== deletedBiomarker.id)
       );
-    },
-  });
-
-  useLabReportsRealtime({
-    onInsert: ({ new: newReport }) => {
-      console.log("onInsert reports", newReport);
-      setReports((prev) =>
-        prev.some((item) => item.id === newReport.id)
-          ? prev
-          : [newReport, ...prev]
-      );
-    },
-    onUpdate: ({ new: updatedReport }) => {
-      console.log("onUpdate reports", updatedReport);
-      setReports((prev) =>
-        prev.map((item) =>
-          item.id === updatedReport.id ? updatedReport : item
-        )
-      );
-    },
-    onDelete: ({ old: deletedReport }) => {
-      console.log("onDelete reports", deletedReport);
-      setReports((prev) => prev.filter((item) => item.id !== deletedReport.id));
     },
   });
 

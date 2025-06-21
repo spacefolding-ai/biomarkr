@@ -1,6 +1,16 @@
 import { format } from "date-fns";
-import React, { useCallback } from "react";
-import { FlatList, RefreshControl, Text, View } from "react-native";
+import React, { useCallback, useState } from "react";
+import {
+  Button,
+  FlatList,
+  Modal,
+  RefreshControl,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
+import { useMemo } from "react";
 import ExtractionProgressBar from "../components/ExtractionProgressBar";
 import { ExtractionStatus } from "../types/ExtractionStatus.enum";
 import { LabReport } from "../types/LabReport";
@@ -16,28 +26,31 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
   refreshing,
   onRefresh,
 }) => {
-  console.log("LabReportsScreen", reports);
-  // const [filter, setFilter] = useState("By date Added");
-  // const [isModalVisible, setModalVisible] = useState(false);
+  const [filter, setFilter] = useState("By date Added");
+  const [isModalVisible, setModalVisible] = useState(false);
 
-  // const toggleModal = () => setModalVisible(!isModalVisible);
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
+  };
 
-  // const applyFilter = (selectedFilter: string) => {
-  //   setFilter(selectedFilter);
-  //   toggleModal();
-  // };
+  const applyFilter = (selectedFilter: string) => {
+    setFilter(selectedFilter);
+    toggleModal();
+  };
 
-  // const sortedReports = [...reports].sort((a, b) => {
-  //   if (filter === "By document date") {
-  //     return (
-  //       new Date(b.report_date).getTime() - new Date(a.report_date).getTime()
-  //     );
-  //   } else {
-  //     return (
-  //       new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-  //     );
-  //   }
-  // });
+  const sortedReports = useMemo(() => {
+    return [...reports].sort((a, b) => {
+      if (filter === "By document date") {
+        return (
+          new Date(b.report_date).getTime() - new Date(a.report_date).getTime()
+        );
+      } else {
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      }
+    });
+  }, [reports, filter]);
 
   const handleRefresh = useCallback(() => {
     onRefresh();
@@ -56,24 +69,25 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
           borderColor: "#eee",
         }}
       >
-        {item?.extraction_status === ExtractionStatus.Done && (
-          <>
-            <View style={{ flex: 3 }}>
-              <Text style={{ fontWeight: "bold" }}>
-                {item?.laboratory_name}
-              </Text>
-              <Text style={{ color: "#444" }}>{item?.description}</Text>
-              {item?.report_date && !isNaN(Date.parse(item.report_date)) && (
-                <Text style={{ color: "#888" }}>
-                  {format(new Date(item.report_date), "d MMM yyyy")}
+        {item?.extraction_status === ExtractionStatus.Done &&
+          item?.description && (
+            <>
+              <View style={{ flex: 3 }}>
+                <Text style={{ fontWeight: "bold" }}>
+                  {item?.laboratory_name}
                 </Text>
-              )}
-            </View>
-            <Text style={{ color: "green", fontSize: 12, marginLeft: 10 }}>
-              Extracted ✅
-            </Text>
-          </>
-        )}
+                <Text style={{ color: "#444" }}>{item?.description}</Text>
+                {item?.report_date && !isNaN(Date.parse(item.report_date)) && (
+                  <Text style={{ color: "#888" }}>
+                    {format(new Date(item.report_date), "d MMM yyyy")}
+                  </Text>
+                )}
+              </View>
+              <Text style={{ color: "green", fontSize: 12, marginLeft: 10 }}>
+                Extracted ✅
+              </Text>
+            </>
+          )}
 
         {item?.extraction_status !== ExtractionStatus.Done && (
           <View style={{ flex: 3 }}>
@@ -106,7 +120,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
         </View>
       ) : (
         <>
-          {/* <View
+          <View
             style={{
               flexDirection: "row",
               justifyContent: "flex-end",
@@ -116,10 +130,10 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
             <TouchableOpacity onPress={toggleModal}>
               <Text style={{ color: "blue" }}>{filter}</Text>
             </TouchableOpacity>
-          </View> */}
+          </View>
 
           <FlatList
-            data={reports}
+            data={sortedReports}
             keyExtractor={(item) => `${item?.id}-${item?.created_at}`}
             renderItem={renderReportItem}
             refreshControl={
@@ -131,7 +145,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
             extraData={reports}
           />
 
-          {/* <Modal
+          <Modal
             animationType="slide"
             transparent={true}
             visible={isModalVisible}
@@ -152,15 +166,19 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
               >
                 <Button
                   title="By date Added"
-                  onPress={() => applyFilter("By date Added")}
+                  onPress={() => {
+                    applyFilter("By date Added");
+                  }}
                 />
                 <Button
                   title="By document date"
-                  onPress={() => applyFilter("By document date")}
+                  onPress={() => {
+                    applyFilter("By document date");
+                  }}
                 />
               </View>
             </TouchableOpacity>
-          </Modal> */}
+          </Modal>
         </>
       )}
     </View>
