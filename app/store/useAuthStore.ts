@@ -5,12 +5,14 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 import { supabase } from "../services/supabaseClient";
 import { User } from "../types/user";
+import { attemptBiometricLogin } from "../utils/attemptBiometricLogin";
 
 interface AuthState {
   session: Session | null;
   user: User | null;
   loading: boolean;
   initAuth: () => void;
+  initBiometricLogin: () => void;
   logout: () => void;
 }
 
@@ -34,6 +36,19 @@ export const useAuthStore = create<AuthState>()(
         return () => {
           listener.subscription.unsubscribe();
         };
+      },
+      // TODO: Work in progress
+      initBiometricLogin: async () => {
+        const success = await attemptBiometricLogin();
+        if (success) {
+          // ✅ Log in the user OR restore session OR fetch user
+          const { data, error } = await supabase.auth.getSession();
+          if (data.session) {
+            set({ session: data.session, user: data.session.user });
+          }
+        } else {
+          console.log("Biometric auth failed or was cancelled.");
+        }
       },
       logout: async () => {
         await supabase.auth.signOut();
