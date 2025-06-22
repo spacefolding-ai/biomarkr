@@ -5,6 +5,7 @@ import React from "react";
 import { AppIcon, IconName } from "../components/IconRegistry";
 import HealthLabScreen from "../screens/HealthLabScreen";
 import LabAssistantScreen from "../screens/LabAssistantScreen";
+import LabReportDetailsScreen from "../screens/LabReportDetailsScreen";
 import LoginScreen from "../screens/LoginScreen";
 import MoreScreen from "../screens/MoreScreen";
 import OverviewScreen from "../screens/OverviewScreen";
@@ -39,6 +40,11 @@ const AppNavigator = () => {
     <Stack.Navigator id={undefined} screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Auth" component={AuthTabNavigator} />
       <Stack.Screen name="Main" component={MainTabNavigator} />
+      <Stack.Screen
+        name="LabReportDetails"
+        component={LabReportDetailsScreen}
+        options={{ title: "Lab Report" }}
+      />
     </Stack.Navigator>
   );
 };
