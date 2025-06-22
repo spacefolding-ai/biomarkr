@@ -47,12 +47,23 @@ const AppNavigator = () => {
         component={LabReportDetailsScreen}
         options={({ navigation }) => ({
           title: "Lab Report",
+          headerShown: true,
           headerLeft: () => (
             <TouchableOpacity
               onPress={() => navigation.goBack()}
               style={{ marginLeft: 10 }}
             >
               <Ionicons name="arrow-back" size={28} color="black" />
+            </TouchableOpacity>
+          ),
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => {
+                /* Future edit functionality */
+              }}
+              style={{ marginRight: 10 }}
+            >
+              <Ionicons name="pencil" size={24} color="black" />
             </TouchableOpacity>
           ),
           headerTitleStyle: {

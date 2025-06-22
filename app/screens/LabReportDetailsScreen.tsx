@@ -89,8 +89,10 @@ const styles = StyleSheet.create({
   },
   profileContainer: {
     flexDirection: "row",
-    padding: 16,
+    padding: 24,
     alignItems: "center",
+    justifyContent: "center",
+    height: 300,
   },
   avatar: {
     width: 50,
@@ -101,6 +103,7 @@ const styles = StyleSheet.create({
   },
   profileDetails: {
     flex: 1,
+    justifyContent: "center",
   },
   profileText: {
     fontSize: 14,
