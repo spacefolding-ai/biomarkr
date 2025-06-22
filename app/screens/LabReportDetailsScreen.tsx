@@ -32,10 +32,20 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
       <ScrollView style={{ padding: 16 }}>
         <Text style={styles.subtitle}>Biomarkers</Text>
         {relatedBiomarkers.map((biomarker) => (
-          <View key={biomarker.id} style={styles.biomarkerContainer}>
-            <Text style={styles.biomarkerText}>
-              {biomarker.marker_name}: {biomarker.value} {biomarker.unit}
-            </Text>
+          <View key={biomarker.id} style={styles.biomarkerItem}>
+            <Text style={styles.biomarkerName}>{biomarker.marker_name}</Text>
+            <View style={styles.biomarkerDetails}>
+              <Text style={styles.biomarkerValue}>
+                {biomarker.value} {biomarker.unit}
+              </Text>
+              {biomarker.abnormal_flag === "high" ? (
+                <Text style={styles.abnormalHigh}>▲</Text>
+              ) : biomarker.abnormal_flag === "low" ? (
+                <Text style={styles.abnormalLow}>▼</Text>
+              ) : (
+                <Text style={styles.normal}>●</Text>
+              )}
+            </View>
           </View>
         ))}
       </ScrollView>
@@ -106,13 +116,32 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     marginBottom: 8,
   },
-  biomarkerContainer: {
-    paddingVertical: 8,
+  biomarkerItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    padding: 16,
     borderBottomWidth: 1,
     borderColor: "#eee",
   },
-  biomarkerText: {
-    fontSize: 16,
+  biomarkerName: {
+    fontWeight: "bold",
+  },
+  biomarkerDetails: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  biomarkerValue: {
+    marginRight: 8,
+  },
+  abnormalHigh: {
+    color: "orange",
+  },
+  abnormalLow: {
+    color: "orange",
+  },
+  normal: {
+    color: "green",
   },
 });
 

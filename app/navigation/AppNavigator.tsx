@@ -1,7 +1,9 @@
+import { Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
 import { LogIn, UserPlus } from "lucide-react-native";
 import React from "react";
+import { TouchableOpacity } from "react-native";
 import { AppIcon, IconName } from "../components/IconRegistry";
 import HealthLabScreen from "../screens/HealthLabScreen";
 import LabAssistantScreen from "../screens/LabAssistantScreen";
@@ -43,7 +45,27 @@ const AppNavigator = () => {
       <Stack.Screen
         name="LabReportDetails"
         component={LabReportDetailsScreen}
-        options={{ title: "Lab Report" }}
+        options={({ navigation }) => ({
+          title: "Lab Report",
+          headerLeft: () => (
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={{ marginLeft: 10 }}
+            >
+              <Ionicons name="arrow-back" size={28} color="black" />
+            </TouchableOpacity>
+          ),
+          headerTitleStyle: {
+            fontWeight: "bold",
+            fontSize: 24,
+            color: "black",
+          },
+          headerStyle: {
+            backgroundColor: "white",
+            shadowColor: "transparent",
+          },
+          gestureEnabled: true,
+        })}
       />
     </Stack.Navigator>
   );
