@@ -11,7 +11,8 @@ export interface LabReport {
   description?: string;
   created_at?: string;
   extraction_status?: ExtractionStatus;
-  file_name?: string;
   notes?: string;
-  doc_preview_url?: string;
+  file_name?: string;
+  file_url?: string;
+  thumbnail_url?: string;
 }

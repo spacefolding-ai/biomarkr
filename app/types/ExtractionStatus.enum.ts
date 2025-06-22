@@ -1,8 +1,8 @@
 export enum ExtractionStatus {
-  Pending = "pending",
-  Processing = "processing",
-  Saving = "saving",
-  Done = "done",
-  Error = "error",
-  Unsupported = "unsupported",
+  PENDING = "pending",
+  PROCESSING = "processing",
+  SAVING = "saving",
+  DONE = "done",
+  ERROR = "error",
+  UNSUPPORTED = "unsupported",
 }

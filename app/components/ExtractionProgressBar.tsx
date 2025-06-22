@@ -14,14 +14,14 @@ interface Props {
 
 const getProgress = (status: ExtractionStatus): number => {
   switch (status) {
-    case "pending":
+    case ExtractionStatus.PENDING:
       return 0;
-    case "processing":
+    case ExtractionStatus.PROCESSING:
       return 95;
-    case "done":
+    case ExtractionStatus.DONE:
       return 100;
-    case "error":
-    case "unsupported":
+    case ExtractionStatus.ERROR:
+    case ExtractionStatus.UNSUPPORTED:
     default:
       return 0;
   }
@@ -32,7 +32,7 @@ const capitalizeFirstLetter = (string: string) => {
 };
 
 const getStatusText = (status: ExtractionStatus, progress: number) => {
-  if (status === "processing" && progress >= 95) {
+  if (status === ExtractionStatus.PROCESSING && progress >= 95) {
     return "Analyzing...";
   }
   return capitalizeFirstLetter(status) + "...";
@@ -43,7 +43,7 @@ const ExtractionProgressBar: React.FC<Props> = ({ status }) => {
 
   useEffect(() => {
     const target = getProgress(status);
-    if (status === "processing") {
+    if (status === ExtractionStatus.PROCESSING) {
       progress.value = withSequence(
         withTiming(30, { duration: 5000 }),
         withTiming(60, { duration: 5000 }),

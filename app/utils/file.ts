@@ -1,8 +1,8 @@
 import * as FileSystem from "expo-file-system";
 import * as ImageManipulator from "expo-image-manipulator";
 import MimeTypes from "react-native-mime-types";
-import { PDFDocument } from "react-native-pdf-lib";
 import { v4 as uuidv4 } from "uuid";
+import { supabase } from "../services/supabaseClient";
 
 export interface FileInfo {
   normalizedUri: string;
@@ -74,12 +74,7 @@ export async function generatePreview(
   uri: string,
   type: string
 ): Promise<string> {
-  console.log("Type: ", type);
-  console.log("Uri: ", uri);
-
   if (type === "image") {
-    console.log("Generating preview for image: ", uri);
-
     try {
       const result = await ImageManipulator.manipulateAsync(
         uri,
@@ -87,18 +82,26 @@ export async function generatePreview(
         { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
       );
 
-      console.log("Resized Image: ", result);
       return result.uri;
     } catch (error) {
-      console.error("Error generating preview: ", error);
       throw error;
     }
-  } else if (type === "pdf") {
-    const pdfDoc = await PDFDocument.open(uri);
-    const page = await pdfDoc.getPage(0);
-    const imageUri = await page.render({ width: 100, height: 100 });
-    return imageUri;
   }
 
   throw new Error("Unsupported file type");
+}
+
+export async function getImageUrl(
+  path: string,
+  isPublic = true
+): Promise<string | null> {
+  const [bucket, ...rest] = path.split("/");
+  const key = rest.join("/");
+
+  if (isPublic) {
+    return supabase.storage.from(bucket).getPublicUrl(key).data.publicUrl;
+  }
+
+  const { data } = await supabase.storage.from(bucket).createSignedUrl(key, 60);
+  return data?.signedUrl ?? null;
 }
