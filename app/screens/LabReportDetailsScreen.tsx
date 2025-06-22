@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Dimensions, StyleSheet, Text, View } from "react-native";
+import { Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SceneMap, TabView } from "react-native-tab-view";
 import { useBiomarkersStore } from "../store/useBiomarkersStore";
 import { LabReport } from "../types/LabReport";
@@ -29,7 +29,7 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
 
   const renderScene = SceneMap({
     results: () => (
-      <View style={{ padding: 16 }}>
+      <ScrollView style={{ padding: 16 }}>
         <Text style={styles.subtitle}>Biomarkers</Text>
         {relatedBiomarkers.map((biomarker) => (
           <View key={biomarker.id} style={styles.biomarkerContainer}>
@@ -38,7 +38,7 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
             </Text>
           </View>
         ))}
-      </View>
+      </ScrollView>
     ),
     docs: () => (
       <View style={{ padding: 16 }}>
