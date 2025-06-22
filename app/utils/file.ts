@@ -1,5 +1,5 @@
 import * as FileSystem from "expo-file-system";
-import ImageResizer from "react-native-image-resizer";
+import * as ImageManipulator from "expo-image-manipulator";
 import MimeTypes from "react-native-mime-types";
 import { PDFDocument } from "react-native-pdf-lib";
 import { v4 as uuidv4 } from "uuid";
@@ -76,22 +76,29 @@ export async function generatePreview(
 ): Promise<string> {
   console.log("Type: ", type);
   console.log("Uri: ", uri);
+
   if (type === "image") {
     console.log("Generating preview for image: ", uri);
-    const resizedImage = await ImageResizer.createResizedImage(
-      uri,
-      100,
-      100,
-      "JPEG",
-      80
-    );
-    console.log("Resized Image: ", resizedImage);
-    return resizedImage.uri;
+
+    try {
+      const result = await ImageManipulator.manipulateAsync(
+        uri,
+        [{ resize: { width: 100, height: 100 } }],
+        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+      );
+
+      console.log("Resized Image: ", result);
+      return result.uri;
+    } catch (error) {
+      console.error("Error generating preview: ", error);
+      throw error;
+    }
   } else if (type === "pdf") {
     const pdfDoc = await PDFDocument.open(uri);
     const page = await pdfDoc.getPage(0);
     const imageUri = await page.render({ width: 100, height: 100 });
     return imageUri;
   }
+
   throw new Error("Unsupported file type");
 }

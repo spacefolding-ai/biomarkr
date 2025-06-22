@@ -32,7 +32,7 @@ export async function uploadFileAndInsertToDb(
   // Upload the main file
   const fileData = await uploadFileToStorage(fileUri, filePath, mimeType);
   if (!fileData) throw new Error("File upload failed");
-  console.log("File Uri: ", fileUri);
+
   // Generate and upload the thumbnail
   const previewUri = await generatePreview(
     fileUri,
