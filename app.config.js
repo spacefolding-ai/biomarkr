@@ -13,8 +13,8 @@ export default {
     android: {
       package: "com.anonymous.biomarkr",
     },
-    is: {
-      package: "com.anonymous.biomarkr",
+    ios: {
+      bundleIdentifier: "com.anonymous.biomarkr",
     },
   },
 };
