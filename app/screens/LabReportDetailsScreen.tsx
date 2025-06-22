@@ -38,9 +38,9 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
               <Text style={styles.biomarkerValue}>
                 {biomarker.value} {biomarker.unit}
               </Text>
-              {biomarker.abnormal_flag === "high" ? (
+              {biomarker.abnormal_flag?.toLowerCase() === "high" ? (
                 <Text style={styles.abnormalHigh}>▲</Text>
-              ) : biomarker.abnormal_flag === "low" ? (
+              ) : biomarker.abnormal_flag?.toLowerCase() === "low" ? (
                 <Text style={styles.abnormalLow}>▼</Text>
               ) : (
                 <Text style={styles.normal}>●</Text>
