@@ -62,14 +62,26 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
       <View style={styles.profileContainer}>
         <View style={styles.avatar} />
         <View style={styles.profileDetails}>
-          <Text style={styles.profileText}>Profile</Text>
-          <Text style={styles.profileValue}>{labReport.patient_name}</Text>
-          <Text style={styles.profileText}>Date</Text>
-          <Text style={styles.profileValue}>{labReport.report_date}</Text>
-          <Text style={styles.profileText}>Laboratory</Text>
-          <Text style={styles.profileValue}>
-            {labReport.laboratory_name || "Not specified"}
-          </Text>
+          <View style={styles.detailRow}>
+            <Text style={styles.profileText}>Profile</Text>
+            <Text style={styles.profileValue}>{labReport.patient_name}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.profileText}>Date</Text>
+            <Text style={styles.profileValue}>{labReport.report_date}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.profileText}>Laboratory</Text>
+            <Text style={styles.profileValue}>
+              {labReport.laboratory_name || "Not specified"}
+            </Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.profileText}>Notes</Text>
+            <Text style={styles.profileValue}>
+              {labReport.notes || "Not specified"}
+            </Text>
+          </View>
         </View>
       </View>
       <TabView
@@ -89,10 +101,11 @@ const styles = StyleSheet.create({
   },
   profileContainer: {
     flexDirection: "row",
-    padding: 24,
-    alignItems: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    alignItems: "flex-start",
     justifyContent: "center",
-    height: 300,
+    marginTop: 16,
   },
   avatar: {
     width: 50,
@@ -107,11 +120,12 @@ const styles = StyleSheet.create({
   },
   profileText: {
     fontSize: 14,
-    color: "#888",
+    color: "#333",
+    fontWeight: "bold",
   },
   profileValue: {
     fontSize: 16,
-    fontWeight: "bold",
+    fontWeight: "normal",
     marginBottom: 8,
   },
   subtitle: {
@@ -145,6 +159,11 @@ const styles = StyleSheet.create({
   },
   normal: {
     color: "green",
+  },
+  detailRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
   },
 });
 
