@@ -1,3 +1,5 @@
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
 import { format } from "date-fns";
 import React, { useCallback, useState } from "react";
 import {
@@ -9,6 +11,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { RootStackParamList } from "../navigation/types";
 
 import { useMemo } from "react";
 import ExtractionProgressBar from "../components/ExtractionProgressBar";
@@ -28,6 +31,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
 }) => {
   const [filter, setFilter] = useState("By date Added");
   const [isModalVisible, setModalVisible] = useState(false);
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -58,44 +62,53 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
 
   const renderReportItem = ({ item }: { item: LabReport }) => {
     return (
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-          paddingVertical: 12,
-          paddingHorizontal: 16,
-          borderBottomWidth: 1,
-          borderColor: "#eee",
+      <TouchableOpacity
+        onPress={() => {
+          if (item.extraction_status === ExtractionStatus.Done) {
+            navigation.navigate("LabReportDetails", { labReport: item });
+          }
         }}
       >
-        {item?.extraction_status === ExtractionStatus.Done &&
-          item?.description && (
-            <>
-              <View style={{ flex: 3 }}>
-                <Text style={{ fontWeight: "bold" }}>
-                  {item?.laboratory_name}
-                </Text>
-                <Text style={{ color: "#444" }}>{item?.description}</Text>
-                {item?.report_date && !isNaN(Date.parse(item.report_date)) && (
-                  <Text style={{ color: "#888" }}>
-                    {format(new Date(item.report_date), "d MMM yyyy")}
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            borderBottomWidth: 1,
+            borderColor: "#eee",
+          }}
+        >
+          {item?.extraction_status === ExtractionStatus.Done &&
+            item?.description && (
+              <>
+                <View style={{ flex: 3 }}>
+                  <Text style={{ fontWeight: "bold" }}>
+                    {item?.laboratory_name}
                   </Text>
-                )}
-              </View>
-              <Text style={{ color: "green", fontSize: 12, marginLeft: 10 }}>
-                Extracted ✅
-              </Text>
-            </>
-          )}
+                  <Text style={{ color: "#444" }}>{item?.description}</Text>
+                  {item?.report_date &&
+                    !isNaN(Date.parse(item.report_date)) && (
+                      <Text style={{ color: "#888" }}>
+                        {format(new Date(item.report_date), "d MMM yyyy")}
+                      </Text>
+                    )}
+                </View>
+                <Text style={{ color: "green", fontSize: 12, marginLeft: 10 }}>
+                  Extracted ✅
+                </Text>
+              </>
+            )}
 
-        {item?.extraction_status !== ExtractionStatus.Done && (
-          <View style={{ flex: 3 }}>
-            <ExtractionProgressBar status={item?.extraction_status} />
-            <Text style={{ marginTop: 8, color: "#555" }}>Analyzing...</Text>
-          </View>
-        )}
-      </View>
+          {item?.extraction_status !== ExtractionStatus.Done && (
+            <View style={{ flex: 3 }}>
+              <ExtractionProgressBar status={item?.extraction_status} />
+              <Text style={{ marginTop: 8, color: "#555" }}>Analyzing...</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
     );
   };
 
