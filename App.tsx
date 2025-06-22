@@ -28,8 +28,8 @@ export default function App() {
   const { setUserId: setBiomarkersUserId } = useBiomarkersStore();
   const { setUserId: setLabReportsUserId } = useLabReportsStore();
 
-  useBiomarkersRealtime();
   useLabReportsRealtime();
+  useBiomarkersRealtime();
 
   useEffect(() => {
     initAuth();
