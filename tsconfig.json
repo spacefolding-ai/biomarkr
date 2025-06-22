@@ -4,7 +4,7 @@
     "paths": {
       "*": ["node_modules/*", "app/types/*"]
     },
-    "jsx": "react-native",
+    "jsx": "react-jsx",
     "esModuleInterop": true
   },
   "extends": "expo/tsconfig.base",

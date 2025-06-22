@@ -98,6 +98,7 @@ export default function UploadScreen() {
 
     console.log("Uploading file:", fileInfo);
     console.log("User ID:", user.id);
+    console.log("Normalized Uri: ", fileInfo.normalizedUri);
 
     try {
       setUploading(true);
