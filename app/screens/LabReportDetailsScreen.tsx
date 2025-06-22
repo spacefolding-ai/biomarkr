@@ -71,6 +71,18 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
             <Text style={styles.profileValue}>{labReport.report_date}</Text>
           </View>
           <View style={styles.detailRow}>
+            <Text style={styles.profileText}>Date of Birth</Text>
+            <Text style={styles.profileValue}>
+              {labReport.patient_dob || "Not specified"}
+            </Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Text style={styles.profileText}>Patient Gender</Text>
+            <Text style={styles.profileValue}>
+              {labReport.patient_gender || "Not specified"}
+            </Text>
+          </View>
+          <View style={styles.detailRow}>
             <Text style={styles.profileText}>Laboratory</Text>
             <Text style={styles.profileValue}>
               {labReport.laboratory_name || "Not specified"}
