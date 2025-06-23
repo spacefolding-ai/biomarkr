@@ -5,6 +5,7 @@ import {
   useFonts,
 } from "@expo-google-fonts/roboto";
 import { NavigationContainer } from "@react-navigation/native";
+import * as ScreenOrientation from "expo-screen-orientation";
 import React, { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import "react-native-get-random-values";
@@ -32,6 +33,7 @@ export default function App() {
   useBiomarkersRealtime();
 
   useEffect(() => {
+    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
     initAuth();
     if (user && session) {
       setBiomarkersUserId(user.id);

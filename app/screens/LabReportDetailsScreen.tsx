@@ -1,13 +1,26 @@
+import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useState } from "react";
-import { Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Button,
+  Dimensions,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
+import Modal from "react-native-modal";
 import { SceneMap, TabView } from "react-native-tab-view";
 import { useBiomarkersStore } from "../store/useBiomarkersStore";
+import { useLabReportsStore } from "../store/useLabReportsStore";
 import { LabReport } from "../types/LabReport";
 
 interface LabReportDetailsScreenProps {
   route: {
     params: {
       labReport: LabReport;
+      isEditMode: boolean;
     };
   };
 }
@@ -20,12 +33,38 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
   const relatedBiomarkers = biomarkers.filter(
     (b) => b.report_id === labReport.id
   );
-
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: "results", title: "Results" },
     { key: "docs", title: "Docs" },
   ]);
+
+  const [date, setDate] = useState(
+    labReport.report_date || new Date().toISOString()
+  );
+  const [laboratory, setLaboratory] = useState(labReport.laboratory_name);
+  const [notes, setNotes] = useState(labReport.notes);
+
+  const [isDateModalVisible, setDateModalVisible] = useState(false);
+  const [selectedTempDate, setSelectedTempDate] = useState<Date>(
+    new Date(date)
+  );
+  const [isLabModalVisible, setLabModalVisible] = useState(false);
+  const [isNotesModalVisible, setNotesModalVisible] = useState(false);
+  const { updateReport } = useLabReportsStore();
+
+  const handleSave = () => {
+    // Logic to update the Lab Report
+    const updatedReport = {
+      ...labReport,
+      report_date: date,
+      laboratory_name: laboratory,
+      notes: notes,
+      id: labReport.id,
+    };
+    // Call a function to save the updated report
+    updateReport(updatedReport);
+  };
 
   const renderScene = SceneMap({
     results: () => (
@@ -68,7 +107,17 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.profileText}>Date</Text>
-            <Text style={styles.profileValue}>{labReport.report_date}</Text>
+            {isEditMode ? (
+              <Pressable onPress={() => setDateModalVisible(true)}>
+                <Text style={{ ...styles.profileValue, color: "orange" }}>
+                  {new Date(date).toLocaleDateString()}
+                </Text>
+              </Pressable>
+            ) : (
+              <Text style={styles.profileValue}>
+                {new Date(date).toLocaleDateString()}
+              </Text>
+            )}
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.profileText}>Date of Birth</Text>
@@ -82,35 +131,155 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
               {labReport.patient_gender || "Not specified"}
             </Text>
           </View>
+
           <View style={styles.detailRow}>
             <Text style={styles.profileText}>Laboratory</Text>
-            <Text style={styles.profileValue}>
-              {labReport.laboratory_name || "Not specified"}
-            </Text>
+            {isEditMode ? (
+              <Pressable onPress={() => setLabModalVisible(true)}>
+                <Text style={{ ...styles.profileValue, color: "orange" }}>
+                  {laboratory || "Set Laboratory"}
+                </Text>
+              </Pressable>
+            ) : (
+              <Text style={styles.profileValue}>
+                {laboratory || "Not specified"}
+              </Text>
+            )}
           </View>
+
           <View style={styles.detailRow}>
             <Text style={styles.profileText}>Notes</Text>
-            <Text style={styles.profileValue}>
-              {labReport.notes || "Not specified"}
-            </Text>
+            {isEditMode ? (
+              <Pressable onPress={() => setNotesModalVisible(true)}>
+                <Text style={{ ...styles.profileValue, color: "orange" }}>
+                  {notes || "Add Notes"}
+                </Text>
+              </Pressable>
+            ) : (
+              <Text style={styles.profileValue}>
+                {notes || "Not specified"}
+              </Text>
+            )}
           </View>
         </View>
       </View>
+
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}
         onIndexChange={setIndex}
         initialLayout={{ width: Dimensions.get("window").width }}
       />
+
+      {isEditMode && <Button title="Save" onPress={handleSave} />}
+
+      {/* Date Modal */}
+      <Modal
+        isVisible={isDateModalVisible}
+        onBackdropPress={() => setDateModalVisible(false)}
+        style={{ justifyContent: "flex-end", margin: 0 }}
+      >
+        <View style={styles.modalContentStyleDate}>
+          <View style={styles.modalTitleStyle}>
+            <Button title="Cancel" onPress={() => setDateModalVisible(false)} />
+            <Text style={{ color: "black", fontSize: 18 }}>Change Date</Text>
+            <Button
+              title="Done"
+              onPress={() => {
+                setDate(selectedTempDate.toISOString()); // ← update final value here
+                setDateModalVisible(false);
+              }}
+            />
+          </View>
+
+          <DateTimePicker
+            value={new Date(date)}
+            mode="date"
+            display="spinner"
+            onChange={(event, selectedDate) => {
+              if (selectedDate) {
+                setSelectedTempDate(selectedDate); // ← don't update main date yet
+              }
+            }}
+          />
+        </View>
+      </Modal>
+
+      {/* Laboratory Modal */}
+      <Modal
+        isVisible={isLabModalVisible}
+        onBackdropPress={() => setLabModalVisible(false)}
+        style={{ justifyContent: "flex-end", margin: 0 }}
+      >
+        <View style={styles.modalContentStyle}>
+          <View style={styles.modalTitleStyle}>
+            <Button title="Close" onPress={() => setNotesModalVisible(false)} />
+            <Text style={{ color: "black", fontSize: 18 }}>
+              Laboratory Name
+            </Text>
+            <Button title="Save" onPress={() => setLabModalVisible(false)} />
+          </View>
+          <View
+            style={{
+              flexDirection: "column",
+              justifyContent: "center",
+              width: "100%",
+              alignItems: "flex-end",
+              paddingHorizontal: 18,
+            }}
+          >
+            <TextInput
+              autoFocus={true}
+              style={styles.input}
+              value={laboratory}
+              onChangeText={setLaboratory}
+              placeholder="Enter Laboratory"
+            />
+          </View>
+        </View>
+      </Modal>
+
+      {/* Notes Modal */}
+      <Modal
+        isVisible={isNotesModalVisible}
+        onBackdropPress={() => setNotesModalVisible(false)}
+        style={{ justifyContent: "flex-end", margin: 0 }}
+      >
+        <View style={styles.modalContentStyle}>
+          <View style={styles.modalTitleStyle}>
+            <Button title="Close" onPress={() => setNotesModalVisible(false)} />
+            <Text style={{ color: "black", fontSize: 18 }}>Enter Notes</Text>
+            <Button title="Save" onPress={() => setNotesModalVisible(false)} />
+          </View>
+          <View
+            style={{
+              flexDirection: "column",
+              justifyContent: "center",
+              width: "100%",
+              alignItems: "flex-end",
+              paddingHorizontal: 18,
+            }}
+          >
+            <TextInput
+              autoFocus={true}
+              style={styles.inputNotes}
+              value={notes}
+              multiline={true}
+              numberOfLines={6}
+              maxLength={140}
+              onChangeText={setNotes}
+              placeholder="Enter Notes"
+            />
+            <Text>{notes?.length ?? 0}/140</Text>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
+  container: { flex: 1, backgroundColor: "#fff" },
   profileContainer: {
     flexDirection: "row",
     paddingHorizontal: 24,
@@ -126,25 +295,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#ccc",
     marginRight: 16,
   },
-  profileDetails: {
-    flex: 1,
-    justifyContent: "center",
-  },
-  profileText: {
-    fontSize: 14,
-    color: "#333",
-    fontWeight: "bold",
-  },
-  profileValue: {
-    fontSize: 16,
-    fontWeight: "normal",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
+  profileDetails: { flex: 1, justifyContent: "center" },
+  profileText: { fontSize: 16, color: "#333", fontWeight: "bold" },
+  profileValue: { fontSize: 16, fontWeight: "normal", marginBottom: 8 },
+  subtitle: { fontSize: 20, fontWeight: "bold", marginBottom: 8 },
   biomarkerItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -153,29 +307,59 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: "#eee",
   },
-  biomarkerName: {
-    fontWeight: "bold",
-  },
-  biomarkerDetails: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  biomarkerValue: {
-    marginRight: 8,
-  },
-  abnormalHigh: {
-    color: "orange",
-  },
-  abnormalLow: {
-    color: "orange",
-  },
-  normal: {
-    color: "green",
-  },
+  biomarkerName: { fontWeight: "bold" },
+  biomarkerDetails: { flexDirection: "row", alignItems: "center" },
+  biomarkerValue: { marginRight: 8 },
+  abnormalHigh: { color: "orange" },
+  abnormalLow: { color: "orange" },
+  normal: { color: "green" },
   detailRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 8,
+    borderBottomWidth: 1,
+    borderColor: "#ccc",
+    paddingBottom: 4,
+    paddingTop: 4,
+    alignItems: "center",
+  },
+  input: {
+    borderBottomWidth: 1,
+    borderColor: "#ccc",
+    padding: 4,
+    fontSize: 16,
+    height: 40,
+    width: "100%",
+  },
+  inputNotes: {
+    borderBottomWidth: 1,
+    borderColor: "#ccc",
+    padding: 4,
+    fontSize: 16,
+    height: 200,
+    width: "100%",
+  },
+  modalTitleStyle: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    paddingHorizontal: 10,
+    height: 50,
+    borderBottomWidth: 1,
+    borderColor: "#ccc",
+  },
+  modalContentStyleDate: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    alignItems: "center",
+    height: "33%",
+  },
+  modalContentStyle: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    alignItems: "center",
+    height: "66%",
   },
 });
 

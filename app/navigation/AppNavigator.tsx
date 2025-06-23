@@ -44,8 +44,9 @@ const AppNavigator = () => {
   const { deleteReport } = useLabReportsStore();
   const { deleteBiomarkersForReport } = useBiomarkersStore();
 
-  const toggleEditMode = () => {
+  const toggleEditMode = (navigation) => {
     setIsEditMode((prev) => !prev);
+    navigation.setParams({ isEditMode: !isEditMode });
   };
 
   const confirmDelete = (id, navigation) => {
@@ -102,7 +103,7 @@ const AppNavigator = () => {
           ),
           headerRight: () => (
             <TouchableOpacity
-              onPress={toggleEditMode}
+              onPress={() => toggleEditMode(navigation)}
               style={{ marginRight: 10 }}
             >
               <Ionicons

@@ -39,7 +39,7 @@ export const useLabReportsStore = create<LabReportsState>()(
         }
       },
 
-      updateReport: (report) => {
+      updateReport: async (report) => {
         // TODO check if this is needed. Insert fallback if update arrives before insert or insert is not firing
         const existing = get().reports;
         const exists = existing.some((r) => r.id === report.id);
@@ -51,16 +51,26 @@ export const useLabReportsStore = create<LabReportsState>()(
         // end TODO
 
         const updated = existing.map((r) => (r.id === report.id ? report : r));
-        set({ reports: updated });
+
+        try {
+          await supabase.from("lab_reports").update(report).eq("id", report.id);
+          set({ reports: updated });
+          Toast.show({
+            type: "success",
+            text1: "Success",
+            text2: "Lab report updated successfully!",
+          });
+        } catch (err) {
+          console.error("Unexpected error:", err);
+        }
       },
 
       deleteReport: async (id) => {
         try {
           await supabase.from("files").delete().eq("lab_report_id", id);
           await supabase.from("lab_reports").delete().eq("id", id);
-          set({ reports: get().reports.filter((r) => r.id !== id) });
           await supabase.from("biomarkers").delete().eq("lab_report_id", id);
-
+          set({ reports: get().reports.filter((r) => r.id !== id) });
           Toast.show({
             type: "success",
             text1: "Success",
