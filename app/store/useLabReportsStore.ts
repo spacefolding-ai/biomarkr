@@ -1,6 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Toast from "react-native-toast-message";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { supabase } from "../services/supabaseClient"; // Ensure this import is correct
 import { LabReport } from "../types/LabReport";
 
 interface LabReportsState {
@@ -52,8 +54,21 @@ export const useLabReportsStore = create<LabReportsState>()(
         set({ reports: updated });
       },
 
-      deleteReport: (id) => {
-        set({ reports: get().reports.filter((r) => r.id !== id) });
+      deleteReport: async (id) => {
+        try {
+          await supabase.from("files").delete().eq("lab_report_id", id);
+          await supabase.from("lab_reports").delete().eq("id", id);
+          set({ reports: get().reports.filter((r) => r.id !== id) });
+          // delete corresponding biomarkers
+          await supabase.from("biomarkers").delete().eq("lab_report_id", id);
+          Toast.show({
+            type: "success",
+            text1: "Success",
+            text2: "Lab report deleted successfully!",
+          });
+        } catch (err) {
+          console.error("Unexpected error:", err);
+        }
       },
 
       setRefreshing: (refreshing) => set({ refreshing }),
