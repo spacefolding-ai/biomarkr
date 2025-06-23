@@ -52,7 +52,7 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
     padding: 20,
     borderRadius: 10,
     alignItems: "center",
-    height: Dimensions.get("window").height / 4,
+    height: "25%",
   };
 
   const handleSave = () => {
