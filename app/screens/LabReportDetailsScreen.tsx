@@ -13,6 +13,7 @@ import {
 import Modal from "react-native-modal";
 import { SceneMap, TabView } from "react-native-tab-view";
 import { useBiomarkersStore } from "../store/useBiomarkersStore";
+import { useLabReportsStore } from "../store/useLabReportsStore";
 import { LabReport } from "../types/LabReport";
 
 interface LabReportDetailsScreenProps {
@@ -50,34 +51,19 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
   );
   const [isLabModalVisible, setLabModalVisible] = useState(false);
   const [isNotesModalVisible, setNotesModalVisible] = useState(false);
-
-  const modalTitleStyle = {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    width: "100%",
-    paddingHorizontal: 10,
-    height: 50,
-    borderBottomWidth: 1,
-    borderColor: "#ccc",
-  };
-
-  const modalContentStyleDate = {
-    backgroundColor: "white",
-    borderRadius: 10,
-    alignItems: "center",
-    height: "33%",
-  };
-
-  const modalContentStyle = {
-    backgroundColor: "white",
-    borderRadius: 10,
-    alignItems: "center",
-    height: "66%",
-  };
+  const { updateReport } = useLabReportsStore();
 
   const handleSave = () => {
-    // Save logic here
+    // Logic to update the Lab Report
+    const updatedReport = {
+      ...labReport,
+      report_date: date,
+      laboratory_name: laboratory,
+      notes: notes,
+      id: labReport.id,
+    };
+    // Call a function to save the updated report
+    updateReport(updatedReport);
   };
 
   const renderScene = SceneMap({
