@@ -44,15 +44,17 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
   const [notes, setNotes] = useState(labReport.notes);
 
   const [isDateModalVisible, setDateModalVisible] = useState(false);
+  const [selectedTempDate, setSelectedTempDate] = useState<Date>(
+    new Date(date)
+  );
   const [isLabModalVisible, setLabModalVisible] = useState(false);
   const [isNotesModalVisible, setNotesModalVisible] = useState(false);
 
   const modalContentStyle = {
     backgroundColor: "white",
-    padding: 20,
     borderRadius: 10,
     alignItems: "center",
-    height: "25%",
+    height: "33%",
   };
 
   const handleSave = () => {
@@ -168,19 +170,37 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
         style={{ justifyContent: "flex-end", margin: 0 }}
       >
         <View style={modalContentStyle}>
-          <Text>Change Date</Text>
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+              width: "100%",
+              paddingHorizontal: 10,
+              height: 50,
+            }}
+          >
+            <Button title="Cancel" onPress={() => setDateModalVisible(false)} />
+            <Text style={{ color: "black", fontSize: 18 }}>Change Date</Text>
+            <Button
+              title="Done"
+              onPress={() => {
+                setDate(selectedTempDate.toISOString()); // ← update final value here
+                setDateModalVisible(false);
+              }}
+            />
+          </View>
+
           <DateTimePicker
             value={new Date(date)}
             mode="date"
             display="spinner"
             onChange={(event, selectedDate) => {
-              if (event.type === "set" && selectedDate) {
-                setDate(selectedDate.toISOString());
+              if (selectedDate) {
+                setSelectedTempDate(selectedDate); // ← don't update main date yet
               }
-              setDateModalVisible(false);
             }}
           />
-          <Button title="Close" onPress={() => setDateModalVisible(false)} />
         </View>
       </Modal>
 
