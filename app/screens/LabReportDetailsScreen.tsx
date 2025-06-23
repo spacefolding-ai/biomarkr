@@ -18,6 +18,7 @@ interface LabReportDetailsScreenProps {
   route: {
     params: {
       labReport: LabReport;
+      isEditMode: boolean;
     };
   };
 }
@@ -36,7 +37,9 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
     { key: "docs", title: "Docs" },
   ]);
 
-  const [date, setDate] = useState(labReport.report_date);
+  const [date, setDate] = useState(
+    labReport.report_date || new Date().toISOString()
+  );
   const [laboratory, setLaboratory] = useState(labReport.laboratory_name);
   const [notes, setNotes] = useState(labReport.notes);
 
@@ -44,9 +47,16 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
   const [isLabModalVisible, setLabModalVisible] = useState(false);
   const [isNotesModalVisible, setNotesModalVisible] = useState(false);
 
+  const modalContentStyle = {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
+    height: Dimensions.get("window").height / 4,
+  };
+
   const handleSave = () => {
-    // Update the store with new values
-    // Call update function from the store
+    // Save logic here
   };
 
   const renderScene = SceneMap({
@@ -92,11 +102,13 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
             <Text style={styles.profileText}>Date</Text>
             {isEditMode ? (
               <Button
-                title={date || "Set Date"}
+                title={new Date(date).toLocaleDateString()}
                 onPress={() => setDateModalVisible(true)}
               />
             ) : (
-              <Text style={styles.profileValue}>{date}</Text>
+              <Text style={styles.profileValue}>
+                {new Date(date).toLocaleDateString()}
+              </Text>
             )}
           </View>
           <View style={styles.detailRow}>
@@ -139,12 +151,14 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
           </View>
         </View>
       </View>
+
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}
         onIndexChange={setIndex}
         initialLayout={{ width: Dimensions.get("window").width }}
       />
+
       {isEditMode && <Button title="Save" onPress={handleSave} />}
 
       {/* Date Modal */}
@@ -153,15 +167,17 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
         onBackdropPress={() => setDateModalVisible(false)}
         style={{ justifyContent: "flex-end", margin: 0 }}
       >
-        <View style={styles.modalContent}>
+        <View style={modalContentStyle}>
           <Text>Change Date</Text>
           <DateTimePicker
             value={new Date(date)}
             mode="date"
             display="spinner"
             onChange={(event, selectedDate) => {
-              const currentDate = selectedDate || date;
-              setDate(currentDate);
+              if (event.type === "set" && selectedDate) {
+                setDate(selectedDate.toISOString());
+              }
+              setDateModalVisible(false);
             }}
           />
           <Button title="Close" onPress={() => setDateModalVisible(false)} />
@@ -169,8 +185,13 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
       </Modal>
 
       {/* Laboratory Modal */}
-      <Modal isVisible={isLabModalVisible}>
-        <View style={styles.modalContent}>
+      <Modal
+        isVisible={isLabModalVisible}
+        onBackdropPress={() => setLabModalVisible(false)}
+        style={{ justifyContent: "flex-end", margin: 0 }}
+      >
+        <View style={modalContentStyle}>
+          <Text>Enter Laboratory</Text>
           <TextInput
             style={styles.input}
             value={laboratory}
@@ -182,8 +203,13 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
       </Modal>
 
       {/* Notes Modal */}
-      <Modal isVisible={isNotesModalVisible}>
-        <View style={styles.modalContent}>
+      <Modal
+        isVisible={isNotesModalVisible}
+        onBackdropPress={() => setNotesModalVisible(false)}
+        style={{ justifyContent: "flex-end", margin: 0 }}
+      >
+        <View style={modalContentStyle}>
+          <Text>Enter Notes</Text>
           <TextInput
             style={styles.input}
             value={notes}
@@ -198,10 +224,7 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
+  container: { flex: 1, backgroundColor: "#fff" },
   profileContainer: {
     flexDirection: "row",
     paddingHorizontal: 24,
@@ -217,25 +240,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#ccc",
     marginRight: 16,
   },
-  profileDetails: {
-    flex: 1,
-    justifyContent: "center",
-  },
-  profileText: {
-    fontSize: 14,
-    color: "#333",
-    fontWeight: "bold",
-  },
-  profileValue: {
-    fontSize: 16,
-    fontWeight: "normal",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 8,
-  },
+  profileDetails: { flex: 1, justifyContent: "center" },
+  profileText: { fontSize: 14, color: "#333", fontWeight: "bold" },
+  profileValue: { fontSize: 16, fontWeight: "normal", marginBottom: 8 },
+  subtitle: { fontSize: 20, fontWeight: "bold", marginBottom: 8 },
   biomarkerItem: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -244,25 +252,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderColor: "#eee",
   },
-  biomarkerName: {
-    fontWeight: "bold",
-  },
-  biomarkerDetails: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  biomarkerValue: {
-    marginRight: 8,
-  },
-  abnormalHigh: {
-    color: "orange",
-  },
-  abnormalLow: {
-    color: "orange",
-  },
-  normal: {
-    color: "green",
-  },
+  biomarkerName: { fontWeight: "bold" },
+  biomarkerDetails: { flexDirection: "row", alignItems: "center" },
+  biomarkerValue: { marginRight: 8 },
+  abnormalHigh: { color: "orange" },
+  abnormalLow: { color: "orange" },
+  normal: { color: "green" },
   detailRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -277,12 +272,8 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     padding: 4,
     fontSize: 16,
-  },
-  modalContent: {
-    backgroundColor: "white",
-    padding: 20,
-    borderRadius: 10,
-    alignItems: "center",
+    height: 40,
+    width: "100%",
   },
 });
 
