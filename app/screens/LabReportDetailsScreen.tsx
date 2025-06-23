@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import {
   Button,
   Dimensions,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -103,10 +104,11 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
           <View style={styles.detailRow}>
             <Text style={styles.profileText}>Date</Text>
             {isEditMode ? (
-              <Button
-                title={new Date(date).toLocaleDateString()}
-                onPress={() => setDateModalVisible(true)}
-              />
+              <Pressable onPress={() => setDateModalVisible(true)}>
+                <Text style={{ ...styles.profileValue, color: "orange" }}>
+                  {new Date(date).toLocaleDateString()}
+                </Text>
+              </Pressable>
             ) : (
               <Text style={styles.profileValue}>
                 {new Date(date).toLocaleDateString()}
@@ -128,10 +130,11 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
           <View style={styles.detailRow}>
             <Text style={styles.profileText}>Laboratory</Text>
             {isEditMode ? (
-              <Button
-                title={laboratory || "Set Laboratory"}
-                onPress={() => setLabModalVisible(true)}
-              />
+              <Pressable onPress={() => setLabModalVisible(true)}>
+                <Text style={{ ...styles.profileValue, color: "orange" }}>
+                  {laboratory || "Set Laboratory"}
+                </Text>
+              </Pressable>
             ) : (
               <Text style={styles.profileValue}>
                 {laboratory || "Not specified"}
@@ -141,10 +144,11 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
           <View style={styles.detailRow}>
             <Text style={styles.profileText}>Notes</Text>
             {isEditMode ? (
-              <Button
-                title={notes || "Add Notes"}
-                onPress={() => setNotesModalVisible(true)}
-              />
+              <Pressable onPress={() => setNotesModalVisible(true)}>
+                <Text style={{ ...styles.profileValue, color: "orange" }}>
+                  {notes || "Add Notes"}
+                </Text>
+              </Pressable>
             ) : (
               <Text style={styles.profileValue}>
                 {notes || "Not specified"}
@@ -261,7 +265,7 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   profileDetails: { flex: 1, justifyContent: "center" },
-  profileText: { fontSize: 14, color: "#333", fontWeight: "bold" },
+  profileText: { fontSize: 16, color: "#333", fontWeight: "bold" },
   profileValue: { fontSize: 16, fontWeight: "normal", marginBottom: 8 },
   subtitle: { fontSize: 20, fontWeight: "bold", marginBottom: 8 },
   biomarkerItem: {
@@ -286,6 +290,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     paddingBottom: 4,
     paddingTop: 4,
+    alignItems: "center",
   },
   input: {
     borderBottomWidth: 1,
