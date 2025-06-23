@@ -1,3 +1,4 @@
+import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useState } from "react";
 import {
   Button,
@@ -8,6 +9,7 @@ import {
   TextInput,
   View,
 } from "react-native";
+import Modal from "react-native-modal";
 import { SceneMap, TabView } from "react-native-tab-view";
 import { useBiomarkersStore } from "../store/useBiomarkersStore";
 import { LabReport } from "../types/LabReport";
@@ -37,6 +39,10 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
   const [date, setDate] = useState(labReport.report_date);
   const [laboratory, setLaboratory] = useState(labReport.laboratory_name);
   const [notes, setNotes] = useState(labReport.notes);
+
+  const [isDateModalVisible, setDateModalVisible] = useState(false);
+  const [isLabModalVisible, setLabModalVisible] = useState(false);
+  const [isNotesModalVisible, setNotesModalVisible] = useState(false);
 
   const handleSave = () => {
     // Update the store with new values
@@ -87,9 +93,7 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
             {isEditMode ? (
               <Button
                 title={date || "Set Date"}
-                onPress={() => {
-                  /* Open date picker */
-                }}
+                onPress={() => setDateModalVisible(true)}
               />
             ) : (
               <Text style={styles.profileValue}>{date}</Text>
@@ -110,11 +114,9 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
           <View style={styles.detailRow}>
             <Text style={styles.profileText}>Laboratory</Text>
             {isEditMode ? (
-              <TextInput
-                style={styles.input}
-                value={laboratory}
-                onChangeText={setLaboratory}
-                placeholder="Enter Laboratory"
+              <Button
+                title={laboratory || "Set Laboratory"}
+                onPress={() => setLabModalVisible(true)}
               />
             ) : (
               <Text style={styles.profileValue}>
@@ -125,11 +127,9 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
           <View style={styles.detailRow}>
             <Text style={styles.profileText}>Notes</Text>
             {isEditMode ? (
-              <TextInput
-                style={styles.input}
-                value={notes}
-                onChangeText={setNotes}
-                placeholder="Enter Notes"
+              <Button
+                title={notes || "Add Notes"}
+                onPress={() => setNotesModalVisible(true)}
               />
             ) : (
               <Text style={styles.profileValue}>
@@ -146,6 +146,53 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
         initialLayout={{ width: Dimensions.get("window").width }}
       />
       {isEditMode && <Button title="Save" onPress={handleSave} />}
+
+      {/* Date Modal */}
+      <Modal
+        isVisible={isDateModalVisible}
+        onBackdropPress={() => setDateModalVisible(false)}
+        style={{ justifyContent: "flex-end", margin: 0 }}
+      >
+        <View style={styles.modalContent}>
+          <Text>Change Date</Text>
+          <DateTimePicker
+            value={new Date(date)}
+            mode="date"
+            display="spinner"
+            onChange={(event, selectedDate) => {
+              const currentDate = selectedDate || date;
+              setDate(currentDate);
+            }}
+          />
+          <Button title="Close" onPress={() => setDateModalVisible(false)} />
+        </View>
+      </Modal>
+
+      {/* Laboratory Modal */}
+      <Modal isVisible={isLabModalVisible}>
+        <View style={styles.modalContent}>
+          <TextInput
+            style={styles.input}
+            value={laboratory}
+            onChangeText={setLaboratory}
+            placeholder="Enter Laboratory"
+          />
+          <Button title="Close" onPress={() => setLabModalVisible(false)} />
+        </View>
+      </Modal>
+
+      {/* Notes Modal */}
+      <Modal isVisible={isNotesModalVisible}>
+        <View style={styles.modalContent}>
+          <TextInput
+            style={styles.input}
+            value={notes}
+            onChangeText={setNotes}
+            placeholder="Enter Notes"
+          />
+          <Button title="Close" onPress={() => setNotesModalVisible(false)} />
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -230,6 +277,12 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     padding: 4,
     fontSize: 16,
+  },
+  modalContent: {
+    backgroundColor: "white",
+    padding: 20,
+    borderRadius: 10,
+    alignItems: "center",
   },
 });
 
