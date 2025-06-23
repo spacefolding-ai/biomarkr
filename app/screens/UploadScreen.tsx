@@ -3,7 +3,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import * as Camera from "expo-camera";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Button,
@@ -96,9 +96,6 @@ export default function UploadScreen() {
       return;
     }
 
-    console.log("Uploading file:", fileInfo);
-    console.log("User ID:", user.id);
-
     try {
       setUploading(true);
       await uploadFileAndInsertToDb(
@@ -128,7 +125,6 @@ export default function UploadScreen() {
 
   const handleCancel = () => {
     setFileInfo(null);
-    // Navigate back to the previous screen
   };
 
   return (

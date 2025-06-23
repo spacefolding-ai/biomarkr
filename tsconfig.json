@@ -5,6 +5,8 @@
       "*": ["node_modules/*", "app/types/*"]
     },
     "jsx": "react-native",
+    "lib": ["es6", "dom"],
+    "types": ["react", "react-native", "expo"],
     "esModuleInterop": true
   },
   "extends": "expo/tsconfig.base",

@@ -36,7 +36,7 @@
     "@types/uuid": "^10.0.0",
     "date-fns": "^4.1.0",
     "expo": "53.0.12",
-    "expo-app-loading": "^1.1.2",
+    "expo-app-loading": "^1.0.3",
     "expo-auth-session": "~6.2.0",
     "expo-camera": "~16.1.8",
     "expo-constants": "~17.1.6",
@@ -45,24 +45,28 @@
     "expo-font": "~13.3.1",
     "expo-image-manipulator": "~13.1.7",
     "expo-image-picker": "~16.1.4",
+    "expo-local-authentication": "~16.0.4",
     "expo-notifications": "~0.31.3",
     "expo-random": "^14.0.1",
     "js-base64": "^3.7.7",
     "lucide-react-native": "^0.514.0",
     "nativewind": "^4.1.23",
-    "react": "19.0.0",
+    "react": "^19.0.0",
     "react-dom": "19.0.0",
     "react-hook-form": "^7.57.0",
-    "react-native": "0.79.4",
+    "react-native": "^0.79.4",
     "react-native-dotenv": "^3.4.11",
     "react-native-gesture-handler": "~2.24.0",
     "react-native-get-random-values": "^1.11.0",
+    "react-native-image-resizer": "^1.4.5",
     "react-native-mime-types": "^2.5.0",
     "react-native-paper": "^5.14.5",
+    "react-native-pdf-lib": "^1.0.0",
     "react-native-reanimated": "~3.17.4",
     "react-native-safe-area-context": "5.4.0",
     "react-native-screens": "^4.11.1",
-    "react-native-svg": "15.11.2",
+    "react-native-svg": "^15.11.2",
+    "react-native-svg-transformer": "^1.5.1",
     "react-native-toast-message": "^2.3.0",
     "react-native-url-polyfill": "^2.0.0",
     "react-native-vector-icons": "^10.2.0",
@@ -70,8 +74,7 @@
     "uuid": "^11.1.0",
     "victory-native": "^41.17.4",
     "zod": "^3.25.63",
-    "zustand": "^5.0.5",
-    "expo-local-authentication": "~16.0.4"
+    "zustand": "^5.0.5"
   },
   "expo": {
     "doctor": {
@@ -81,9 +84,12 @@
     }
   },
   "devDependencies": {
-    "@types/react": "~19.0.10",
-    "@types/react-native": "^0.72.8",
+    "@babel/plugin-transform-private-methods": "^7.27.1",
+    "@react-native-community/cli": "latest",
+    "@types/react": "^19.0.10",
+    "@types/react-native": "^0.73.0",
     "babel-plugin-module-resolver": "^5.0.2",
-    "typescript": "~5.8.3"
+    "metro-react-native-babel-preset": "^0.77.0",
+    "typescript": "^5.8.3"
   }
 }

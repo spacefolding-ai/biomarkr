@@ -1,6 +1,8 @@
 import { v4 as uuidv4 } from "uuid";
-import { supabase } from "./supabaseClient";
+import { ExtractionStatus } from "../types/ExtractionStatus.enum";
+import { generatePreview } from "../utils/file";
 import { uploadFileToStorage } from "./storage";
+import { supabase } from "./supabaseClient";
 
 // Simplified mime resolver
 function getMimeType(fileName: string): string {
@@ -26,15 +28,33 @@ export async function uploadFileAndInsertToDb(
   const fileExt = fileName.split(".").pop()?.toLowerCase();
   const mimeType = getMimeType(fileName);
   const uniqueFileName = `${uuidv4()}.${fileExt}`;
-  const filePath = `reports/${userId}/${uniqueFileName}`;
+  const filePath = `uploads/reports/${userId}/${uniqueFileName}`;
 
-  await uploadFileToStorage(fileUri, filePath, mimeType);
+  // Upload the main file
+  const fileData = await uploadFileToStorage(fileUri, filePath, mimeType);
+  if (!fileData) throw new Error("File upload failed");
 
+  // Generate and upload the thumbnail
+  const previewUri = await generatePreview(
+    fileUri,
+    mimeType.startsWith("image") ? "image" : "pdf"
+  );
+  const previewFileName = `thumb_${uniqueFileName}`;
+  const previewFilePath = `reports/${userId}/${previewFileName}`;
+  const thumbData = await uploadFileToStorage(
+    previewUri as string,
+    previewFilePath,
+    "image/jpeg"
+  );
+  if (!thumbData) throw new Error("Thumbnail upload failed");
+
+  // Insert file into the database
   const { error: insertError } = await supabase.from("files").insert({
     user_id: userId,
-    file_path: filePath,
+    file_url: fileData.path,
     file_name: uniqueFileName,
-    extraction_status: "pending",
+    thumbnail_url: thumbData.path,
+    extraction_status: ExtractionStatus.PENDING,
     uploaded_at: new Date().toISOString(),
   });
 

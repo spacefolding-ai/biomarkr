@@ -13,8 +13,10 @@ import {
 } from "react-native";
 import { RootStackParamList } from "../navigation/types";
 
+import { FileText } from "lucide-react-native";
 import { useMemo } from "react";
 import ExtractionProgressBar from "../components/ExtractionProgressBar";
+import { ThumbnailLoader } from "../components/ThumbnailLoader";
 import { ExtractionStatus } from "../types/ExtractionStatus.enum";
 import { LabReport } from "../types/LabReport";
 
@@ -64,7 +66,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
     return (
       <TouchableOpacity
         onPress={() => {
-          if (item.extraction_status === ExtractionStatus.Done) {
+          if (item.extraction_status === ExtractionStatus.DONE) {
             navigation.navigate("LabReportDetails", { labReport: item });
           }
         }}
@@ -80,20 +82,28 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
             borderColor: "#eee",
           }}
         >
-          {item?.extraction_status === ExtractionStatus.Done &&
+          {item?.extraction_status === ExtractionStatus.DONE &&
             item?.description && (
               <>
-                <View style={{ flex: 3 }}>
-                  <Text style={{ fontWeight: "bold" }}>
-                    {item?.laboratory_name}
-                  </Text>
-                  <Text style={{ color: "#444" }}>{item?.description}</Text>
-                  {item?.report_date &&
-                    !isNaN(Date.parse(item.report_date)) && (
-                      <Text style={{ color: "#888" }}>
-                        {format(new Date(item.report_date), "d MMM yyyy")}
-                      </Text>
-                    )}
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  {/\.(jpeg|png|jpg)$/i.test(item?.file_name) ? (
+                    <ThumbnailLoader path={item.thumbnail_url} size={48} />
+                  ) : (
+                    <FileText size={48} color="#000" />
+                  )}
+                  <View style={{ marginLeft: 8 }}>
+                    <Text style={{ fontWeight: "bold" }}>
+                      {item?.laboratory_name}
+                    </Text>
+                    <Text style={{ color: "#444" }}>{item?.description}</Text>
+
+                    {item?.report_date &&
+                      !isNaN(Date.parse(item.report_date)) && (
+                        <Text style={{ color: "#888" }}>
+                          {format(new Date(item.report_date), "d MMM yyyy")}
+                        </Text>
+                      )}
+                  </View>
                 </View>
                 <Text style={{ color: "green", fontSize: 12, marginLeft: 10 }}>
                   Extracted ✅
@@ -101,7 +111,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
               </>
             )}
 
-          {item?.extraction_status !== ExtractionStatus.Done && (
+          {item?.extraction_status !== ExtractionStatus.DONE && (
             <View style={{ flex: 3 }}>
               <ExtractionProgressBar status={item?.extraction_status} />
               <Text style={{ marginTop: 8, color: "#555" }}>Analyzing...</Text>

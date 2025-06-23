@@ -10,5 +10,11 @@ export default {
       supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY,
     },
     scheme: "biomarkr",
+    android: {
+      package: "com.anonymous.biomarkr",
+    },
+    ios: {
+      bundleIdentifier: "com.anonymous.biomarkr",
+    },
   },
 };
