@@ -13,6 +13,7 @@ interface BiomarkersState {
   addBiomarker: (biomarker: Biomarker) => void;
   updateBiomarker: (biomarker: Biomarker) => void;
   deleteBiomarker: (id: string) => void;
+  deleteBiomarkersForReport: (reportId: string) => void;
   setRefreshing: (refreshing: boolean) => void;
   setLoading: (loading: boolean) => void;
 }
@@ -46,6 +47,13 @@ export const useBiomarkersStore = create<BiomarkersState>()(
 
       deleteBiomarker: (id) => {
         const filtered = get().biomarkers.filter((b) => b.id !== id);
+        set({ biomarkers: filtered });
+      },
+
+      deleteBiomarkersForReport: (reportId) => {
+        const filtered = get().biomarkers.filter(
+          (b) => b.report_id !== reportId
+        );
         set({ biomarkers: filtered });
       },
 

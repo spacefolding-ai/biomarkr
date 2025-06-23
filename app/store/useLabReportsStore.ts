@@ -59,8 +59,8 @@ export const useLabReportsStore = create<LabReportsState>()(
           await supabase.from("files").delete().eq("lab_report_id", id);
           await supabase.from("lab_reports").delete().eq("id", id);
           set({ reports: get().reports.filter((r) => r.id !== id) });
-          // delete corresponding biomarkers
           await supabase.from("biomarkers").delete().eq("lab_report_id", id);
+
           Toast.show({
             type: "success",
             text1: "Success",
