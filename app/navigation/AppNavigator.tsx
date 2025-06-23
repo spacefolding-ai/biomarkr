@@ -2,8 +2,8 @@ import { Ionicons } from "@expo/vector-icons";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createStackNavigator } from "@react-navigation/stack";
 import { LogIn, UserPlus } from "lucide-react-native";
-import React from "react";
-import { TouchableOpacity } from "react-native";
+import React, { useState } from "react";
+import { Alert, TouchableOpacity } from "react-native";
 import { AppIcon, IconName } from "../components/IconRegistry";
 import HealthLabScreen from "../screens/HealthLabScreen";
 import LabAssistantScreen from "../screens/LabAssistantScreen";
@@ -13,6 +13,8 @@ import MoreScreen from "../screens/MoreScreen";
 import OverviewScreen from "../screens/OverviewScreen";
 import SignupScreen from "../screens/SignupScreen";
 import UploadScreen from "../screens/UploadScreen";
+import { useBiomarkersStore } from "../store/useBiomarkersStore";
+import { useLabReportsStore } from "../store/useLabReportsStore";
 import { RootStackParamList } from "./types";
 
 const Tab = createBottomTabNavigator();
@@ -38,6 +40,39 @@ const AuthTabNavigator = () => (
 );
 
 const AppNavigator = () => {
+  const [isEditMode, setIsEditMode] = useState(false);
+  const { deleteReport } = useLabReportsStore();
+  const { deleteBiomarkersForReport } = useBiomarkersStore();
+
+  const toggleEditMode = () => {
+    setIsEditMode((prev) => !prev);
+  };
+
+  const confirmDelete = (id, navigation) => {
+    Alert.alert(
+      "Are you sure you want to delete Lab Result?",
+      "All result's biomarkers will be lost",
+      [
+        {
+          text: "Cancel",
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => handleDelete(id, navigation),
+        },
+      ]
+    );
+  };
+
+  const handleDelete = (id: string, navigation: any) => {
+    deleteReport(id);
+    setIsEditMode(false);
+    deleteBiomarkersForReport(id);
+    navigation.goBack();
+  };
+
   return (
     <Stack.Navigator id={undefined} screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Auth" component={AuthTabNavigator} />
@@ -45,25 +80,36 @@ const AppNavigator = () => {
       <Stack.Screen
         name="LabReportDetails"
         component={LabReportDetailsScreen}
-        options={({ navigation }) => ({
+        initialParams={isEditMode}
+        options={({ navigation, route }) => ({
           title: "Lab Report",
           headerShown: true,
           headerLeft: () => (
             <TouchableOpacity
-              onPress={() => navigation.goBack()}
+              onPress={
+                isEditMode
+                  ? () => confirmDelete(route.params.labReport.id, navigation)
+                  : () => navigation.goBack()
+              }
               style={{ marginLeft: 10 }}
             >
-              <Ionicons name="arrow-back" size={28} color="black" />
+              <Ionicons
+                name={isEditMode ? "trash" : "arrow-back"}
+                size={28}
+                color="black"
+              />
             </TouchableOpacity>
           ),
           headerRight: () => (
             <TouchableOpacity
-              onPress={() => {
-                /* Future edit functionality */
-              }}
+              onPress={toggleEditMode}
               style={{ marginRight: 10 }}
             >
-              <Ionicons name="pencil" size={24} color="black" />
+              <Ionicons
+                name={isEditMode ? "checkmark" : "pencil"}
+                size={24}
+                color="black"
+              />
             </TouchableOpacity>
           ),
           headerTitleStyle: {

@@ -15,7 +15,7 @@ interface LabReportDetailsScreenProps {
 const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
   route,
 }) => {
-  const { labReport } = route.params;
+  const { labReport, isEditMode } = route.params;
   const { biomarkers } = useBiomarkersStore();
   const relatedBiomarkers = biomarkers.filter(
     (b) => b.report_id === labReport.id
