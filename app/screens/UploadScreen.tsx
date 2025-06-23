@@ -159,6 +159,7 @@ export default function UploadScreen() {
             <Image
               source={{ uri: fileInfo.normalizedUri }}
               style={styles.imagePreview}
+              onError={(error) => console.log("Image load error:", error)}
             />
           )}
           <Text style={styles.pathText}>
