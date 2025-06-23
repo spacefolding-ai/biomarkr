@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Dimensions, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  Button,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { SceneMap, TabView } from "react-native-tab-view";
 import { useBiomarkersStore } from "../store/useBiomarkersStore";
 import { LabReport } from "../types/LabReport";
@@ -20,12 +28,20 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
   const relatedBiomarkers = biomarkers.filter(
     (b) => b.report_id === labReport.id
   );
-
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: "results", title: "Results" },
     { key: "docs", title: "Docs" },
   ]);
+
+  const [date, setDate] = useState(labReport.report_date);
+  const [laboratory, setLaboratory] = useState(labReport.laboratory_name);
+  const [notes, setNotes] = useState(labReport.notes);
+
+  const handleSave = () => {
+    // Update the store with new values
+    // Call update function from the store
+  };
 
   const renderScene = SceneMap({
     results: () => (
@@ -68,7 +84,16 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.profileText}>Date</Text>
-            <Text style={styles.profileValue}>{labReport.report_date}</Text>
+            {isEditMode ? (
+              <Button
+                title={date || "Set Date"}
+                onPress={() => {
+                  /* Open date picker */
+                }}
+              />
+            ) : (
+              <Text style={styles.profileValue}>{date}</Text>
+            )}
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.profileText}>Date of Birth</Text>
@@ -84,15 +109,33 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.profileText}>Laboratory</Text>
-            <Text style={styles.profileValue}>
-              {labReport.laboratory_name || "Not specified"}
-            </Text>
+            {isEditMode ? (
+              <TextInput
+                style={styles.input}
+                value={laboratory}
+                onChangeText={setLaboratory}
+                placeholder="Enter Laboratory"
+              />
+            ) : (
+              <Text style={styles.profileValue}>
+                {laboratory || "Not specified"}
+              </Text>
+            )}
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.profileText}>Notes</Text>
-            <Text style={styles.profileValue}>
-              {labReport.notes || "Not specified"}
-            </Text>
+            {isEditMode ? (
+              <TextInput
+                style={styles.input}
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="Enter Notes"
+              />
+            ) : (
+              <Text style={styles.profileValue}>
+                {notes || "Not specified"}
+              </Text>
+            )}
           </View>
         </View>
       </View>
@@ -102,6 +145,7 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
         onIndexChange={setIndex}
         initialLayout={{ width: Dimensions.get("window").width }}
       />
+      {isEditMode && <Button title="Save" onPress={handleSave} />}
     </View>
   );
 };
@@ -176,6 +220,16 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 8,
+    borderBottomWidth: 1,
+    borderColor: "#ccc",
+    paddingBottom: 4,
+    paddingTop: 4,
+  },
+  input: {
+    borderBottomWidth: 1,
+    borderColor: "#ccc",
+    padding: 4,
+    fontSize: 16,
   },
 });
 
