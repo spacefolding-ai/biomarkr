@@ -51,11 +51,29 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
   const [isLabModalVisible, setLabModalVisible] = useState(false);
   const [isNotesModalVisible, setNotesModalVisible] = useState(false);
 
-  const modalContentStyle = {
+  const modalTitleStyle = {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    paddingHorizontal: 10,
+    height: 50,
+    borderBottomWidth: 1,
+    borderColor: "#ccc",
+  };
+
+  const modalContentStyleDate = {
     backgroundColor: "white",
     borderRadius: 10,
     alignItems: "center",
     height: "33%",
+  };
+
+  const modalContentStyle = {
+    backgroundColor: "white",
+    borderRadius: 10,
+    alignItems: "center",
+    height: "66%",
   };
 
   const handleSave = () => {
@@ -127,6 +145,7 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
               {labReport.patient_gender || "Not specified"}
             </Text>
           </View>
+
           <View style={styles.detailRow}>
             <Text style={styles.profileText}>Laboratory</Text>
             {isEditMode ? (
@@ -141,6 +160,7 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
               </Text>
             )}
           </View>
+
           <View style={styles.detailRow}>
             <Text style={styles.profileText}>Notes</Text>
             {isEditMode ? (
@@ -173,17 +193,8 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
         onBackdropPress={() => setDateModalVisible(false)}
         style={{ justifyContent: "flex-end", margin: 0 }}
       >
-        <View style={modalContentStyle}>
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              alignItems: "center",
-              width: "100%",
-              paddingHorizontal: 10,
-              height: 50,
-            }}
-          >
+        <View style={styles.modalContentStyleDate}>
+          <View style={styles.modalTitleStyle}>
             <Button title="Cancel" onPress={() => setDateModalVisible(false)} />
             <Text style={{ color: "black", fontSize: 18 }}>Change Date</Text>
             <Button
@@ -214,15 +225,31 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
         onBackdropPress={() => setLabModalVisible(false)}
         style={{ justifyContent: "flex-end", margin: 0 }}
       >
-        <View style={modalContentStyle}>
-          <Text>Enter Laboratory</Text>
-          <TextInput
-            style={styles.input}
-            value={laboratory}
-            onChangeText={setLaboratory}
-            placeholder="Enter Laboratory"
-          />
-          <Button title="Close" onPress={() => setLabModalVisible(false)} />
+        <View style={styles.modalContentStyle}>
+          <View style={styles.modalTitleStyle}>
+            <Button title="Close" onPress={() => setNotesModalVisible(false)} />
+            <Text style={{ color: "black", fontSize: 18 }}>
+              Laboratory Name
+            </Text>
+            <Button title="Save" onPress={() => setLabModalVisible(false)} />
+          </View>
+          <View
+            style={{
+              flexDirection: "column",
+              justifyContent: "center",
+              width: "100%",
+              alignItems: "flex-end",
+              paddingHorizontal: 18,
+            }}
+          >
+            <TextInput
+              autoFocus={true}
+              style={styles.input}
+              value={laboratory}
+              onChangeText={setLaboratory}
+              placeholder="Enter Laboratory"
+            />
+          </View>
         </View>
       </Modal>
 
@@ -232,15 +259,33 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
         onBackdropPress={() => setNotesModalVisible(false)}
         style={{ justifyContent: "flex-end", margin: 0 }}
       >
-        <View style={modalContentStyle}>
-          <Text>Enter Notes</Text>
-          <TextInput
-            style={styles.input}
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="Enter Notes"
-          />
-          <Button title="Close" onPress={() => setNotesModalVisible(false)} />
+        <View style={styles.modalContentStyle}>
+          <View style={styles.modalTitleStyle}>
+            <Button title="Close" onPress={() => setNotesModalVisible(false)} />
+            <Text style={{ color: "black", fontSize: 18 }}>Enter Notes</Text>
+            <Button title="Save" onPress={() => setNotesModalVisible(false)} />
+          </View>
+          <View
+            style={{
+              flexDirection: "column",
+              justifyContent: "center",
+              width: "100%",
+              alignItems: "flex-end",
+              paddingHorizontal: 18,
+            }}
+          >
+            <TextInput
+              autoFocus={true}
+              style={styles.inputNotes}
+              value={notes}
+              multiline={true}
+              numberOfLines={6}
+              maxLength={140}
+              onChangeText={setNotes}
+              placeholder="Enter Notes"
+            />
+            <Text>{notes?.length ?? 0}/140</Text>
+          </View>
         </View>
       </Modal>
     </View>
@@ -299,6 +344,36 @@ const styles = StyleSheet.create({
     fontSize: 16,
     height: 40,
     width: "100%",
+  },
+  inputNotes: {
+    borderBottomWidth: 1,
+    borderColor: "#ccc",
+    padding: 4,
+    fontSize: 16,
+    height: 200,
+    width: "100%",
+  },
+  modalTitleStyle: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "100%",
+    paddingHorizontal: 10,
+    height: 50,
+    borderBottomWidth: 1,
+    borderColor: "#ccc",
+  },
+  modalContentStyleDate: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    alignItems: "center",
+    height: "33%",
+  },
+  modalContentStyle: {
+    backgroundColor: "white",
+    borderRadius: 10,
+    alignItems: "center",
+    height: "66%",
   },
 });
 
