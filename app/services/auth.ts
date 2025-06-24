@@ -2,7 +2,7 @@ import { NavigationProp } from "@react-navigation/native";
 import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import Toast from "react-native-toast-message";
-import { supabase } from "./supabaseClient";
+import { supabase } from "../supabase/supabaseClient";
 
 WebBrowser.maybeCompleteAuthSession();
 

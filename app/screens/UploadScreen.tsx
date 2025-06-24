@@ -23,7 +23,7 @@ export default function UploadScreen() {
   const [uploading, setUploading] = useState(false);
   const [cameraPermission, requestCameraPermission] =
     Camera.useCameraPermissions();
-  const { user, session, loading, initAuth } = useAuthStore();
+  const { user, session, loading } = useAuthStore();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
   if (loading) {

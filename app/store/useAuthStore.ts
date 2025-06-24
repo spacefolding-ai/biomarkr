@@ -3,7 +3,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Session } from "@supabase/supabase-js";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
-import { supabase } from "../services/supabaseClient";
+import { handleLogout } from "../services/auth";
+import { supabase } from "../supabase/supabaseClient";
 import { User } from "../types/user";
 import { attemptBiometricLogin } from "../utils/attemptBiometricLogin";
 
@@ -51,7 +52,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
       logout: async () => {
-        await supabase.auth.signOut();
+        await handleLogout();
         set({ session: null, user: null });
       },
     }),

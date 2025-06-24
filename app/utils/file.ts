@@ -2,7 +2,7 @@ import * as FileSystem from "expo-file-system";
 import * as ImageManipulator from "expo-image-manipulator";
 import MimeTypes from "react-native-mime-types";
 import { v4 as uuidv4 } from "uuid";
-import { supabase } from "../services/supabaseClient";
+import { supabase } from "../supabase/supabaseClient";
 
 export interface FileInfo {
   normalizedUri: string;
@@ -104,4 +104,13 @@ export async function getImageUrl(
 
   const { data } = await supabase.storage.from(bucket).createSignedUrl(key, 60);
   return data?.signedUrl ?? null;
+}
+
+export function decode(base64: string): Uint8Array {
+  const binaryString = atob(base64);
+  const bytes = new Uint8Array(binaryString.length);
+  for (let i = 0; i < binaryString.length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  return bytes;
 }

@@ -22,7 +22,7 @@ export const useBiomarkersStore = create<BiomarkersState>()(
   persist(
     (set, get) => ({
       userId: null,
-      biomarkers: [],
+      biomarkers: [] as Biomarker[],
       refreshing: false,
       loading: false,
 

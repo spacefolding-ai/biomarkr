@@ -11,12 +11,12 @@ import { ActivityIndicator, View } from "react-native";
 import "react-native-get-random-values";
 import Toast from "react-native-toast-message";
 import "react-native-url-polyfill/auto";
-import { useBiomarkersRealtime } from "./app/hooks/useBiomarkersRealtime";
-import { useLabReportsRealtime } from "./app/hooks/useLabReportsRealtime";
 import AppNavigator from "./app/navigation/AppNavigator";
 import { useAuthStore } from "./app/store/useAuthStore";
 import { useBiomarkersStore } from "./app/store/useBiomarkersStore";
 import { useLabReportsStore } from "./app/store/useLabReportsStore";
+import { useBiomarkersRealtime } from "./app/supabase/hooks/useBiomarkersRealtime";
+import { useLabReportsRealtime } from "./app/supabase/hooks/useLabReportsRealtime";
 
 export default function App() {
   const [fontsLoaded] = useFonts({

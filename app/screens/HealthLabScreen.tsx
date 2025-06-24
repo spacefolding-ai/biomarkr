@@ -1,9 +1,9 @@
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import React, { useCallback, useEffect, useState } from "react";
 import { SafeAreaView } from "react-native";
-import { supabase } from "../services/supabaseClient";
 import { useBiomarkersStore } from "../store/useBiomarkersStore";
 import { useLabReportsStore } from "../store/useLabReportsStore";
+import { supabase } from "../supabase/supabaseClient";
 import BiomarkersScreen from "./BiomarkersScreen";
 import LabReportsScreen from "./LabReportsScreen";
 
