@@ -64,25 +64,27 @@ export async function deleteAllFilesFromStorageByReportId(
     // Step 1: Fetch all file paths from the database
     const { data: files, error: fetchError } = await supabase
       .from("files")
-      .select("file_path")
+      .select("file_path, thumbnail_path")
       .eq("report_id", reportId);
     console.log("files: ", files);
     if (fetchError) {
       throw new Error(`Failed to fetch files: ${fetchError.message}`);
     }
 
-    const filePaths = files?.map((f) => f.file_path) ?? [];
+    const filePathsToDelete = files
+      .flatMap((f) => [f.file_path, f.thumbnail_path])
+      .filter(Boolean); // remove null/undefined if any
 
-    if (filePaths.length === 0) {
+    if (filePathsToDelete.length === 0) {
       console.log(`No files found for report_id: ${reportId}`);
       return;
     }
-    console.log("filePaths: ", filePaths);
+    console.log("filePathsToDelete: ", filePathsToDelete);
     // Step 2: Delete from Supabase Storage
-    const { error: storageError } = await supabase.storage
+    const { data: storageData, error: storageError } = await supabase.storage
       .from("uploads")
-      .remove(filePaths);
-
+      .remove(filePathsToDelete);
+    console.log("storageData: ", storageData);
     if (storageError) {
       throw new Error(`Failed to delete from storage: ${storageError.message}`);
     }
