@@ -13,6 +13,6 @@ export interface LabReport {
   extraction_status?: ExtractionStatus;
   notes?: string;
   file_name?: string;
-  file_url?: string;
-  thumbnail_url?: string;
+  file_path?: string;
+  thumbnail_path?: string;
 }

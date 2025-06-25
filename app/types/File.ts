@@ -3,9 +3,9 @@ import { ExtractionStatus } from "./ExtractionStatus.enum";
 export interface File {
   id: string;
   user_id: string;
-  file_url: string;
+  file_path: string;
   file_name: string;
-  thumbnail_url: string;
+  thumbnail_path: string;
   uploaded_at: string;
   extraction_status: ExtractionStatus;
   report_id: string | null;

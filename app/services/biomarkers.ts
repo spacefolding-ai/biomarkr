@@ -2,7 +2,7 @@ import Toast from "react-native-toast-message";
 import { supabase } from "../supabase/supabaseClient";
 import { Biomarker } from "../types/Biomarker";
 
-export async function deleteAllBiomarkersForReportFromDb(
+export async function deleteAllBiomarkersFromDbByReportId(
   reportId: string
 ): Promise<void> {
   try {

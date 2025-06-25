@@ -1,7 +1,6 @@
 import * as FileSystem from "expo-file-system";
 import Toast from "react-native-toast-message";
 import { supabase } from "../supabase/supabaseClient";
-import { SupabaseStorageFile } from "../types/File";
 import { decode } from "../utils/file";
 
 export async function uploadFileToStorage(
@@ -58,15 +57,35 @@ export async function deleteFileFromStorage(path: string): Promise<void> {
   }
 }
 
-export async function getAllFilesFromStorageByReportId(
+export async function deleteAllFilesFromStorageByReportId(
   reportId: string
-): Promise<SupabaseStorageFile[]> {
+): Promise<void> {
   try {
-    const { data, error } = await supabase.storage
+    // Step 1: Fetch all file paths from the database
+    const { data: files, error: fetchError } = await supabase
+      .from("files")
+      .select("file_path")
+      .eq("report_id", reportId);
+    console.log("files: ", files);
+    if (fetchError) {
+      throw new Error(`Failed to fetch files: ${fetchError.message}`);
+    }
+
+    const filePaths = files?.map((f) => f.file_path) ?? [];
+
+    if (filePaths.length === 0) {
+      console.log(`No files found for report_id: ${reportId}`);
+      return;
+    }
+    console.log("filePaths: ", filePaths);
+    // Step 2: Delete from Supabase Storage
+    const { error: storageError } = await supabase.storage
       .from("uploads")
-      .list(`reports/${reportId}`);
-    console.log("getAllFilesFromStorageByReportId: ", data);
-    return (data ?? []) as unknown as SupabaseStorageFile[];
+      .remove(filePaths);
+
+    if (storageError) {
+      throw new Error(`Failed to delete from storage: ${storageError.message}`);
+    }
   } catch (error) {
     throw new Error("Unexpected error: " + error);
   }

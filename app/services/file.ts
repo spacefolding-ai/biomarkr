@@ -1,7 +1,7 @@
 import Toast from "react-native-toast-message";
 import { supabase } from "../supabase/supabaseClient";
 
-export async function deleteAllFilesForReportFromDb(
+export async function deleteAllFilesFromDbByReportId(
   reportId: string
 ): Promise<string> {
   try {

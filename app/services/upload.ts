@@ -53,9 +53,9 @@ export async function uploadFileAndInsertToDb(
     .from("files")
     .insert({
       user_id: userId,
-      file_url: fileData.path,
+      file_path: fileData.path,
       file_name: uniqueFileName,
-      thumbnail_url: thumbData.path,
+      thumbnail_path: thumbData.path,
       extraction_status: ExtractionStatus.PENDING,
       uploaded_at: new Date().toISOString(),
     })
