@@ -87,7 +87,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
               <>
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                   {/\.(jpeg|png|jpg)$/i.test(item?.file_name) ? (
-                    <ThumbnailLoader path={item.thumbnail_url} size={56} />
+                    <ThumbnailLoader path={item.thumbnail_path} size={56} />
                   ) : (
                     <FileText size={56} color="#000" />
                   )}
