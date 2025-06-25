@@ -1,9 +1,10 @@
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
 import React, { useCallback, useEffect, useState } from "react";
 import { SafeAreaView } from "react-native";
+import { getAllBiomarkers } from "../services/biomarkers";
+import { getAllLabReports } from "../services/labReports";
 import { useBiomarkersStore } from "../store/useBiomarkersStore";
 import { useLabReportsStore } from "../store/useLabReportsStore";
-import { supabase } from "../supabase/supabaseClient";
 import BiomarkersScreen from "./BiomarkersScreen";
 import LabReportsScreen from "./LabReportsScreen";
 
@@ -16,23 +17,21 @@ const HealthLabScreen = () => {
   const [loading, setLoading] = useState(true);
 
   const loadBiomarkers = async () => {
-    const { data, error } = await supabase
-      .from("biomarkers")
-      .select("*")
-      .order("report_date", { ascending: false });
-
-    if (data) setBiomarkers(data);
-    if (error) console.error("Failed to load biomarkers:", error);
+    try {
+      const biomarkers = await getAllBiomarkers();
+      setBiomarkers(biomarkers);
+    } catch (error) {
+      console.error("Failed to load biomarkers:", error);
+    }
   };
 
   const loadLabReports = async () => {
-    const { data, error } = await supabase
-      .from("lab_reports")
-      .select("*")
-      .order("report_date", { ascending: false });
-
-    if (data) setReports(data);
-    if (error) console.error("Failed to load lab reports:", error);
+    try {
+      const labReports = await getAllLabReports();
+      setReports(labReports);
+    } catch (error) {
+      console.error("Failed to load lab reports:", error);
+    }
   };
 
   const loadAll = async () => {

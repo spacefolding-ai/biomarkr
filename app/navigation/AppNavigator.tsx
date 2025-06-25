@@ -13,6 +13,8 @@ import MoreScreen from "../screens/MoreScreen";
 import OverviewScreen from "../screens/OverviewScreen";
 import SignupScreen from "../screens/SignupScreen";
 import UploadScreen from "../screens/UploadScreen";
+import { getAllBiomarkers } from "../services/biomarkers";
+import { useBiomarkersStore } from "../store/useBiomarkersStore";
 import { useLabReportsStore } from "../store/useLabReportsStore";
 import { RootStackParamList } from "./types";
 
@@ -41,6 +43,7 @@ const AuthTabNavigator = () => (
 const AppNavigator = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const { deleteReport } = useLabReportsStore();
+  const { setBiomarkers } = useBiomarkersStore();
 
   const toggleEditMode = (navigation) => {
     setIsEditMode((prev) => !prev);
@@ -68,6 +71,8 @@ const AppNavigator = () => {
   const handleDelete = async (id: string, navigation: any) => {
     setIsEditMode(false);
     await deleteReport(id);
+    const biomarkers = await getAllBiomarkers();
+    setBiomarkers(biomarkers);
     navigation.goBack();
   };
 

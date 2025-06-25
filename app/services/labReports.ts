@@ -1,8 +1,23 @@
 import Toast from "react-native-toast-message";
 import { supabase } from "../supabase/supabaseClient";
+import { LabReport } from "../types/LabReport";
 import { deleteAllBiomarkersFromDbByReportId } from "./biomarkers";
 import { deleteAllFilesFromDbByReportId } from "./file";
 import { deleteAllFilesFromStorageByReportId } from "./storage";
+
+export async function getAllLabReports(): Promise<LabReport[]> {
+  try {
+    const { data, error } = await supabase
+      .from("lab_reports")
+      .select("*")
+      .order("report_date", { ascending: false });
+
+    if (data) return data;
+    if (error) throw new Error("Failed to load lab reports: " + error);
+  } catch (error) {
+    throw new Error("Unexpected error: " + error);
+  }
+}
 
 export async function deleteLabReportFromDb(id: string): Promise<string> {
   try {

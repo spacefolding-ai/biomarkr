@@ -1,10 +1,13 @@
-import { RealtimePostgresInsertPayload } from "@supabase/supabase-js";
+import {
+  RealtimePostgresDeletePayload,
+  RealtimePostgresInsertPayload,
+} from "@supabase/supabase-js";
 import { useBiomarkersStore } from "../../store/useBiomarkersStore";
 import { Biomarker } from "../../types/Biomarker";
 import { useSupabaseRealtime } from "./useSupabaseRealtime";
 
 export const useBiomarkersRealtime = () => {
-  const { addBiomarker, updateBiomarker, deleteBiomarker, userId } =
+  const { addBiomarker, updateBiomarker, deleteBiomarker, userId, biomarkers } =
     useBiomarkersStore();
 
   useSupabaseRealtime({
@@ -21,10 +24,13 @@ export const useBiomarkersRealtime = () => {
         //   // console.log("[Realtime] Update biomarker", payload.new);
         //   updateBiomarker(payload.new);
         // },
-        // onDelete: (payload: RealtimePostgresDeletePayload<Biomarker>) => {
-        //   // console.log("[Realtime] Delete biomarker", payload.old);
-        //   deleteBiomarker(payload.old.id);
-        // },
+        onDelete: (payload: RealtimePostgresDeletePayload<Biomarker>) => {
+          // console.log("[Realtime] Delete biomarker", payload.old);
+          const existing = biomarkers.find((b) => b.id === payload.old.id);
+          if (existing) {
+            deleteBiomarker(payload.old.id);
+          }
+        },
       },
     ],
   });
