@@ -1,5 +1,7 @@
 import * as FileSystem from "expo-file-system";
+import Toast from "react-native-toast-message";
 import { supabase } from "../supabase/supabaseClient";
+import { SupabaseStorageFile } from "../types/File";
 import { decode } from "../utils/file";
 
 export async function uploadFileToStorage(
@@ -32,5 +34,40 @@ export async function uploadFileToStorage(
   } catch (error: any) {
     console.error("Upload error:", error);
     throw new Error(error.message || "Failed to upload file");
+  }
+}
+
+export async function deleteFileFromStorage(path: string): Promise<void> {
+  try {
+    const { data, error } = await supabase.storage
+      .from("uploads")
+      .remove([path]);
+    Toast.show({
+      type: "success",
+      text1: "Success",
+      text2: "File deleted successfully!",
+    });
+    console.log(data);
+  } catch (error) {
+    Toast.show({
+      type: "error",
+      text1: "Error",
+      text2: "Failed to delete file!",
+    });
+    throw new Error("Unexpected error: " + error);
+  }
+}
+
+export async function getAllFilesFromStorageByReportId(
+  reportId: string
+): Promise<SupabaseStorageFile[]> {
+  try {
+    const { data, error } = await supabase.storage
+      .from("uploads")
+      .list(`reports/${reportId}`);
+    console.log("getAllFilesFromStorageByReportId: ", data);
+    return (data ?? []) as unknown as SupabaseStorageFile[];
+  } catch (error) {
+    throw new Error("Unexpected error: " + error);
   }
 }

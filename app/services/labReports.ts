@@ -1,11 +1,21 @@
 import Toast from "react-native-toast-message";
 import { supabase } from "../supabase/supabaseClient";
+import { deleteAllBiomarkersForReportFromDb } from "./biomarkers";
+import { deleteAllFilesForReportFromDb } from "./file";
+import {
+  deleteFileFromStorage,
+  getAllFilesFromStorageByReportId,
+} from "./storage";
 
-export async function removeLabReport(id: string): Promise<string> {
+export async function deleteLabReportFromDb(id: string): Promise<string> {
   try {
-    await supabase.from("files").delete().eq("lab_report_id", id);
+    const files = await getAllFilesFromStorageByReportId(id);
+    for (const file of files) {
+      await deleteFileFromStorage(file.name);
+    }
+    await deleteAllFilesForReportFromDb(id);
+    await deleteAllBiomarkersForReportFromDb(id);
     await supabase.from("lab_reports").delete().eq("id", id);
-    await supabase.from("biomarkers").delete().eq("lab_report_id", id);
 
     Toast.show({
       type: "success",

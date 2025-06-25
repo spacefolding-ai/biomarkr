@@ -1,5 +1,4 @@
 import {
-  RealtimePostgresDeletePayload,
   RealtimePostgresInsertPayload,
   RealtimePostgresUpdatePayload,
 } from "@supabase/supabase-js";
@@ -24,10 +23,11 @@ export function useLabReportsRealtime() {
           // console.log("[Realtime] Update lab report", payload.new);
           updateReport(payload.new);
         },
-        onDelete: (payload: RealtimePostgresDeletePayload<LabReport>) => {
-          // console.log("[Realtime] Delete lab report", payload.old);
-          deleteReport(payload.old.id);
-        },
+        // TODO not needed for now
+        // onDelete: (payload: RealtimePostgresDeletePayload<LabReport>) => {
+        //   // console.log("[Realtime] Delete lab report", payload.old);
+        //   deleteReport(payload.old.id);
+        // },
       },
     ],
   });

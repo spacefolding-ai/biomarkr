@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { removeLabReport } from "../services/labReports";
+import { deleteLabReportFromDb } from "../services/labReports";
 import { LabReport } from "../types/LabReport";
 
 interface LabReportsState {
@@ -13,7 +13,7 @@ interface LabReportsState {
   setReports: (reports: LabReport[]) => void;
   addReport: (report: LabReport) => void;
   updateReport: (report: LabReport) => void;
-  deleteReport: (id: string) => void;
+  deleteReport: (id: string) => Promise<void>;
   setRefreshing: (refreshing: boolean) => void;
   setLoading: (loading: boolean) => void;
 }
@@ -36,11 +36,11 @@ export const useLabReportsStore = create<LabReportsState>()(
       },
 
       updateReport: async (report) => {
-        const existing = get().reports;
-        const exists = existing.some((r) => r.id === report.id);
+        const existingReports = get().reports;
+        const exists = existingReports.some((r) => r.id === report.id);
 
         if (!exists) {
-          set({ reports: [report, ...existing] });
+          set({ reports: [report, ...existingReports] });
           return;
         } else {
           set({ reports: [report] });
@@ -48,7 +48,7 @@ export const useLabReportsStore = create<LabReportsState>()(
       },
 
       deleteReport: async (id) => {
-        const removedId = await removeLabReport(id);
+        const removedId = await deleteLabReportFromDb(id);
         set({ reports: get().reports.filter((r) => r.id !== removedId) });
       },
 

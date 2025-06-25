@@ -1,6 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import {
+  deleteAllBiomarkersForReportFromDb,
+  deleteBiomarkerFromDb,
+  updateBiomarkerInDb,
+} from "../services/biomarkers";
 import { Biomarker } from "../types/Biomarker";
 
 interface BiomarkersState {
@@ -38,23 +43,22 @@ export const useBiomarkersStore = create<BiomarkersState>()(
         }
       },
 
-      updateBiomarker: (biomarker) => {
-        const updated = get().biomarkers.map((b) =>
-          b.id === biomarker.id ? biomarker : b
+      updateBiomarker: async (biomarker) => {
+        const updated = await updateBiomarkerInDb(biomarker);
+        const updatedBiomarkers = get().biomarkers.map((b) =>
+          b.id === updated.id ? updated : b
         );
-        set({ biomarkers: updated });
+        set({ biomarkers: updatedBiomarkers });
       },
 
-      deleteBiomarker: (id) => {
-        const filtered = get().biomarkers.filter((b) => b.id !== id);
-        set({ biomarkers: filtered });
+      deleteBiomarker: async (id) => {
+        const removedId = await deleteBiomarkerFromDb(id);
+        set({ biomarkers: get().biomarkers.filter((b) => b.id !== removedId) });
       },
 
-      deleteBiomarkersForReport: (reportId) => {
-        const filtered = get().biomarkers.filter(
-          (b) => b.report_id !== reportId
-        );
-        set({ biomarkers: filtered });
+      deleteBiomarkersForReport: async (reportId) => {
+        await deleteAllBiomarkersForReportFromDb(reportId);
+        set({ biomarkers: get().biomarkers.filter((b) => b.id !== reportId) });
       },
 
       setRefreshing: (refreshing) => set({ refreshing }),
