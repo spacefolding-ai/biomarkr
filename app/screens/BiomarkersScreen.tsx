@@ -22,7 +22,6 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
   refreshing,
   onRefresh,
 }) => {
-  console.log("BiomarkersScreen", biomarkers);
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
 

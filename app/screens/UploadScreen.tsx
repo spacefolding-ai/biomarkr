@@ -34,16 +34,14 @@ export default function UploadScreen() {
     requestCameraPermission();
   }, []);
 
-  const pickImage = async () => {
+  const handlePickImage = async () => {
     try {
-      console.log("User object:", user);
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         quality: 1,
       });
 
       const asset: ImagePicker.ImagePickerAsset = result.assets[0];
-      console.log("ASSET:", asset);
 
       if (!result.canceled) {
         const info = await normalizeImage(
@@ -52,7 +50,6 @@ export default function UploadScreen() {
           asset.uri,
           user.id
         );
-        console.log("INFO:", info);
         setFileInfo(info);
       } else {
         console.log("Image picking was canceled");
@@ -62,7 +59,7 @@ export default function UploadScreen() {
     }
   };
 
-  const pickDocument = async () => {
+  const handlePickDocument = async () => {
     const result = await DocumentPicker.getDocumentAsync({
       type: ["application/pdf", "image/*"],
     });
@@ -75,12 +72,11 @@ export default function UploadScreen() {
         asset.uri,
         user.id
       );
-      console.log("INFO:", info);
       setFileInfo(info);
     }
   };
 
-  const takePhoto = async () => {
+  const handleTakePhoto = async () => {
     const result = await ImagePicker.launchCameraAsync({
       quality: 1,
     });
@@ -88,13 +84,7 @@ export default function UploadScreen() {
     const asset: ImagePicker.ImagePickerAsset = result.assets[0];
 
     if (!result.canceled) {
-      const info = await normalizeImage(
-        asset.fileName,
-        asset.fileSize,
-        asset.uri,
-        user.id
-      );
-      console.log("INFO:", info);
+      const info = await normalizeImage("", asset.fileSize, asset.uri, user.id);
       setFileInfo(info);
     }
   };
@@ -104,7 +94,7 @@ export default function UploadScreen() {
       console.log("Upload failed: Missing fileInfo or user ID");
       return;
     }
-    console.log("FILE INFO:", fileInfo);
+
     try {
       setUploading(true);
       await uploadFileAndInsertToDb(
@@ -142,19 +132,19 @@ export default function UploadScreen() {
         <>
           <Button
             title="Pick Image from Gallery"
-            onPress={pickImage}
+            onPress={handlePickImage}
             disabled={!session}
           />
           <View style={styles.spacer} />
           <Button
             title="Pick Document (PDF, Image)"
-            onPress={pickDocument}
+            onPress={handlePickDocument}
             disabled={!session}
           />
           <View style={styles.spacer} />
           <Button
             title="Take Photo (Camera)"
-            onPress={takePhoto}
+            onPress={handleTakePhoto}
             disabled={!session}
           />
         </>
