@@ -9,6 +9,8 @@ export interface FileInfo {
   fileType: string;
   fileName: string;
   storagePath: string;
+  originalFileName?: string;
+  fileSize?: number;
 }
 
 export function generateUniqueFilePath(uri: string, userId: string): string {
@@ -24,29 +26,34 @@ export function generateUniqueFilePath(uri: string, userId: string): string {
 }
 
 export async function normalizeImage(
-  uri: string,
+  fileName: string,
+  fileSize: number,
+  fileUri: string,
   userId: string
 ): Promise<FileInfo> {
-  const fileInfo = await FileSystem.getInfoAsync(uri);
+  const originalFileName = fileName;
+  const fileInfo = await FileSystem.getInfoAsync(fileUri);
   if (!fileInfo.exists) {
     throw new Error("File does not exist");
   }
 
-  const fileName = uri.split("/").pop() || "";
+  const fileNameFromUri = fileUri.split("/").pop() || "";
   const fileType = fileName.split(".").pop()?.toLowerCase() || "";
 
   // If it's a HEIC/HEIF image on iOS, convert it to PNG
   if (fileType === "heic" || fileType === "heif") {
-    const newUri = uri.replace(/\.(heic|heif)$/i, ".png");
+    const newUri = fileUri.replace(/\.(heic|heif)$/i, ".png");
     await FileSystem.copyAsync({
-      from: uri,
+      from: fileUri,
       to: newUri,
     });
     const storagePath = generateUniqueFilePath(newUri, userId);
     return {
       normalizedUri: newUri,
       fileType: "image/png",
-      fileName: fileName.replace(/\.(heic|heif)$/i, ".png"),
+      originalFileName: originalFileName,
+      fileSize: fileSize,
+      fileName: fileNameFromUri.replace(/\.(heic|heif)$/i, ".png"),
       storagePath,
     };
   }
@@ -54,19 +61,23 @@ export async function normalizeImage(
   // Ensure correct MIME type for PDF files
   if (fileType === "pdf") {
     return {
-      normalizedUri: uri,
+      normalizedUri: fileUri,
       fileType: "application/pdf",
-      fileName,
-      storagePath: generateUniqueFilePath(uri, userId),
+      fileName: fileNameFromUri,
+      originalFileName: originalFileName,
+      fileSize: fileSize,
+      storagePath: generateUniqueFilePath(fileUri, userId),
     };
   }
 
-  const storagePath = generateUniqueFilePath(uri, userId);
+  const storagePath = generateUniqueFilePath(fileUri, userId);
   return {
-    normalizedUri: uri,
+    normalizedUri: fileUri,
     fileType: `image/${fileType}`,
-    fileName,
+    fileName: fileNameFromUri,
     storagePath,
+    originalFileName: originalFileName,
+    fileSize: fileSize,
   };
 }
 

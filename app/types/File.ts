@@ -9,6 +9,7 @@ export interface File {
   uploaded_at: string;
   extraction_status: ExtractionStatus;
   report_id: string | null;
+  original_file_name?: string;
 }
 
 export interface SupabaseStorageFile {

@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
-  deleteAllBiomarkersForReportFromDb,
+  deleteAllBiomarkersFromDbByReportId,
   deleteBiomarkerFromDb,
   updateBiomarkerInDb,
 } from "../services/biomarkers";
@@ -57,7 +57,7 @@ export const useBiomarkersStore = create<BiomarkersState>()(
       },
 
       deleteBiomarkersForReport: async (reportId) => {
-        await deleteAllBiomarkersForReportFromDb(reportId);
+        await deleteAllBiomarkersFromDbByReportId(reportId);
         set({ biomarkers: get().biomarkers.filter((b) => b.id !== reportId) });
       },
 

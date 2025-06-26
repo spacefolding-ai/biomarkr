@@ -34,24 +34,6 @@ export default function UploadScreen() {
     requestCameraPermission();
   }, []);
 
-  const processFile = async (uri: string) => {
-    if (!user?.id) {
-      Toast.show({
-        type: "error",
-        text1: "Error",
-        text2: "User not authenticated",
-      });
-      return;
-    }
-
-    try {
-      const info = await normalizeImage(uri, user.id);
-      setFileInfo(info);
-    } catch (error: any) {
-      Toast.show({ type: "error", text1: "Error", text2: error.message });
-    }
-  };
-
   const pickImage = async () => {
     try {
       console.log("User object:", user);
@@ -60,8 +42,18 @@ export default function UploadScreen() {
         quality: 1,
       });
 
+      const asset: ImagePicker.ImagePickerAsset = result.assets[0];
+      console.log("ASSET:", asset);
+
       if (!result.canceled) {
-        await processFile(result.assets[0].uri);
+        const info = await normalizeImage(
+          asset.fileName,
+          asset.fileSize,
+          asset.uri,
+          user.id
+        );
+        console.log("INFO:", info);
+        setFileInfo(info);
       } else {
         console.log("Image picking was canceled");
       }
@@ -76,7 +68,15 @@ export default function UploadScreen() {
     });
 
     if (result.assets && result.assets.length > 0) {
-      await processFile(result.assets[0].uri);
+      const asset: DocumentPicker.DocumentPickerAsset = result.assets[0];
+      const info = await normalizeImage(
+        asset.name,
+        asset.size,
+        asset.uri,
+        user.id
+      );
+      console.log("INFO:", info);
+      setFileInfo(info);
     }
   };
 
@@ -85,8 +85,17 @@ export default function UploadScreen() {
       quality: 1,
     });
 
+    const asset: ImagePicker.ImagePickerAsset = result.assets[0];
+
     if (!result.canceled) {
-      await processFile(result.assets[0].uri);
+      const info = await normalizeImage(
+        asset.fileName,
+        asset.fileSize,
+        asset.uri,
+        user.id
+      );
+      console.log("INFO:", info);
+      setFileInfo(info);
     }
   };
 
@@ -95,7 +104,7 @@ export default function UploadScreen() {
       console.log("Upload failed: Missing fileInfo or user ID");
       return;
     }
-
+    console.log("FILE INFO:", fileInfo);
     try {
       setUploading(true);
       await uploadFileAndInsertToDb(

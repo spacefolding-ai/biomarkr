@@ -55,6 +55,7 @@ export async function uploadFileAndInsertToDb(
       user_id: userId,
       file_path: fileData.path,
       file_name: uniqueFileName,
+      original_file_name: fileName,
       thumbnail_path: thumbData.path,
       extraction_status: ExtractionStatus.PENDING,
       uploaded_at: new Date().toISOString(),
