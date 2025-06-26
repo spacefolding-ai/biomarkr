@@ -157,7 +157,9 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
 
           <FlatList
             data={sortedReports}
-            keyExtractor={(item) => `${item?.id}-${item?.created_at}`}
+            keyExtractor={(item, index) =>
+              `${item?.id || `temp-${index}`}-${item?.created_at || Date.now()}`
+            }
             renderItem={renderReportItem}
             refreshControl={
               <RefreshControl

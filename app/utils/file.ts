@@ -70,9 +70,41 @@ export async function normalizeImage(
     };
   }
 
-  const storagePath = generateUniqueFilePath(fileUri, userId);
+  // For images, compress if they're too large
+  let processedUri = fileUri;
+  if (fileType === "jpg" || fileType === "jpeg" || fileType === "png") {
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (fileSize && fileSize > maxSize) {
+      console.log(
+        `Compressing large image: ${Math.round(fileSize / 1024 / 1024)}MB`
+      );
+      try {
+        const result = await ImageManipulator.manipulateAsync(
+          fileUri,
+          [{ resize: { width: 2048 } }], // Resize to max width of 2048px
+          {
+            compress: 0.8,
+            format:
+              fileType === "png"
+                ? ImageManipulator.SaveFormat.PNG
+                : ImageManipulator.SaveFormat.JPEG,
+          }
+        );
+        processedUri = result.uri;
+        console.log("Image compressed successfully");
+      } catch (compressionError) {
+        console.warn(
+          "Image compression failed, using original:",
+          compressionError
+        );
+        // Continue with original if compression fails
+      }
+    }
+  }
+
+  const storagePath = generateUniqueFilePath(processedUri, userId);
   return {
-    normalizedUri: fileUri,
+    normalizedUri: processedUri,
     fileType: `image/${fileType}`,
     fileName: fileNameFromUri,
     storagePath,

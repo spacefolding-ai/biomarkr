@@ -16,11 +16,11 @@ export function useLabReportsRealtime() {
       {
         table: "lab_reports",
         onInsert: (payload: RealtimePostgresInsertPayload<LabReport>) => {
-          // console.log("[Realtime] Insert lab report", payload.new);
+          console.log("[Realtime] Insert lab report", payload.new);
           addReport(payload.new);
         },
         onUpdate: (payload: RealtimePostgresUpdatePayload<LabReport>) => {
-          // console.log("[Realtime] Update lab report", payload.new);
+          console.log("[Realtime] Update lab report", payload.new);
           updateReport(payload.new);
         },
         // TODO not needed for now

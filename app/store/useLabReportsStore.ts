@@ -1,7 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { deleteLabReportFromDb } from "../services/labReports";
+import {
+  deleteLabReportFromDb,
+  getAllLabReports,
+} from "../services/labReports";
 import { LabReport } from "../types/LabReport";
 
 interface LabReportsState {
@@ -9,11 +12,12 @@ interface LabReportsState {
   reports: LabReport[];
   refreshing: boolean;
   loading: boolean;
-  setUserId: (id: string) => void;
+  setUserId: (id: string | null) => void;
   setReports: (reports: LabReport[]) => void;
   addReport: (report: LabReport) => void;
   updateReport: (report: LabReport) => void;
   deleteReport: (id: string) => Promise<void>;
+  refreshLabReports: () => Promise<void>;
   setRefreshing: (refreshing: boolean) => void;
   setLoading: (loading: boolean) => void;
 }
@@ -31,8 +35,16 @@ export const useLabReportsStore = create<LabReportsState>()(
       setReports: (reports) => set({ reports }),
 
       addReport: async (report) => {
-        // insert to db handled in n8n
-        set({ reports: [report, ...get().reports] });
+        // Check if report already exists to prevent duplicates
+        const existingReports = get().reports;
+        const exists = existingReports.some((r) => r.id === report.id);
+
+        if (!exists) {
+          // Only add if it doesn't already exist
+          set({ reports: [report, ...existingReports] });
+        } else {
+          console.log("Report already exists, skipping add:", report.id);
+        }
       },
 
       updateReport: async (report) => {
@@ -54,6 +66,11 @@ export const useLabReportsStore = create<LabReportsState>()(
       deleteReport: async (id) => {
         const removedId = await deleteLabReportFromDb(id);
         set({ reports: get().reports.filter((r) => r.id !== removedId) });
+      },
+
+      refreshLabReports: async () => {
+        const reports = await getAllLabReports();
+        set({ reports });
       },
 
       setRefreshing: (refreshing) => set({ refreshing }),

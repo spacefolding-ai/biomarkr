@@ -28,7 +28,22 @@ export const useSupabaseRealtime = ({
   tables,
 }: UseSupabaseRealtimeProps) => {
   useEffect(() => {
+    // Don't subscribe if there's no userId
+    if (!userId) {
+      console.log("⏸️ useSupabaseRealtime: No userId, skipping subscription");
+      return;
+    }
+
     console.log("🔄 useSupabaseRealtime initialized with userId:", userId);
+
+    // Clean up any existing subscriptions for this user first
+    const existingChannels = supabase.getChannels();
+    existingChannels.forEach((ch) => {
+      if (ch.topic.includes(userId)) {
+        console.log(`🧹 Cleaning up existing channel: ${ch.topic}`);
+        ch.unsubscribe();
+      }
+    });
 
     const subscriptions = tables.map(
       <T extends WithUserId>({
@@ -44,16 +59,7 @@ export const useSupabaseRealtime = ({
         onUpdate?: (payload: RealtimePostgresUpdatePayload<T>) => void;
         onDelete?: (payload: RealtimePostgresDeletePayload<T>) => void;
       }) => {
-        const channelName = `realtime:${schema}:${table}`;
-        const existing = supabase
-          .getChannels()
-          .find((ch) => ch.topic === channelName);
-
-        // 🧠 Prevent multiple subscriptions
-        if (existing) {
-          console.warn(`⚠️ Already subscribed to: ${channelName}`);
-          return existing;
-        }
+        const channelName = `realtime:${schema}:${table}:${userId}`;
         const channel = supabase.channel(channelName);
 
         console.log(`📡 Subscribing to: ${channelName}`);
@@ -63,7 +69,7 @@ export const useSupabaseRealtime = ({
             "postgres_changes",
             { event: "INSERT", schema, table },
             (payload: RealtimePostgresInsertPayload<T>) => {
-              // console.log(`[INSERT] ${table}:`, payload);
+              console.log(`[INSERT] ${table}:`, payload.new);
               if (payload.new?.user_id === userId) onInsert(payload);
             }
           );
@@ -74,7 +80,7 @@ export const useSupabaseRealtime = ({
             "postgres_changes",
             { event: "UPDATE", schema, table },
             (payload: RealtimePostgresUpdatePayload<T>) => {
-              // console.log(`[UPDATE] ${table}:`, payload);
+              console.log(`[UPDATE] ${table}:`, payload.new);
               if (payload.new?.user_id === userId) onUpdate(payload);
             }
           );
@@ -85,7 +91,7 @@ export const useSupabaseRealtime = ({
             "postgres_changes",
             { event: "DELETE", schema, table },
             (payload: RealtimePostgresDeletePayload<T>) => {
-              // console.log(`[DELETE] ${table}:`, payload);
+              console.log(`[DELETE] ${table}:`, payload.old);
               if (payload.old?.user_id === userId) onDelete(payload);
             }
           );
@@ -102,5 +108,5 @@ export const useSupabaseRealtime = ({
         await ch.unsubscribe();
       });
     };
-  }, []);
+  }, [userId]);
 };

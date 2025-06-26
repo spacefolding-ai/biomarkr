@@ -29,17 +29,27 @@ export default function App() {
   const { setUserId: setBiomarkersUserId } = useBiomarkersStore();
   const { setUserId: setLabReportsUserId } = useLabReportsStore();
 
+  // Initialize realtime hooks
   useLabReportsRealtime();
   useBiomarkersRealtime();
 
   useEffect(() => {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
     initAuth();
+  }, []);
+
+  // Set user IDs when user is available
+  useEffect(() => {
     if (user && session) {
+      console.log("Setting user IDs for stores:", user.id);
       setBiomarkersUserId(user.id);
       setLabReportsUserId(user.id);
+    } else {
+      console.log("User not available, clearing user IDs");
+      setBiomarkersUserId(null);
+      setLabReportsUserId(null);
     }
-  }, []);
+  }, [user, session]);
 
   if (!fontsLoaded) {
     return (

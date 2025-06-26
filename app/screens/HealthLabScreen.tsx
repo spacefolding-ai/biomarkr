@@ -1,4 +1,5 @@
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
+import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useEffect, useState } from "react";
 import { SafeAreaView } from "react-native";
 import { getAllBiomarkers } from "../services/biomarkers";
@@ -15,6 +16,7 @@ const HealthLabScreen = () => {
   const { reports, setReports } = useLabReportsStore();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState(0);
 
   const loadBiomarkers = async () => {
     try {
@@ -47,6 +49,22 @@ const HealthLabScreen = () => {
       console.log("HealthLabScreen unmounted");
     };
   }, []);
+
+  // Refresh data when screen comes into focus (e.g., after upload)
+  // with debounce to prevent multiple rapid calls
+  useFocusEffect(
+    useCallback(() => {
+      const now = Date.now();
+      if (now - lastRefresh > 2000) {
+        // Debounce: only refresh if more than 2 seconds since last refresh
+        console.log("HealthLabScreen focused - refreshing data");
+        setLastRefresh(now);
+        loadAll();
+      } else {
+        console.log("HealthLabScreen focused - skipping refresh (too soon)");
+      }
+    }, [lastRefresh])
+  );
 
   const onRefresh = useCallback(async () => {
     try {
