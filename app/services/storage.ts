@@ -18,10 +18,8 @@ async function retryUpload<T>(
       return await operation();
     } catch (error: any) {
       lastError = error;
-      console.log(`Upload attempt ${attempt} failed:`, error.message);
 
       if (attempt < maxRetries) {
-        console.log(`Retrying in ${delay}ms...`);
         await new Promise((resolve) => setTimeout(resolve, delay));
         delay *= 2; // Exponential backoff
       }
@@ -51,10 +49,6 @@ export async function uploadFileToStorage(
       );
     }
 
-    console.log(
-      `Uploading file: ${storagePath}, Size: ${fileInfo.size} bytes, Type: ${mimeType}`
-    );
-
     const uploadOperation = async () => {
       const fileContent = await FileSystem.readAsStringAsync(uri, {
         encoding: FileSystem.EncodingType.Base64,
@@ -76,12 +70,9 @@ export async function uploadFileToStorage(
 
     // Retry upload with exponential backoff
     const data = await retryUpload(uploadOperation, 3, 1000);
-    console.log(`Successfully uploaded: ${storagePath}`);
 
     return data;
   } catch (error: any) {
-    console.error("Upload error:", error);
-
     // Provide more specific error messages
     if (error.message?.includes("timeout")) {
       throw new Error(
@@ -107,7 +98,6 @@ export async function deleteFileFromStorage(path: string): Promise<void> {
       text1: "Success",
       text2: "File deleted successfully!",
     });
-    console.log(data);
   } catch (error) {
     Toast.show({
       type: "error",
@@ -127,7 +117,6 @@ export async function deleteAllFilesFromStorageByReportId(
       .from("files")
       .select("file_path, thumbnail_path")
       .eq("report_id", reportId);
-    console.log("files: ", files);
     if (fetchError) {
       throw new Error(`Failed to fetch files: ${fetchError.message}`);
     }
@@ -137,15 +126,12 @@ export async function deleteAllFilesFromStorageByReportId(
       .filter(Boolean); // remove null/undefined if any
 
     if (filePathsToDelete.length === 0) {
-      console.log(`No files found for report_id: ${reportId}`);
       return;
     }
-    console.log("filePathsToDelete: ", filePathsToDelete);
     // Step 2: Delete from Supabase Storage
     const { data: storageData, error: storageError } = await supabase.storage
       .from("uploads")
       .remove(filePathsToDelete);
-    console.log("storageData: ", storageData);
     if (storageError) {
       throw new Error(`Failed to delete from storage: ${storageError.message}`);
     }

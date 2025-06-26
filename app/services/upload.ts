@@ -30,8 +30,6 @@ export async function uploadFileAndInsertToDb(
   const uniqueFileName = `${uuidv4()}.${fileExt}`;
   const filePath = `reports/${userId}/${uniqueFileName}`;
 
-  console.log(`Starting upload process for: ${fileName}`);
-
   // Upload the main file
   const fileData = await uploadFileToStorage(fileUri, filePath, mimeType);
   if (!fileData) throw new Error("File upload failed");
@@ -41,7 +39,6 @@ export async function uploadFileAndInsertToDb(
   // Generate and upload the thumbnail only for images
   if (mimeType.startsWith("image")) {
     try {
-      console.log("Generating thumbnail for image...");
       const previewUri = await generatePreview(fileUri, "image");
       const previewFileName = `thumb_${uniqueFileName}`;
       const previewFilePath = `reports/${userId}/${previewFileName}`;
@@ -50,12 +47,7 @@ export async function uploadFileAndInsertToDb(
         previewFilePath,
         "image/jpeg"
       );
-      console.log("Thumbnail uploaded successfully");
     } catch (thumbnailError: any) {
-      console.warn(
-        "Thumbnail generation/upload failed:",
-        thumbnailError.message
-      );
       // If thumbnail fails, use the main file path as fallback
       thumbData = { path: fileData.path };
     }
@@ -63,8 +55,6 @@ export async function uploadFileAndInsertToDb(
     // For PDFs and other non-image files, use the main file path as thumbnail path
     thumbData = { path: fileData.path };
   }
-
-  console.log("Inserting file record to database...");
 
   // Insert file into the database
   const { data: dataFile, error: insertError } = await supabase
@@ -86,10 +76,8 @@ export async function uploadFileAndInsertToDb(
   }
 
   if (insertError) {
-    console.error("Insertion error:", insertError);
     throw insertError;
   }
 
-  console.log(`Upload process completed successfully for: ${fileName}`);
   return { dataFile };
 }

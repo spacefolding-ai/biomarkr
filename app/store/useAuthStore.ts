@@ -40,15 +40,17 @@ export const useAuthStore = create<AuthState>()(
       },
       // TODO: Work in progress
       initBiometricLogin: async () => {
-        const success = await attemptBiometricLogin();
-        if (success) {
-          // ✅ Log in the user OR restore session OR fetch user
-          const { data, error } = await supabase.auth.getSession();
-          if (data.session) {
-            set({ session: data.session, user: data.session.user });
+        try {
+          const success = await attemptBiometricLogin();
+          if (success) {
+            // ✅ Log in the user OR restore session OR fetch user
+            const { data, error } = await supabase.auth.getSession();
+            if (data.session) {
+              set({ session: data.session, user: data.session.user });
+            }
           }
-        } else {
-          console.log("Biometric auth failed or was cancelled.");
+        } catch (error) {
+          // Biometric auth failed or was cancelled - this is normal
         }
       },
       logout: async () => {

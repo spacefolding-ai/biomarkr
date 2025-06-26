@@ -46,22 +46,13 @@ export default function UploadScreen() {
     try {
       if (mediaLibraryPermission?.granted) {
         // Try to get asset info from MediaLibrary
-        console.log("Attempting to get asset info for URI:", uri);
         const asset = await MediaLibrary.getAssetInfoAsync(uri);
         if (asset && asset.filename) {
-          console.log(
-            "Found actual filename from MediaLibrary:",
-            asset.filename
-          );
           return asset.filename;
-        } else {
-          console.log("MediaLibrary asset info available but no filename");
         }
-      } else {
-        console.log("MediaLibrary permission not granted");
       }
     } catch (error) {
-      console.log("MediaLibrary getAssetInfoAsync failed:", error);
+      // MediaLibrary failed
     }
 
     // Fallback 1: Try to extract meaningful name from URI path
@@ -79,15 +70,13 @@ export default function UploadScreen() {
         !filenamePart.match(/^[A-F0-9-]{8,}\.(jpg|jpeg|png|pdf)$/i) &&
         filenamePart.length > 5
       ) {
-        console.log("Using filename from URI:", filenamePart);
         return filenamePart;
       }
     } catch (error) {
-      console.log("Failed to extract filename from URI:", error);
+      // Failed to extract filename from URI
     }
 
     // Fallback 2: Use the provided fallback name
-    console.log("Using fallback filename:", fallbackName);
     return fallbackName;
   };
 
@@ -107,8 +96,6 @@ export default function UploadScreen() {
           asset.fileName || `image_${Date.now()}.jpg`
         );
 
-        console.log("Using filename:", actualFilename);
-
         const info = await normalizeImage(
           actualFilename,
           asset.fileSize,
@@ -116,11 +103,9 @@ export default function UploadScreen() {
           user.id
         );
         setFileInfo(info);
-      } else {
-        console.log("Image picking was canceled");
       }
     } catch (error) {
-      console.error("Error picking image:", error);
+      // Error picking image
     }
   };
 
@@ -135,7 +120,6 @@ export default function UploadScreen() {
 
         // DocumentPicker usually provides the actual filename
         const actualFilename = asset.name || `document_${Date.now()}.pdf`;
-        console.log("Using document filename:", actualFilename);
 
         const info = await normalizeImage(
           actualFilename,
@@ -144,11 +128,9 @@ export default function UploadScreen() {
           user.id
         );
         setFileInfo(info);
-      } else {
-        console.log("Document picking was canceled");
       }
     } catch (error) {
-      console.error("Error picking document:", error);
+      // Error picking document
     }
   };
 
@@ -164,7 +146,6 @@ export default function UploadScreen() {
         // Camera photos don't have original filenames, so we generate a timestamp-based name
         const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
         const cameraFilename = `photo_${timestamp}.jpg`;
-        console.log("Using camera filename:", cameraFilename);
 
         const info = await normalizeImage(
           cameraFilename,
@@ -173,17 +154,14 @@ export default function UploadScreen() {
           user.id
         );
         setFileInfo(info);
-      } else {
-        console.log("Photo taking was canceled");
       }
     } catch (error) {
-      console.error("Error taking photo:", error);
+      // Error taking photo
     }
   };
 
   const handleUpload = async () => {
     if (!fileInfo || !user?.id) {
-      console.log("Upload failed: Missing fileInfo or user ID");
       return;
     }
 
@@ -250,7 +228,7 @@ export default function UploadScreen() {
             <Image
               source={{ uri: fileInfo.normalizedUri }}
               style={styles.imagePreview}
-              onError={(error) => console.log("Image load error:", error)}
+              onError={() => {}}
             />
           )}
           <Text style={styles.pathText}>

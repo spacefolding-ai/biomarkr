@@ -41,11 +41,9 @@ export default function App() {
   // Set user IDs when user is available
   useEffect(() => {
     if (user && session) {
-      console.log("Setting user IDs for stores:", user.id);
       setBiomarkersUserId(user.id);
       setLabReportsUserId(user.id);
     } else {
-      console.log("User not available, clearing user IDs");
       setBiomarkersUserId(null);
       setLabReportsUserId(null);
     }

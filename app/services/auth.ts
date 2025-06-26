@@ -1,5 +1,6 @@
 import { NavigationProp } from "@react-navigation/native";
 import * as AuthSession from "expo-auth-session";
+import Constants from "expo-constants";
 import * as WebBrowser from "expo-web-browser";
 import Toast from "react-native-toast-message";
 import { supabase } from "../supabase/supabaseClient";
@@ -20,11 +21,8 @@ export async function signInWithGoogle(navigation: NavigationProp<any>) {
   });
 
   if (error) {
-    console.error("OAuth error:", error);
     return;
   }
-
-  console.log("Opening auth session with URL:", data.url);
 
   const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUri);
 
@@ -77,4 +75,22 @@ export async function handleLogin(email: string, password: string) {
 export async function handleLogout() {
   // Sign out the user
   await supabase.auth.signOut();
+}
+
+export async function signInWithOAuth() {
+  const { data, error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: {
+      redirectTo: `${Constants.expoConfig.scheme}://`,
+    },
+  });
+
+  if (error) throw error;
+
+  if (data.url) {
+    await WebBrowser.openAuthSessionAsync(
+      data.url,
+      `${Constants.expoConfig.scheme}://`
+    );
+  }
 }

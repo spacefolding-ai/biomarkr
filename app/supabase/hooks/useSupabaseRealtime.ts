@@ -30,18 +30,13 @@ export const useSupabaseRealtime = ({
   useEffect(() => {
     // Don't subscribe if there's no userId
     if (!userId) {
-      console.log("⏸️ useSupabaseRealtime: No userId, skipping subscription");
       return;
     }
 
-    console.log("🔄 useSupabaseRealtime initialized with userId:", userId);
-
     // Clean up any existing subscriptions for this user first
     const existingChannels = supabase.getChannels();
-    console.log(`🧹 Found ${existingChannels.length} existing channels`);
     existingChannels.forEach((ch) => {
       if (ch.topic.includes(userId)) {
-        console.log(`🧹 Cleaning up existing channel: ${ch.topic}`);
         ch.unsubscribe();
       }
     });
@@ -63,26 +58,16 @@ export const useSupabaseRealtime = ({
         const channelName = `realtime:${schema}:${table}:${userId}`;
         const channel = supabase.channel(channelName);
 
-        console.log(`📡 Subscribing to: ${channelName}`);
-
         // Add connection status listeners
         channel
           .on("presence", { event: "sync" }, () => {
-            console.log(`🟢 Channel ${channelName} presence synced`);
+            // Channel synced
           })
           .on("presence", { event: "join" }, ({ key, newPresences }) => {
-            console.log(
-              `🟢 Channel ${channelName} presence joined:`,
-              key,
-              newPresences
-            );
+            // Presence joined
           })
           .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
-            console.log(
-              `🔴 Channel ${channelName} presence left:`,
-              key,
-              leftPresences
-            );
+            // Presence left
           });
 
         if (onInsert) {
@@ -121,25 +106,15 @@ export const useSupabaseRealtime = ({
           );
         }
 
-        // Subscribe and log the result
-        channel.subscribe((status) => {
-          console.log(`📡 Channel ${channelName} subscription status:`, status);
-          if (status === "CHANNEL_ERROR") {
-            console.error(`❌ Err or subscribing to ${channelName}`);
-          }
-          if (status === "TIMED_OUT") {
-            console.error(`⏰ Timeout subscribing to ${channelName}`);
-          }
-        });
+        // Subscribe
+        channel.subscribe();
 
         return channel;
       }
     );
 
     return () => {
-      console.log(`🛑 Cleaning up ${subscriptions.length} subscriptions`);
       subscriptions.forEach(async (ch) => {
-        console.log(`🛑 Unsubscribing from: ${ch.topic}`);
         await ch.unsubscribe();
       });
     };

@@ -75,9 +75,6 @@ export async function normalizeImage(
   if (fileType === "jpg" || fileType === "jpeg" || fileType === "png") {
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (fileSize && fileSize > maxSize) {
-      console.log(
-        `Compressing large image: ${Math.round(fileSize / 1024 / 1024)}MB`
-      );
       try {
         const result = await ImageManipulator.manipulateAsync(
           fileUri,
@@ -91,12 +88,7 @@ export async function normalizeImage(
           }
         );
         processedUri = result.uri;
-        console.log("Image compressed successfully");
       } catch (compressionError) {
-        console.warn(
-          "Image compression failed, using original:",
-          compressionError
-        );
         // Continue with original if compression fails
       }
     }

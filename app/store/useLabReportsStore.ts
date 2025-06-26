@@ -35,28 +35,14 @@ export const useLabReportsStore = create<LabReportsState>()(
       setReports: (reports) => set({ reports }),
 
       addReport: async (report) => {
-        console.log("📝 [Store] addReport called with:", report);
-
         // Check if report already exists to prevent duplicates
         const existingReports = get().reports;
-        console.log(
-          "📝 [Store] Current reports count:",
-          existingReports.length
-        );
-
         const exists = existingReports.some((r) => r.id === report.id);
 
         if (!exists) {
           // Only add if it doesn't already exist
-          console.log("✅ [Store] Adding new report to store");
           const newReports = [report, ...existingReports];
           set({ reports: newReports });
-          console.log("✅ [Store] New reports count:", newReports.length);
-        } else {
-          console.log(
-            "⚠️ [Store] Report already exists, skipping add:",
-            report.id
-          );
         }
       },
 

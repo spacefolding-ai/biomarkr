@@ -23,23 +23,16 @@ const HealthLabScreen = () => {
       const biomarkers = await getAllBiomarkers();
       setBiomarkers(biomarkers);
     } catch (error) {
-      console.error("Failed to load biomarkers:", error);
+      // Failed to load biomarkers
     }
   };
 
   const loadLabReports = async () => {
     try {
-      console.log("🔄 [HealthLab] Loading lab reports...");
       const labReports = await getAllLabReports();
-      console.log(
-        "✅ [HealthLab] Loaded lab reports:",
-        labReports.length,
-        labReports
-      );
       setReports(labReports);
-      console.log("✅ [HealthLab] Set reports in store");
     } catch (error) {
-      console.error("❌ [HealthLab] Failed to load lab reports:", error);
+      // Failed to load lab reports
     }
   };
 
@@ -50,10 +43,9 @@ const HealthLabScreen = () => {
   };
 
   useEffect(() => {
-    console.log("HealthLabScreen mounted");
     loadAll();
     return () => {
-      console.log("HealthLabScreen unmounted");
+      // Cleanup if needed
     };
   }, []);
 
@@ -64,11 +56,8 @@ const HealthLabScreen = () => {
       const now = Date.now();
       if (now - lastRefresh > 2000) {
         // Debounce: only refresh if more than 2 seconds since last refresh
-        console.log("HealthLabScreen focused - refreshing data");
         setLastRefresh(now);
         loadAll();
-      } else {
-        console.log("HealthLabScreen focused - skipping refresh (too soon)");
       }
     }, [lastRefresh])
   );
@@ -78,7 +67,7 @@ const HealthLabScreen = () => {
       setRefreshing(true);
       await loadAll();
     } catch (error) {
-      console.error("Failed to refresh:", error);
+      // Failed to refresh
     } finally {
       setRefreshing(false);
     }
