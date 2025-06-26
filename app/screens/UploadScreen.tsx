@@ -41,9 +41,8 @@ export default function UploadScreen() {
         quality: 1,
       });
 
-      const asset: ImagePicker.ImagePickerAsset = result.assets[0];
-
-      if (!result.canceled) {
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset: ImagePicker.ImagePickerAsset = result.assets[0];
         const info = await normalizeImage(
           asset.fileName,
           asset.fileSize,
@@ -60,32 +59,48 @@ export default function UploadScreen() {
   };
 
   const handlePickDocument = async () => {
-    const result = await DocumentPicker.getDocumentAsync({
-      type: ["application/pdf", "image/*"],
-    });
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["application/pdf", "image/*"],
+      });
 
-    if (result.assets && result.assets.length > 0) {
-      const asset: DocumentPicker.DocumentPickerAsset = result.assets[0];
-      const info = await normalizeImage(
-        asset.name,
-        asset.size,
-        asset.uri,
-        user.id
-      );
-      setFileInfo(info);
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset: DocumentPicker.DocumentPickerAsset = result.assets[0];
+        const info = await normalizeImage(
+          asset.name,
+          asset.size,
+          asset.uri,
+          user.id
+        );
+        setFileInfo(info);
+      } else {
+        console.log("Document picking was canceled");
+      }
+    } catch (error) {
+      console.error("Error picking document:", error);
     }
   };
 
   const handleTakePhoto = async () => {
-    const result = await ImagePicker.launchCameraAsync({
-      quality: 1,
-    });
+    try {
+      const result = await ImagePicker.launchCameraAsync({
+        quality: 1,
+      });
 
-    const asset: ImagePicker.ImagePickerAsset = result.assets[0];
-
-    if (!result.canceled) {
-      const info = await normalizeImage("", asset.fileSize, asset.uri, user.id);
-      setFileInfo(info);
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const asset: ImagePicker.ImagePickerAsset = result.assets[0];
+        const info = await normalizeImage(
+          "",
+          asset.fileSize,
+          asset.uri,
+          user.id
+        );
+        setFileInfo(info);
+      } else {
+        console.log("Photo taking was canceled");
+      }
+    } catch (error) {
+      console.error("Error taking photo:", error);
     }
   };
 
