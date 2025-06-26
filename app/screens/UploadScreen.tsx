@@ -3,7 +3,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import * as Camera from "expo-camera";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Button,

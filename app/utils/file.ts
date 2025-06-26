@@ -99,6 +99,11 @@ export async function generatePreview(
     }
   }
 
+  // Skip preview generation for PDFs
+  if (type === "pdf") {
+    return uri; // Return the original URI for PDFs
+  }
+
   throw new Error("Unsupported file type");
 }
 
