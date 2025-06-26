@@ -1,5 +1,7 @@
 import * as FileSystem from "expo-file-system";
-import { supabase } from "./supabaseClient";
+import Toast from "react-native-toast-message";
+import { supabase } from "../supabase/supabaseClient";
+import { decode } from "../utils/file";
 
 export async function uploadFileToStorage(
   uri: string,
@@ -34,12 +36,59 @@ export async function uploadFileToStorage(
   }
 }
 
-// Helper function to decode base64 string to Uint8Array
-function decode(base64: string): Uint8Array {
-  const binaryString = atob(base64);
-  const bytes = new Uint8Array(binaryString.length);
-  for (let i = 0; i < binaryString.length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
+export async function deleteFileFromStorage(path: string): Promise<void> {
+  try {
+    const { data, error } = await supabase.storage
+      .from("uploads")
+      .remove([path]);
+    Toast.show({
+      type: "success",
+      text1: "Success",
+      text2: "File deleted successfully!",
+    });
+    console.log(data);
+  } catch (error) {
+    Toast.show({
+      type: "error",
+      text1: "Error",
+      text2: "Failed to delete file!",
+    });
+    throw new Error("Unexpected error: " + error);
   }
-  return bytes;
+}
+
+export async function deleteAllFilesFromStorageByReportId(
+  reportId: string
+): Promise<void> {
+  try {
+    // Step 1: Fetch all file paths from the database
+    const { data: files, error: fetchError } = await supabase
+      .from("files")
+      .select("file_path, thumbnail_path")
+      .eq("report_id", reportId);
+    console.log("files: ", files);
+    if (fetchError) {
+      throw new Error(`Failed to fetch files: ${fetchError.message}`);
+    }
+
+    const filePathsToDelete = files
+      .flatMap((f) => [f.file_path, f.thumbnail_path])
+      .filter(Boolean); // remove null/undefined if any
+
+    if (filePathsToDelete.length === 0) {
+      console.log(`No files found for report_id: ${reportId}`);
+      return;
+    }
+    console.log("filePathsToDelete: ", filePathsToDelete);
+    // Step 2: Delete from Supabase Storage
+    const { data: storageData, error: storageError } = await supabase.storage
+      .from("uploads")
+      .remove(filePathsToDelete);
+    console.log("storageData: ", storageData);
+    if (storageError) {
+      throw new Error(`Failed to delete from storage: ${storageError.message}`);
+    }
+  } catch (error) {
+    throw new Error("Unexpected error: " + error);
+  }
 }

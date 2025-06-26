@@ -1,8 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import Toast from "react-native-toast-message";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { supabase } from "../services/supabaseClient"; // Ensure this import is correct
+import { deleteLabReportFromDb } from "../services/labReports";
 import { LabReport } from "../types/LabReport";
 
 interface LabReportsState {
@@ -14,7 +13,7 @@ interface LabReportsState {
   setReports: (reports: LabReport[]) => void;
   addReport: (report: LabReport) => void;
   updateReport: (report: LabReport) => void;
-  deleteReport: (id: string) => void;
+  deleteReport: (id: string) => Promise<void>;
   setRefreshing: (refreshing: boolean) => void;
   setLoading: (loading: boolean) => void;
 }
@@ -23,7 +22,7 @@ export const useLabReportsStore = create<LabReportsState>()(
   persist(
     (set, get) => ({
       userId: null,
-      reports: [],
+      reports: [] as LabReport[],
       refreshing: false,
       loading: false,
 
@@ -31,54 +30,26 @@ export const useLabReportsStore = create<LabReportsState>()(
 
       setReports: (reports) => set({ reports }),
 
-      addReport: (report) => {
-        const existing = get().reports;
-        const exists = existing.find((r) => r.id === report.id);
-        if (!exists) {
-          set({ reports: [report, ...existing] });
-        }
+      addReport: async (report) => {
+        // insert to db handled in n8n
+        set({ reports: [report, ...get().reports] });
       },
 
       updateReport: async (report) => {
-        // TODO check if this is needed. Insert fallback if update arrives before insert or insert is not firing
-        const existing = get().reports;
-        const exists = existing.some((r) => r.id === report.id);
+        const existingReports = get().reports;
+        const exists = existingReports.some((r) => r.id === report.id);
 
         if (!exists) {
-          set({ reports: [report, ...existing] });
+          set({ reports: [report, ...existingReports] });
           return;
-        }
-        // end TODO
-
-        const updated = existing.map((r) => (r.id === report.id ? report : r));
-
-        try {
-          await supabase.from("lab_reports").update(report).eq("id", report.id);
-          set({ reports: updated });
-          Toast.show({
-            type: "success",
-            text1: "Success",
-            text2: "Lab report updated successfully!",
-          });
-        } catch (err) {
-          console.error("Unexpected error:", err);
+        } else {
+          set({ reports: [report] });
         }
       },
 
       deleteReport: async (id) => {
-        try {
-          await supabase.from("files").delete().eq("lab_report_id", id);
-          await supabase.from("lab_reports").delete().eq("id", id);
-          await supabase.from("biomarkers").delete().eq("lab_report_id", id);
-          set({ reports: get().reports.filter((r) => r.id !== id) });
-          Toast.show({
-            type: "success",
-            text1: "Success",
-            text2: "Lab report deleted successfully!",
-          });
-        } catch (err) {
-          console.error("Unexpected error:", err);
-        }
+        const removedId = await deleteLabReportFromDb(id);
+        set({ reports: get().reports.filter((r) => r.id !== removedId) });
       },
 
       setRefreshing: (refreshing) => set({ refreshing }),

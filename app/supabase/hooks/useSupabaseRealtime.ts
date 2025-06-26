@@ -4,7 +4,7 @@ import {
   RealtimePostgresUpdatePayload,
 } from "@supabase/supabase-js";
 import { useEffect } from "react";
-import { supabase } from "../services/supabaseClient";
+import { supabase } from "../supabaseClient";
 
 interface RealtimeTableConfig {
   table: string;
@@ -63,7 +63,7 @@ export const useSupabaseRealtime = ({
             "postgres_changes",
             { event: "INSERT", schema, table },
             (payload: RealtimePostgresInsertPayload<T>) => {
-              console.log(`[INSERT] ${table}:`, payload);
+              // console.log(`[INSERT] ${table}:`, payload);
               if (payload.new?.user_id === userId) onInsert(payload);
             }
           );
@@ -74,7 +74,7 @@ export const useSupabaseRealtime = ({
             "postgres_changes",
             { event: "UPDATE", schema, table },
             (payload: RealtimePostgresUpdatePayload<T>) => {
-              console.log(`[UPDATE] ${table}:`, payload);
+              // console.log(`[UPDATE] ${table}:`, payload);
               if (payload.new?.user_id === userId) onUpdate(payload);
             }
           );
@@ -85,7 +85,7 @@ export const useSupabaseRealtime = ({
             "postgres_changes",
             { event: "DELETE", schema, table },
             (payload: RealtimePostgresDeletePayload<T>) => {
-              console.log(`[DELETE] ${table}:`, payload);
+              // console.log(`[DELETE] ${table}:`, payload);
               if (payload.old?.user_id === userId) onDelete(payload);
             }
           );

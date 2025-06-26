@@ -1,15 +1,6 @@
-import { useAuthStore } from "../store/useAuthStore";
+import { useAuthStore } from "../../store/useAuthStore";
+import { File } from "../../types/File";
 import { useSupabaseRealtime } from "./useSupabaseRealtime";
-
-interface File {
-  id: string;
-  user_id: string;
-  file_path: string;
-  original_file_name: string;
-  uploaded_at: string;
-  lab_report_id: string | null;
-  extraction_status: string;
-}
 
 interface RealtimePayload<T> {
   new: T;

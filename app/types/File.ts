@@ -3,10 +3,27 @@ import { ExtractionStatus } from "./ExtractionStatus.enum";
 export interface File {
   id: string;
   user_id: string;
-  file_url: string;
+  file_path: string;
   file_name: string;
-  thumbnail_url: string;
+  thumbnail_path: string;
   uploaded_at: string;
   extraction_status: ExtractionStatus;
-  lab_report_id: string | null;
+  report_id: string | null;
+}
+
+export interface SupabaseStorageFile {
+  id: string;
+  name: string;
+  bucket_id: string;
+  owner: string | null;
+  created_at: string;
+  updated_at: string;
+  last_accessed_at: string | null;
+  metadata: {
+    size: number;
+    mimetype: string;
+    cacheControl?: string;
+    eTag?: string;
+    httpStatusCode?: number;
+  };
 }
