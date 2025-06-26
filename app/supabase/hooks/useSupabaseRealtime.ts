@@ -38,6 +38,7 @@ export const useSupabaseRealtime = ({
 
     // Clean up any existing subscriptions for this user first
     const existingChannels = supabase.getChannels();
+    console.log(`🧹 Found ${existingChannels.length} existing channels`);
     existingChannels.forEach((ch) => {
       if (ch.topic.includes(userId)) {
         console.log(`🧹 Cleaning up existing channel: ${ch.topic}`);
@@ -64,13 +65,34 @@ export const useSupabaseRealtime = ({
 
         console.log(`📡 Subscribing to: ${channelName}`);
 
+        // Add connection status listeners
+        channel
+          .on("presence", { event: "sync" }, () => {
+            console.log(`🟢 Channel ${channelName} presence synced`);
+          })
+          .on("presence", { event: "join" }, ({ key, newPresences }) => {
+            console.log(
+              `🟢 Channel ${channelName} presence joined:`,
+              key,
+              newPresences
+            );
+          })
+          .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
+            console.log(
+              `🔴 Channel ${channelName} presence left:`,
+              key,
+              leftPresences
+            );
+          });
+
         if (onInsert) {
           channel.on(
             "postgres_changes",
             { event: "INSERT", schema, table },
             (payload: RealtimePostgresInsertPayload<T>) => {
-              console.log(`[INSERT] ${table}:`, payload.new);
-              if (payload.new?.user_id === userId) onInsert(payload);
+              if (payload.new?.user_id === userId) {
+                onInsert(payload);
+              }
             }
           );
         }
@@ -80,8 +102,9 @@ export const useSupabaseRealtime = ({
             "postgres_changes",
             { event: "UPDATE", schema, table },
             (payload: RealtimePostgresUpdatePayload<T>) => {
-              console.log(`[UPDATE] ${table}:`, payload.new);
-              if (payload.new?.user_id === userId) onUpdate(payload);
+              if (payload.new?.user_id === userId) {
+                onUpdate(payload);
+              }
             }
           );
         }
@@ -91,18 +114,30 @@ export const useSupabaseRealtime = ({
             "postgres_changes",
             { event: "DELETE", schema, table },
             (payload: RealtimePostgresDeletePayload<T>) => {
-              console.log(`[DELETE] ${table}:`, payload.old);
-              if (payload.old?.user_id === userId) onDelete(payload);
+              if (payload.old?.user_id === userId) {
+                onDelete(payload);
+              }
             }
           );
         }
 
-        channel.subscribe();
+        // Subscribe and log the result
+        channel.subscribe((status) => {
+          console.log(`📡 Channel ${channelName} subscription status:`, status);
+          if (status === "CHANNEL_ERROR") {
+            console.error(`❌ Err or subscribing to ${channelName}`);
+          }
+          if (status === "TIMED_OUT") {
+            console.error(`⏰ Timeout subscribing to ${channelName}`);
+          }
+        });
+
         return channel;
       }
     );
 
     return () => {
+      console.log(`🛑 Cleaning up ${subscriptions.length} subscriptions`);
       subscriptions.forEach(async (ch) => {
         console.log(`🛑 Unsubscribing from: ${ch.topic}`);
         await ch.unsubscribe();

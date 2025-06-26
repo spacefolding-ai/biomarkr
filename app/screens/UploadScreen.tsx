@@ -3,6 +3,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import * as Camera from "expo-camera";
 import * as DocumentPicker from "expo-document-picker";
 import * as ImagePicker from "expo-image-picker";
+import * as MediaLibrary from "expo-media-library";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
@@ -23,6 +24,8 @@ export default function UploadScreen() {
   const [uploading, setUploading] = useState(false);
   const [cameraPermission, requestCameraPermission] =
     Camera.useCameraPermissions();
+  const [mediaLibraryPermission, requestMediaLibraryPermission] =
+    MediaLibrary.usePermissions();
   const { user, session, loading } = useAuthStore();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
 
@@ -32,7 +35,61 @@ export default function UploadScreen() {
 
   useEffect(() => {
     requestCameraPermission();
+    requestMediaLibraryPermission();
   }, []);
+
+  // Helper function to try to get the actual filename
+  const getActualFilename = async (
+    uri: string,
+    fallbackName: string
+  ): Promise<string> => {
+    try {
+      if (mediaLibraryPermission?.granted) {
+        // Try to get asset info from MediaLibrary
+        console.log("Attempting to get asset info for URI:", uri);
+        const asset = await MediaLibrary.getAssetInfoAsync(uri);
+        if (asset && asset.filename) {
+          console.log(
+            "Found actual filename from MediaLibrary:",
+            asset.filename
+          );
+          return asset.filename;
+        } else {
+          console.log("MediaLibrary asset info available but no filename");
+        }
+      } else {
+        console.log("MediaLibrary permission not granted");
+      }
+    } catch (error) {
+      console.log("MediaLibrary getAssetInfoAsync failed:", error);
+    }
+
+    // Fallback 1: Try to extract meaningful name from URI path
+    try {
+      const uriParts = uri.split("/");
+      const lastPart = uriParts[uriParts.length - 1];
+
+      // Remove query parameters if any
+      const filenamePart = lastPart.split("?")[0];
+
+      // Check if it looks like a real filename (contains letters, not just UUID pattern)
+      if (
+        filenamePart &&
+        filenamePart.includes(".") &&
+        !filenamePart.match(/^[A-F0-9-]{8,}\.(jpg|jpeg|png|pdf)$/i) &&
+        filenamePart.length > 5
+      ) {
+        console.log("Using filename from URI:", filenamePart);
+        return filenamePart;
+      }
+    } catch (error) {
+      console.log("Failed to extract filename from URI:", error);
+    }
+
+    // Fallback 2: Use the provided fallback name
+    console.log("Using fallback filename:", fallbackName);
+    return fallbackName;
+  };
 
   const handlePickImage = async () => {
     try {
@@ -43,8 +100,17 @@ export default function UploadScreen() {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset: ImagePicker.ImagePickerAsset = result.assets[0];
+
+        // Try to get the actual filename
+        const actualFilename = await getActualFilename(
+          asset.uri,
+          asset.fileName || `image_${Date.now()}.jpg`
+        );
+
+        console.log("Using filename:", actualFilename);
+
         const info = await normalizeImage(
-          asset.fileName,
+          actualFilename,
           asset.fileSize,
           asset.uri,
           user.id
@@ -66,8 +132,13 @@ export default function UploadScreen() {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset: DocumentPicker.DocumentPickerAsset = result.assets[0];
+
+        // DocumentPicker usually provides the actual filename
+        const actualFilename = asset.name || `document_${Date.now()}.pdf`;
+        console.log("Using document filename:", actualFilename);
+
         const info = await normalizeImage(
-          asset.name,
+          actualFilename,
           asset.size,
           asset.uri,
           user.id
@@ -89,8 +160,14 @@ export default function UploadScreen() {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const asset: ImagePicker.ImagePickerAsset = result.assets[0];
+
+        // Camera photos don't have original filenames, so we generate a timestamp-based name
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const cameraFilename = `photo_${timestamp}.jpg`;
+        console.log("Using camera filename:", cameraFilename);
+
         const info = await normalizeImage(
-          "",
+          cameraFilename,
           asset.fileSize,
           asset.uri,
           user.id

@@ -29,10 +29,17 @@ const HealthLabScreen = () => {
 
   const loadLabReports = async () => {
     try {
+      console.log("🔄 [HealthLab] Loading lab reports...");
       const labReports = await getAllLabReports();
+      console.log(
+        "✅ [HealthLab] Loaded lab reports:",
+        labReports.length,
+        labReports
+      );
       setReports(labReports);
+      console.log("✅ [HealthLab] Set reports in store");
     } catch (error) {
-      console.error("Failed to load lab reports:", error);
+      console.error("❌ [HealthLab] Failed to load lab reports:", error);
     }
   };
 
