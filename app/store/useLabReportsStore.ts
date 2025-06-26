@@ -43,7 +43,11 @@ export const useLabReportsStore = create<LabReportsState>()(
           set({ reports: [report, ...existingReports] });
           return;
         } else {
-          set({ reports: [report] });
+          // Update the existing report while keeping all other reports
+          const updatedReports = existingReports.map((r) =>
+            r.id === report.id ? report : r
+          );
+          set({ reports: updatedReports });
         }
       },
 
