@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button, Dimensions, StyleSheet, View } from "react-native";
 import { SceneMap, TabView } from "react-native-tab-view";
 import { BiomarkersTab } from "../components/BiomarkersTab";
@@ -22,7 +22,6 @@ interface LabReportDetailsScreenProps {
       shouldSave?: boolean;
       shouldRevert?: boolean;
       hasChanges?: boolean;
-      getHasChanges?: () => boolean;
     };
   };
   navigation: any;
@@ -38,6 +37,7 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
 
   const [index, setIndex] = useState(0);
   const [routes] = useState(createTabRoutes());
+  const lastHasChangesRef = useRef<boolean>(false);
 
   const {
     date,
@@ -76,10 +76,14 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
     }
   }, [shouldSave, shouldRevert, handleSave, revertChanges, route.params]);
 
-  // Store hasChanges function in route params for navigator access
+  // Update navigation params with hasChanges boolean value only when it actually changes
   useEffect(() => {
-    route.params.getHasChanges = hasChanges;
-  }, [hasChanges, route.params]);
+    const currentHasChanges = hasChanges();
+    if (currentHasChanges !== lastHasChangesRef.current) {
+      lastHasChangesRef.current = currentHasChanges;
+      navigation.setParams({ hasChanges: currentHasChanges });
+    }
+  }, [date, laboratory, notes, navigation, hasChanges]);
 
   const handleDeleteBiomarker = (biomarkerId: string) => {
     // Placeholder for delete functionality - will be implemented later

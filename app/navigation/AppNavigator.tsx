@@ -48,8 +48,7 @@ const AppNavigator = () => {
   const toggleEditMode = (navigation, route) => {
     if (isEditMode) {
       // Check if there are any changes before showing confirmation dialog
-      const getHasChanges = route.params?.getHasChanges;
-      const hasChanges = getHasChanges ? getHasChanges() : false;
+      const hasChanges = route.params?.hasChanges || false;
 
       if (hasChanges) {
         // Show confirmation dialog when there are changes
