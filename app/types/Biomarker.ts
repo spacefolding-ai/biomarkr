@@ -9,4 +9,5 @@ export interface Biomarker {
   abnormal_flag: string | null;
   created_at: string;
   report_date: string;
+  biomarker_group?: string;
 }

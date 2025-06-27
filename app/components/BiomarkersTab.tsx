@@ -13,13 +13,17 @@ import { Biomarker } from "../types/Biomarker";
 interface BiomarkersTabProps {
   biomarkers: Biomarker[];
   isEditMode?: boolean;
+  selectedBiomarkerId?: string | null;
   onDeleteBiomarker?: (biomarkerId: string) => void;
+  onEditBiomarker?: (biomarker: Biomarker) => void;
 }
 
 export const BiomarkersTab: React.FC<BiomarkersTabProps> = ({
   biomarkers,
   isEditMode = false,
+  selectedBiomarkerId = null,
   onDeleteBiomarker,
+  onEditBiomarker,
 }) => {
   return (
     <ScrollView style={styles.container}>
@@ -29,7 +33,9 @@ export const BiomarkersTab: React.FC<BiomarkersTabProps> = ({
           key={biomarker.id}
           biomarker={biomarker}
           isEditMode={isEditMode}
+          isSelected={selectedBiomarkerId === biomarker.id}
           onDelete={onDeleteBiomarker}
+          onEdit={onEditBiomarker}
         />
       ))}
     </ScrollView>
@@ -39,13 +45,17 @@ export const BiomarkersTab: React.FC<BiomarkersTabProps> = ({
 interface BiomarkerItemProps {
   biomarker: Biomarker;
   isEditMode?: boolean;
+  isSelected?: boolean;
   onDelete?: (biomarkerId: string) => void;
+  onEdit?: (biomarker: Biomarker) => void;
 }
 
 const BiomarkerItem: React.FC<BiomarkerItemProps> = ({
   biomarker,
   isEditMode = false,
+  isSelected = false,
   onDelete,
+  onEdit,
 }) => {
   const getAbnormalFlag = (flag?: string) => {
     const normalizedFlag = flag?.toLowerCase();
@@ -74,8 +84,18 @@ const BiomarkerItem: React.FC<BiomarkerItemProps> = ({
     }
   };
 
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(biomarker);
+    }
+  };
+
   const biomarkerContent = (
-    <View style={styles.biomarkerItem}>
+    <TouchableOpacity
+      style={[styles.biomarkerItem, isSelected && styles.biomarkerItemSelected]}
+      onPress={isEditMode ? handleEdit : undefined}
+      activeOpacity={isEditMode ? 0.7 : 1}
+    >
       <View style={styles.biomarkerLeft}>
         <Text style={styles.biomarkerName} numberOfLines={0}>
           {biomarker.marker_name}
@@ -87,7 +107,7 @@ const BiomarkerItem: React.FC<BiomarkerItemProps> = ({
         </Text>
         {getAbnormalFlag(biomarker.abnormal_flag)}
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   if (isEditMode) {
@@ -123,6 +143,11 @@ const styles = StyleSheet.create({
     borderColor: "#eee",
     backgroundColor: "white",
     minHeight: 60,
+  },
+  biomarkerItemSelected: {
+    backgroundColor: "#f0f8ff",
+    borderColor: "#007AFF",
+    borderWidth: 1,
   },
   biomarkerLeft: {
     flex: 3,
