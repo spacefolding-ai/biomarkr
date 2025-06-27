@@ -71,10 +71,55 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
     }
   }, [shouldSave, shouldRevert, handleSave, revertChanges, route.params]);
 
+  const handleDeleteBiomarker = (biomarkerId: string) => {
+    // Placeholder for delete functionality - will be implemented later
+    console.log("Delete biomarker:", biomarkerId);
+  };
+
   const renderScene = SceneMap({
-    results: () => <BiomarkersTab biomarkers={relatedBiomarkers} />,
+    results: () => (
+      <BiomarkersTab
+        biomarkers={relatedBiomarkers}
+        isEditMode={isEditMode}
+        onDeleteBiomarker={handleDeleteBiomarker}
+      />
+    ),
     docs: () => <DocumentsTab />,
   });
+
+  const handleIndexChange = (newIndex: number) => {
+    // Disable tab switching when in edit mode
+    if (!isEditMode) {
+      setIndex(newIndex);
+    }
+  };
+
+  const renderTabBar = (props: any) => {
+    return (
+      <View style={[styles.tabBar, isEditMode && styles.tabBarDisabled]}>
+        {props.navigationState.routes.map((route: any, i: number) => {
+          const isActive = i === props.navigationState.index;
+          return (
+            <View
+              key={route.key}
+              style={[
+                styles.tabItem,
+                isActive && styles.tabItemActive,
+                isEditMode && styles.tabItemDisabled,
+              ]}
+            >
+              <Button
+                title={route.title}
+                onPress={() => !isEditMode && setIndex(i)}
+                disabled={isEditMode}
+                color={isEditMode ? "#999" : isActive ? "#007AFF" : "#666"}
+              />
+            </View>
+          );
+        })}
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -92,8 +137,10 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
       <TabView
         navigationState={{ index, routes }}
         renderScene={renderScene}
-        onIndexChange={setIndex}
+        onIndexChange={handleIndexChange}
         initialLayout={{ width: Dimensions.get("window").width }}
+        renderTabBar={renderTabBar}
+        swipeEnabled={!isEditMode}
       />
 
       {isEditMode && (
@@ -142,6 +189,28 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  tabBar: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+  },
+  tabBarDisabled: {
+    backgroundColor: "#f5f5f5",
+    opacity: 0.6,
+  },
+  tabItem: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+  },
+  tabItemActive: {
+    borderBottomWidth: 2,
+    borderBottomColor: "#007AFF",
+  },
+  tabItemDisabled: {
+    opacity: 0.5,
   },
 });
 

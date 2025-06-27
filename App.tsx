@@ -8,6 +8,7 @@ import { NavigationContainer } from "@react-navigation/native";
 import * as ScreenOrientation from "expo-screen-orientation";
 import React, { useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-get-random-values";
 import Toast from "react-native-toast-message";
 import "react-native-url-polyfill/auto";
@@ -58,9 +59,11 @@ export default function App() {
   }
 
   return (
-    <NavigationContainer>
-      <AppNavigator />
-      <Toast />
-    </NavigationContainer>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <NavigationContainer>
+        <AppNavigator />
+        <Toast />
+      </NavigationContainer>
+    </GestureHandlerRootView>
   );
 }
