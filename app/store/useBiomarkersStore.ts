@@ -13,7 +13,7 @@ interface BiomarkersState {
   biomarkers: Biomarker[];
   refreshing: boolean;
   loading: boolean;
-  setUserId: (id: string) => void;
+  setUserId: (id: string | null) => void;
   setBiomarkers: (biomarkers: Biomarker[]) => void;
   addBiomarker: (biomarker: Biomarker) => void;
   updateBiomarker: (biomarker: Biomarker) => void;

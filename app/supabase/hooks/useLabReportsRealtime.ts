@@ -16,16 +16,17 @@ export function useLabReportsRealtime() {
       {
         table: "lab_reports",
         onInsert: (payload: RealtimePostgresInsertPayload<LabReport>) => {
-          // console.log("[Realtime] Insert lab report", payload.new);
-          addReport(payload.new);
+          if (payload.new?.user_id === userId) {
+            addReport(payload.new);
+          }
         },
         onUpdate: (payload: RealtimePostgresUpdatePayload<LabReport>) => {
-          // console.log("[Realtime] Update lab report", payload.new);
-          updateReport(payload.new);
+          if (payload.new?.user_id === userId) {
+            updateReport(payload.new);
+          }
         },
         // TODO not needed for now
         // onDelete: (payload: RealtimePostgresDeletePayload<LabReport>) => {
-        //   // console.log("[Realtime] Delete lab report", payload.old);
         //   deleteReport(payload.old.id);
         // },
       },

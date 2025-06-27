@@ -14,7 +14,6 @@ export async function deleteAllFilesFromDbByReportId(
       text1: "Success",
       text2: "File deleted successfully!",
     });
-    console.log("deleteAllFilesForReportFromDb: ", data);
     return data;
   } catch (error) {
     Toast.show({
@@ -34,7 +33,6 @@ export async function deleteFileFromDb(id: string): Promise<string> {
       text1: "Success",
       text2: "File deleted successfully!",
     });
-    console.log("deleteFileFromDb: ", data);
     return data;
   } catch (error) {
     Toast.show({

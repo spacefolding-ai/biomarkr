@@ -28,7 +28,18 @@ export const useSupabaseRealtime = ({
   tables,
 }: UseSupabaseRealtimeProps) => {
   useEffect(() => {
-    console.log("🔄 useSupabaseRealtime initialized with userId:", userId);
+    // Don't subscribe if there's no userId
+    if (!userId) {
+      return;
+    }
+
+    // Clean up any existing subscriptions for this user first
+    const existingChannels = supabase.getChannels();
+    existingChannels.forEach((ch) => {
+      if (ch.topic.includes(userId)) {
+        ch.unsubscribe();
+      }
+    });
 
     const subscriptions = tables.map(
       <T extends WithUserId>({
@@ -44,27 +55,29 @@ export const useSupabaseRealtime = ({
         onUpdate?: (payload: RealtimePostgresUpdatePayload<T>) => void;
         onDelete?: (payload: RealtimePostgresDeletePayload<T>) => void;
       }) => {
-        const channelName = `realtime:${schema}:${table}`;
-        const existing = supabase
-          .getChannels()
-          .find((ch) => ch.topic === channelName);
-
-        // 🧠 Prevent multiple subscriptions
-        if (existing) {
-          console.warn(`⚠️ Already subscribed to: ${channelName}`);
-          return existing;
-        }
+        const channelName = `realtime:${schema}:${table}:${userId}`;
         const channel = supabase.channel(channelName);
 
-        console.log(`📡 Subscribing to: ${channelName}`);
+        // Add connection status listeners
+        channel
+          .on("presence", { event: "sync" }, () => {
+            // Channel synced
+          })
+          .on("presence", { event: "join" }, ({ key, newPresences }) => {
+            // Presence joined
+          })
+          .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
+            // Presence left
+          });
 
         if (onInsert) {
           channel.on(
             "postgres_changes",
             { event: "INSERT", schema, table },
             (payload: RealtimePostgresInsertPayload<T>) => {
-              // console.log(`[INSERT] ${table}:`, payload);
-              if (payload.new?.user_id === userId) onInsert(payload);
+              if (payload.new?.user_id === userId) {
+                onInsert(payload);
+              }
             }
           );
         }
@@ -74,8 +87,9 @@ export const useSupabaseRealtime = ({
             "postgres_changes",
             { event: "UPDATE", schema, table },
             (payload: RealtimePostgresUpdatePayload<T>) => {
-              // console.log(`[UPDATE] ${table}:`, payload);
-              if (payload.new?.user_id === userId) onUpdate(payload);
+              if (payload.new?.user_id === userId) {
+                onUpdate(payload);
+              }
             }
           );
         }
@@ -85,22 +99,24 @@ export const useSupabaseRealtime = ({
             "postgres_changes",
             { event: "DELETE", schema, table },
             (payload: RealtimePostgresDeletePayload<T>) => {
-              // console.log(`[DELETE] ${table}:`, payload);
-              if (payload.old?.user_id === userId) onDelete(payload);
+              if (payload.old?.user_id === userId) {
+                onDelete(payload);
+              }
             }
           );
         }
 
+        // Subscribe
         channel.subscribe();
+
         return channel;
       }
     );
 
     return () => {
       subscriptions.forEach(async (ch) => {
-        console.log(`🛑 Unsubscribing from: ${ch.topic}`);
         await ch.unsubscribe();
       });
     };
-  }, []);
+  }, [userId]);
 };

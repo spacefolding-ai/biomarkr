@@ -33,7 +33,7 @@ export async function deleteLabReportFromDb(id: string): Promise<string> {
     });
     return id;
   } catch (err) {
-    console.error("Unexpected error:", err);
+    // Unexpected error
     Toast.show({
       type: "error",
       text1: "Error",

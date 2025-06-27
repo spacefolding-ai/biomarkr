@@ -146,10 +146,25 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
           <View
             style={{
               flexDirection: "row",
-              justifyContent: "flex-end",
+              justifyContent: "space-between",
+              alignItems: "center",
               padding: 16,
             }}
           >
+            <TouchableOpacity
+              onPress={handleRefresh}
+              style={{
+                backgroundColor: "#007AFF",
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                borderRadius: 6,
+              }}
+            >
+              <Text style={{ color: "white", fontSize: 12 }}>
+                {refreshing ? "Refreshing..." : "Manual Refresh"}
+              </Text>
+            </TouchableOpacity>
+
             <TouchableOpacity onPress={toggleModal}>
               <Text style={{ color: "blue" }}>{filter}</Text>
             </TouchableOpacity>
@@ -157,7 +172,9 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
 
           <FlatList
             data={sortedReports}
-            keyExtractor={(item) => `${item?.id}-${item?.created_at}`}
+            keyExtractor={(item, index) =>
+              `${item?.id || `temp-${index}`}-${item?.created_at || Date.now()}`
+            }
             renderItem={renderReportItem}
             refreshControl={
               <RefreshControl

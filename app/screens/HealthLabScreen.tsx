@@ -1,4 +1,5 @@
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
+import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useEffect, useState } from "react";
 import { SafeAreaView } from "react-native";
 import { getAllBiomarkers } from "../services/biomarkers";
@@ -15,13 +16,14 @@ const HealthLabScreen = () => {
   const { reports, setReports } = useLabReportsStore();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState(0);
 
   const loadBiomarkers = async () => {
     try {
       const biomarkers = await getAllBiomarkers();
       setBiomarkers(biomarkers);
     } catch (error) {
-      console.error("Failed to load biomarkers:", error);
+      // Failed to load biomarkers
     }
   };
 
@@ -30,7 +32,7 @@ const HealthLabScreen = () => {
       const labReports = await getAllLabReports();
       setReports(labReports);
     } catch (error) {
-      console.error("Failed to load lab reports:", error);
+      // Failed to load lab reports
     }
   };
 
@@ -41,19 +43,31 @@ const HealthLabScreen = () => {
   };
 
   useEffect(() => {
-    console.log("HealthLabScreen mounted");
     loadAll();
     return () => {
-      console.log("HealthLabScreen unmounted");
+      // Cleanup if needed
     };
   }, []);
+
+  // Refresh data when screen comes into focus (e.g., after upload)
+  // with debounce to prevent multiple rapid calls
+  useFocusEffect(
+    useCallback(() => {
+      const now = Date.now();
+      if (now - lastRefresh > 2000) {
+        // Debounce: only refresh if more than 2 seconds since last refresh
+        setLastRefresh(now);
+        loadAll();
+      }
+    }, [lastRefresh])
+  );
 
   const onRefresh = useCallback(async () => {
     try {
       setRefreshing(true);
       await loadAll();
     } catch (error) {
-      console.error("Failed to refresh:", error);
+      // Failed to refresh
     } finally {
       setRefreshing(false);
     }

@@ -8,14 +8,28 @@
     "platforms": ["ios", "android", "web"],
     "ios": {
       "bundleIdentifier": "com.anonymous.biomarkr",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to get the actual filename of selected images."
+      }
     },
     "android": {
       "package": "com.anonymous.biomarkr",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "permissions": ["READ_EXTERNAL_STORAGE"]
     },
-    "plugins": ["expo-font"]
+    "plugins": [
+      "expo-font",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow biomarkr to access your photos to get actual filenames.",
+          "savePhotosPermission": "Allow biomarkr to save photos to your photo library.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ]
+    ]
   }
 }

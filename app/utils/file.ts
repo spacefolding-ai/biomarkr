@@ -70,9 +70,33 @@ export async function normalizeImage(
     };
   }
 
-  const storagePath = generateUniqueFilePath(fileUri, userId);
+  // For images, compress if they're too large
+  let processedUri = fileUri;
+  if (fileType === "jpg" || fileType === "jpeg" || fileType === "png") {
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (fileSize && fileSize > maxSize) {
+      try {
+        const result = await ImageManipulator.manipulateAsync(
+          fileUri,
+          [{ resize: { width: 2048 } }], // Resize to max width of 2048px
+          {
+            compress: 0.8,
+            format:
+              fileType === "png"
+                ? ImageManipulator.SaveFormat.PNG
+                : ImageManipulator.SaveFormat.JPEG,
+          }
+        );
+        processedUri = result.uri;
+      } catch (compressionError) {
+        // Continue with original if compression fails
+      }
+    }
+  }
+
+  const storagePath = generateUniqueFilePath(processedUri, userId);
   return {
-    normalizedUri: fileUri,
+    normalizedUri: processedUri,
     fileType: `image/${fileType}`,
     fileName: fileNameFromUri,
     storagePath,
@@ -97,6 +121,11 @@ export async function generatePreview(
     } catch (error) {
       throw error;
     }
+  }
+
+  // Skip preview generation for PDFs
+  if (type === "pdf") {
+    return uri; // Return the original URI for PDFs
   }
 
   throw new Error("Unsupported file type");

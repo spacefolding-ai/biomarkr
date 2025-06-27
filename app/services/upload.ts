@@ -34,19 +34,27 @@ export async function uploadFileAndInsertToDb(
   const fileData = await uploadFileToStorage(fileUri, filePath, mimeType);
   if (!fileData) throw new Error("File upload failed");
 
-  // Generate and upload the thumbnail
-  const previewUri = await generatePreview(
-    fileUri,
-    mimeType.startsWith("image") ? "image" : "pdf"
-  );
-  const previewFileName = `thumb_${uniqueFileName}`;
-  const previewFilePath = `reports/${userId}/${previewFileName}`;
-  const thumbData = await uploadFileToStorage(
-    previewUri as string,
-    previewFilePath,
-    "image/jpeg"
-  );
-  if (!thumbData) throw new Error("Thumbnail upload failed");
+  let thumbData;
+
+  // Generate and upload the thumbnail only for images
+  if (mimeType.startsWith("image")) {
+    try {
+      const previewUri = await generatePreview(fileUri, "image");
+      const previewFileName = `thumb_${uniqueFileName}`;
+      const previewFilePath = `reports/${userId}/${previewFileName}`;
+      thumbData = await uploadFileToStorage(
+        previewUri as string,
+        previewFilePath,
+        "image/jpeg"
+      );
+    } catch (thumbnailError: any) {
+      // If thumbnail fails, use the main file path as fallback
+      thumbData = { path: fileData.path };
+    }
+  } else {
+    // For PDFs and other non-image files, use the main file path as thumbnail path
+    thumbData = { path: fileData.path };
+  }
 
   // Insert file into the database
   const { data: dataFile, error: insertError } = await supabase
@@ -68,7 +76,6 @@ export async function uploadFileAndInsertToDb(
   }
 
   if (insertError) {
-    console.error("Insertion error:", insertError);
     throw insertError;
   }
 
