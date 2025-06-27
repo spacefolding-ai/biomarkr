@@ -59,8 +59,12 @@ const BiomarkerItem: React.FC<BiomarkerItemProps> = ({
 }) => {
   const getAbnormalFlag = (flag?: string) => {
     const normalizedFlag = flag?.toLowerCase();
-    if (normalizedFlag === "high") {
+    if (normalizedFlag === "very high") {
+      return <Text style={styles.abnormalVeryHigh}>▲</Text>;
+    } else if (normalizedFlag === "high") {
       return <Text style={styles.abnormalHigh}>▲</Text>;
+    } else if (normalizedFlag === "very low") {
+      return <Text style={styles.abnormalVeryLow}>▼</Text>;
     } else if (normalizedFlag === "low") {
       return <Text style={styles.abnormalLow}>▼</Text>;
     } else {
@@ -173,8 +177,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
   },
+  abnormalVeryHigh: {
+    color: "red",
+  },
   abnormalHigh: {
     color: "orange",
+  },
+  abnormalVeryLow: {
+    color: "red",
   },
   abnormalLow: {
     color: "orange",

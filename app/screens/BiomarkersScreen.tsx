@@ -71,8 +71,12 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
             )}
           </View>
 
-          {item?.abnormal_flag?.toLowerCase() === "high" ? (
+          {item?.abnormal_flag?.toLowerCase() === "very high" ? (
+            <Text style={{ color: "red" }}>▲</Text>
+          ) : item?.abnormal_flag?.toLowerCase() === "high" ? (
             <Text style={{ color: "orange" }}>▲</Text>
+          ) : item?.abnormal_flag?.toLowerCase() === "very low" ? (
+            <Text style={{ color: "red" }}>▼</Text>
           ) : item?.abnormal_flag?.toLowerCase() === "low" ? (
             <Text style={{ color: "orange" }}>▼</Text>
           ) : (
