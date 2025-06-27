@@ -47,31 +47,41 @@ const AppNavigator = () => {
 
   const toggleEditMode = (navigation, route) => {
     if (isEditMode) {
-      // Show confirmation dialog when exiting edit mode
-      Alert.alert(
-        "Save Changes",
-        "Do you want to save the changes you made to this lab report?",
-        [
-          {
-            text: "Cancel",
-            style: "cancel",
-            onPress: () => {
-              // Revert changes and exit edit mode
-              setIsEditMode(false);
-              navigation.setParams({ isEditMode: false, shouldRevert: true });
+      // Check if there are any changes before showing confirmation dialog
+      const getHasChanges = route.params?.getHasChanges;
+      const hasChanges = getHasChanges ? getHasChanges() : false;
+
+      if (hasChanges) {
+        // Show confirmation dialog when there are changes
+        Alert.alert(
+          "Save Changes",
+          "Do you want to save the changes you made to this lab report?",
+          [
+            {
+              text: "Cancel",
+              style: "cancel",
+              onPress: () => {
+                // Revert changes and exit edit mode
+                setIsEditMode(false);
+                navigation.setParams({ isEditMode: false, shouldRevert: true });
+              },
             },
-          },
-          {
-            text: "Save",
-            style: "default",
-            onPress: () => {
-              // Save changes and exit edit mode
-              setIsEditMode(false);
-              navigation.setParams({ isEditMode: false, shouldSave: true });
+            {
+              text: "Save",
+              style: "default",
+              onPress: () => {
+                // Save changes and exit edit mode
+                setIsEditMode(false);
+                navigation.setParams({ isEditMode: false, shouldSave: true });
+              },
             },
-          },
-        ]
-      );
+          ]
+        );
+      } else {
+        // No changes, just exit edit mode
+        setIsEditMode(false);
+        navigation.setParams({ isEditMode: false });
+      }
     } else {
       // Enter edit mode
       setIsEditMode(true);

@@ -17,6 +17,16 @@ export const useLabReportEditor = (labReport: LabReport) => {
 
   const { updateReport } = useLabReportsStore();
 
+  // Check if any changes were made
+  const hasChanges = () => {
+    const originalDate = labReport.report_date || new Date().toISOString();
+    return (
+      date !== originalDate ||
+      laboratory !== labReport.laboratory_name ||
+      notes !== labReport.notes
+    );
+  };
+
   const handleSave = async () => {
     try {
       setIsSaving(true);
@@ -91,5 +101,6 @@ export const useLabReportEditor = (labReport: LabReport) => {
     // Actions
     handleSave,
     revertChanges,
+    hasChanges,
   };
 };

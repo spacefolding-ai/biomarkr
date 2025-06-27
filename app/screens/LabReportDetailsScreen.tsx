@@ -21,12 +21,16 @@ interface LabReportDetailsScreenProps {
       isEditMode: boolean;
       shouldSave?: boolean;
       shouldRevert?: boolean;
+      hasChanges?: boolean;
+      getHasChanges?: () => boolean;
     };
   };
+  navigation: any;
 }
 
 const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
   route,
+  navigation,
 }) => {
   const { labReport, isEditMode, shouldSave, shouldRevert } = route.params;
   const { biomarkers } = useBiomarkersStore();
@@ -56,6 +60,7 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
     handleNotesSave,
     handleSave,
     revertChanges,
+    hasChanges,
   } = useLabReportEditor(labReport);
 
   // Handle navigation parameters for save/revert actions
@@ -70,6 +75,11 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
       route.params.shouldRevert = false;
     }
   }, [shouldSave, shouldRevert, handleSave, revertChanges, route.params]);
+
+  // Store hasChanges function in route params for navigator access
+  useEffect(() => {
+    route.params.getHasChanges = hasChanges;
+  }, [hasChanges, route.params]);
 
   const handleDeleteBiomarker = (biomarkerId: string) => {
     // Placeholder for delete functionality - will be implemented later
