@@ -16,6 +16,7 @@ interface BiomarkersTabProps {
   selectedBiomarkerId?: string | null;
   onDeleteBiomarker?: (biomarkerId: string) => void;
   onEditBiomarker?: (biomarker: Biomarker) => void;
+  onAddBiomarker?: () => void;
 }
 
 export const BiomarkersTab: React.FC<BiomarkersTabProps> = ({
@@ -24,10 +25,19 @@ export const BiomarkersTab: React.FC<BiomarkersTabProps> = ({
   selectedBiomarkerId = null,
   onDeleteBiomarker,
   onEditBiomarker,
+  onAddBiomarker,
 }) => {
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.subtitle}>Biomarkers</Text>
+      <View style={styles.header}>
+        <Text style={styles.subtitle}>Biomarkers</Text>
+        {isEditMode && onAddBiomarker && (
+          <TouchableOpacity style={styles.addButton} onPress={onAddBiomarker}>
+            <Ionicons name="add" size={20} color="#007AFF" />
+            <Text style={styles.addButtonText}>Add Biomarker</Text>
+          </TouchableOpacity>
+        )}
+      </View>
       {biomarkers.map((biomarker) => (
         <BiomarkerItem
           key={biomarker.id}
@@ -133,10 +143,31 @@ const styles = StyleSheet.create({
   container: {
     padding: 16,
   },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
   subtitle: {
     fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 8,
+  },
+  addButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f0f8ff",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#007AFF",
+  },
+  addButtonText: {
+    color: "#007AFF",
+    fontSize: 14,
+    fontWeight: "500",
+    marginLeft: 4,
   },
   biomarkerItem: {
     flexDirection: "row",
