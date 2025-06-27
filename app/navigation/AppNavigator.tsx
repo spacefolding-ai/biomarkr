@@ -45,9 +45,38 @@ const AppNavigator = () => {
   const { deleteReport } = useLabReportsStore();
   const { setBiomarkers } = useBiomarkersStore();
 
-  const toggleEditMode = (navigation) => {
-    setIsEditMode((prev) => !prev);
-    navigation.setParams({ isEditMode: !isEditMode });
+  const toggleEditMode = (navigation, route) => {
+    if (isEditMode) {
+      // Show confirmation dialog when exiting edit mode
+      Alert.alert(
+        "Save Changes",
+        "Do you want to save the changes you made to this lab report?",
+        [
+          {
+            text: "Cancel",
+            style: "cancel",
+            onPress: () => {
+              // Revert changes and exit edit mode
+              setIsEditMode(false);
+              navigation.setParams({ isEditMode: false, shouldRevert: true });
+            },
+          },
+          {
+            text: "Save",
+            style: "default",
+            onPress: () => {
+              // Save changes and exit edit mode
+              setIsEditMode(false);
+              navigation.setParams({ isEditMode: false, shouldSave: true });
+            },
+          },
+        ]
+      );
+    } else {
+      // Enter edit mode
+      setIsEditMode(true);
+      navigation.setParams({ isEditMode: true });
+    }
   };
 
   const confirmDelete = (id, navigation) => {
@@ -105,7 +134,7 @@ const AppNavigator = () => {
           ),
           headerRight: () => (
             <TouchableOpacity
-              onPress={() => toggleEditMode(navigation)}
+              onPress={() => toggleEditMode(navigation, route)}
               style={{ marginRight: 10 }}
             >
               <Ionicons

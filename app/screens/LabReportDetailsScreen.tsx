@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Dimensions, StyleSheet, View } from "react-native";
 import { SceneMap, TabView } from "react-native-tab-view";
 import { BiomarkersTab } from "../components/BiomarkersTab";
@@ -19,6 +19,8 @@ interface LabReportDetailsScreenProps {
     params: {
       labReport: LabReport;
       isEditMode: boolean;
+      shouldSave?: boolean;
+      shouldRevert?: boolean;
     };
   };
 }
@@ -26,7 +28,7 @@ interface LabReportDetailsScreenProps {
 const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
   route,
 }) => {
-  const { labReport, isEditMode } = route.params;
+  const { labReport, isEditMode, shouldSave, shouldRevert } = route.params;
   const { biomarkers } = useBiomarkersStore();
   const relatedBiomarkers = getRelatedBiomarkers(biomarkers, labReport.id);
 
@@ -37,6 +39,7 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
     date,
     laboratory,
     notes,
+    isSaving,
     isDateModalVisible,
     isLabModalVisible,
     isNotesModalVisible,
@@ -52,7 +55,21 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
     handleLabSave,
     handleNotesSave,
     handleSave,
+    revertChanges,
   } = useLabReportEditor(labReport);
+
+  // Handle navigation parameters for save/revert actions
+  useEffect(() => {
+    if (shouldSave) {
+      handleSave();
+      // Clear the parameter to avoid re-triggering
+      route.params.shouldSave = false;
+    } else if (shouldRevert) {
+      revertChanges();
+      // Clear the parameter to avoid re-triggering
+      route.params.shouldRevert = false;
+    }
+  }, [shouldSave, shouldRevert, handleSave, revertChanges, route.params]);
 
   const renderScene = SceneMap({
     results: () => <BiomarkersTab biomarkers={relatedBiomarkers} />,
@@ -79,7 +96,13 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
         initialLayout={{ width: Dimensions.get("window").width }}
       />
 
-      {isEditMode && <Button title="Save" onPress={handleSave} />}
+      {isEditMode && (
+        <Button
+          title={isSaving ? "Saving..." : "Save"}
+          onPress={handleSave}
+          disabled={isSaving}
+        />
+      )}
 
       <DatePickerModal
         isVisible={isDateModalVisible}

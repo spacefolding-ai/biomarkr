@@ -19,6 +19,42 @@ export async function getAllLabReports(): Promise<LabReport[]> {
   }
 }
 
+export async function updateLabReportInDb(
+  report: LabReport
+): Promise<LabReport> {
+  try {
+    const { data, error } = await supabase
+      .from("lab_reports")
+      .update({
+        report_date: report.report_date,
+        laboratory_name: report.laboratory_name,
+        notes: report.notes,
+      })
+      .eq("id", report.id)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error("Failed to update lab report: " + error.message);
+    }
+
+    Toast.show({
+      type: "success",
+      text1: "Success",
+      text2: "Lab report updated successfully!",
+    });
+
+    return data;
+  } catch (err) {
+    Toast.show({
+      type: "error",
+      text1: "Error",
+      text2: "Failed to update lab report!",
+    });
+    throw err;
+  }
+}
+
 export async function deleteLabReportFromDb(id: string): Promise<string> {
   try {
     await deleteAllFilesFromStorageByReportId(id);

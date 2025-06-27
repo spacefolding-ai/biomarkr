@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware";
 import {
   deleteLabReportFromDb,
   getAllLabReports,
+  updateLabReportInDb,
 } from "../services/labReports";
 import { LabReport } from "../types/LabReport";
 
@@ -47,18 +48,26 @@ export const useLabReportsStore = create<LabReportsState>()(
       },
 
       updateReport: async (report) => {
-        const existingReports = get().reports;
-        const exists = existingReports.some((r) => r.id === report.id);
+        try {
+          // Update in Supabase first
+          const updatedReport = await updateLabReportInDb(report);
 
-        if (!exists) {
-          set({ reports: [report, ...existingReports] });
-          return;
-        } else {
-          // Update the existing report while keeping all other reports
-          const updatedReports = existingReports.map((r) =>
-            r.id === report.id ? report : r
-          );
-          set({ reports: updatedReports });
+          // Then update local state
+          const existingReports = get().reports;
+          const exists = existingReports.some((r) => r.id === report.id);
+
+          if (!exists) {
+            set({ reports: [updatedReport, ...existingReports] });
+          } else {
+            // Update the existing report while keeping all other reports
+            const updatedReports = existingReports.map((r) =>
+              r.id === updatedReport.id ? updatedReport : r
+            );
+            set({ reports: updatedReports });
+          }
+        } catch (error) {
+          // If update fails, don't update local state
+          throw error;
         }
       },
 
