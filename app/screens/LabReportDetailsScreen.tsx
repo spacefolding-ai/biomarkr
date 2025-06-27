@@ -49,6 +49,8 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
     closeLabModal,
     openNotesModal,
     closeNotesModal,
+    handleLabSave,
+    handleNotesSave,
     handleSave,
   } = useLabReportEditor(labReport);
 
@@ -56,14 +58,6 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
     results: () => <BiomarkersTab biomarkers={relatedBiomarkers} />,
     docs: () => <DocumentsTab />,
   });
-
-  const handleLabSave = () => {
-    closeLabModal();
-  };
-
-  const handleNotesSave = () => {
-    closeNotesModal();
-  };
 
   return (
     <View style={styles.container}>
@@ -98,7 +92,7 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
         isVisible={isLabModalVisible}
         title="Laboratory Name"
         value={laboratory || ""}
-        onChangeText={setLaboratory}
+        onChangeText={() => {}} // Not used anymore, handled internally
         onClose={closeLabModal}
         onSave={handleLabSave}
         placeholder="Enter Laboratory"
@@ -108,7 +102,7 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
         isVisible={isNotesModalVisible}
         title="Enter Notes"
         value={notes || ""}
-        onChangeText={setNotes}
+        onChangeText={() => {}} // Not used anymore, handled internally
         onClose={closeNotesModal}
         onSave={handleNotesSave}
         placeholder="Enter Notes"

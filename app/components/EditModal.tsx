@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Button, StyleSheet, Text, TextInput, View } from "react-native";
 import ReactNativeModal from "react-native-modal";
 
@@ -8,7 +8,7 @@ interface EditModalProps {
   value: string;
   onChangeText: (text: string) => void;
   onClose: () => void;
-  onSave: () => void;
+  onSave: (newValue: string) => void;
   placeholder?: string;
   multiline?: boolean;
   numberOfLines?: number;
@@ -29,12 +29,29 @@ export const EditModal: React.FC<EditModalProps> = ({
   maxLength,
   showCharacterCount = false,
 }) => {
+  const [tempValue, setTempValue] = useState(value);
+
+  // Reset temp value when modal opens
+  useEffect(() => {
+    if (isVisible) {
+      setTempValue(value);
+    }
+  }, [isVisible, value]);
+
+  const handleSave = () => {
+    onSave(tempValue);
+  };
+
+  const handleClose = () => {
+    setTempValue(value); // Reset to original value
+    onClose();
+  };
   const modalContent = (
     <View style={styles.modalContent}>
       <View style={styles.modalHeader}>
-        <Button title="Close" onPress={onClose} />
+        <Button title="Cancel" onPress={handleClose} />
         <Text style={styles.modalTitle}>{title}</Text>
-        <Button title="Save" onPress={onSave} />
+        <Button title="Save" onPress={handleSave} />
       </View>
       <View style={styles.inputContainer}>
         <TextInput
@@ -44,8 +61,8 @@ export const EditModal: React.FC<EditModalProps> = ({
             multiline && styles.multilineInput,
             { height: multiline ? numberOfLines * 25 + 20 : 40 },
           ]}
-          value={value}
-          onChangeText={onChangeText}
+          value={tempValue}
+          onChangeText={setTempValue}
           placeholder={placeholder}
           multiline={multiline}
           numberOfLines={numberOfLines}
@@ -53,7 +70,7 @@ export const EditModal: React.FC<EditModalProps> = ({
         />
         {showCharacterCount && maxLength && (
           <Text style={styles.characterCount}>
-            {value?.length ?? 0}/{maxLength}
+            {tempValue?.length ?? 0}/{maxLength}
           </Text>
         )}
       </View>

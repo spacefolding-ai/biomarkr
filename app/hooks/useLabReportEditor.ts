@@ -35,6 +35,16 @@ export const useLabReportEditor = (labReport: LabReport) => {
   const openNotesModal = () => setNotesModalVisible(true);
   const closeNotesModal = () => setNotesModalVisible(false);
 
+  const handleLabSave = (newValue: string) => {
+    setLaboratory(newValue);
+    closeLabModal();
+  };
+
+  const handleNotesSave = (newValue: string) => {
+    setNotes(newValue);
+    closeNotesModal();
+  };
+
   return {
     // State
     date,
@@ -58,6 +68,10 @@ export const useLabReportEditor = (labReport: LabReport) => {
     closeLabModal,
     openNotesModal,
     closeNotesModal,
+
+    // Modal save handlers
+    handleLabSave,
+    handleNotesSave,
 
     // Actions
     handleSave,
