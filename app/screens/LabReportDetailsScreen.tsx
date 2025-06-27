@@ -7,6 +7,7 @@ import { DocumentsTab } from "../components/DocumentsTab";
 import { EditModal } from "../components/EditModal";
 import { ProfileSection } from "../components/ProfileSection";
 import { useLabReportEditor } from "../hooks/useLabReportEditor";
+import { deleteBiomarkerFromDb } from "../services/biomarkers";
 import { useBiomarkersStore } from "../store/useBiomarkersStore";
 import { LabReport } from "../types/LabReport";
 import {
@@ -32,12 +33,15 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
   navigation,
 }) => {
   const { labReport, isEditMode, shouldSave, shouldRevert } = route.params;
-  const { biomarkers } = useBiomarkersStore();
+  const { biomarkers, setBiomarkers } = useBiomarkersStore();
   const relatedBiomarkers = getRelatedBiomarkers(biomarkers, labReport.id);
 
   const [index, setIndex] = useState(0);
   const [routes] = useState(createTabRoutes());
   const lastHasChangesRef = useRef<boolean>(false);
+
+  // Local state to track deleted biomarker IDs
+  const [deletedBiomarkerIds, setDeletedBiomarkerIds] = useState<string[]>([]);
 
   const {
     date,
@@ -66,34 +70,76 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
   // Handle navigation parameters for save/revert actions
   useEffect(() => {
     if (shouldSave) {
-      handleSave();
+      handleSaveWithBiomarkers();
       // Clear the parameter to avoid re-triggering
       route.params.shouldSave = false;
     } else if (shouldRevert) {
-      revertChanges();
+      handleRevertWithBiomarkers();
       // Clear the parameter to avoid re-triggering
       route.params.shouldRevert = false;
     }
-  }, [shouldSave, shouldRevert, handleSave, revertChanges, route.params]);
+  }, [shouldSave, shouldRevert, route.params]);
 
   // Update navigation params with hasChanges boolean value only when it actually changes
   useEffect(() => {
-    const currentHasChanges = hasChanges();
+    const currentHasChanges = hasChangesWithBiomarkers();
     if (currentHasChanges !== lastHasChangesRef.current) {
       lastHasChangesRef.current = currentHasChanges;
       navigation.setParams({ hasChanges: currentHasChanges });
     }
-  }, [date, laboratory, notes, navigation, hasChanges]);
+  }, [date, laboratory, notes, deletedBiomarkerIds, navigation]);
 
-  const handleDeleteBiomarker = (biomarkerId: string) => {
-    // Placeholder for delete functionality - will be implemented later
-    console.log("Delete biomarker:", biomarkerId);
+  // Check if there are changes including deleted biomarkers
+  const hasChangesWithBiomarkers = () => {
+    return hasChanges() || deletedBiomarkerIds.length > 0;
   };
+
+  // Handle biomarker deletion (local state only)
+  const handleDeleteBiomarker = (biomarkerId: string) => {
+    setDeletedBiomarkerIds((prev) => [...prev, biomarkerId]);
+  };
+
+  // Handle save with biomarker deletions
+  const handleSaveWithBiomarkers = async () => {
+    try {
+      // First save the lab report changes
+      await handleSave();
+
+      // Then permanently delete biomarkers from Supabase
+      for (const biomarkerId of deletedBiomarkerIds) {
+        await deleteBiomarkerFromDb(biomarkerId);
+      }
+
+      // Remove deleted biomarkers from local store after all deletions are complete
+      if (deletedBiomarkerIds.length > 0) {
+        const updatedBiomarkers = biomarkers.filter(
+          (b) => !deletedBiomarkerIds.includes(b.id)
+        );
+        setBiomarkers(updatedBiomarkers);
+      }
+
+      // Clear the local deleted list after successful save
+      setDeletedBiomarkerIds([]);
+    } catch (error) {
+      console.error("Error saving changes:", error);
+    }
+  };
+
+  // Handle revert with biomarker restoration
+  const handleRevertWithBiomarkers = () => {
+    revertChanges();
+    setDeletedBiomarkerIds([]);
+  };
+
+  // Filter biomarkers to exclude locally deleted ones
+  const displayedBiomarkers = relatedBiomarkers.filter(
+    (biomarker) => !deletedBiomarkerIds.includes(biomarker.id)
+  );
 
   const renderScene = SceneMap({
     results: () => (
       <BiomarkersTab
-        biomarkers={relatedBiomarkers}
+        biomarkers={displayedBiomarkers}
         isEditMode={isEditMode}
         onDeleteBiomarker={handleDeleteBiomarker}
       />
