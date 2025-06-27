@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Button, Dimensions, StyleSheet, View } from "react-native";
 import { SceneMap, TabView } from "react-native-tab-view";
+import { BiomarkerEditModal } from "../components/BiomarkerEditModal";
 import { BiomarkersTab } from "../components/BiomarkersTab";
 import { DatePickerModal } from "../components/DatePickerModal";
 import { DocumentsTab } from "../components/DocumentsTab";
@@ -9,6 +10,7 @@ import { ProfileSection } from "../components/ProfileSection";
 import { useLabReportEditor } from "../hooks/useLabReportEditor";
 import { deleteBiomarkerFromDb } from "../services/biomarkers";
 import { useBiomarkersStore } from "../store/useBiomarkersStore";
+import { Biomarker } from "../types/Biomarker";
 import { LabReport } from "../types/LabReport";
 import {
   createTabRoutes,
@@ -33,7 +35,7 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
   navigation,
 }) => {
   const { labReport, isEditMode, shouldSave, shouldRevert } = route.params;
-  const { biomarkers, setBiomarkers } = useBiomarkersStore();
+  const { biomarkers, setBiomarkers, updateBiomarker } = useBiomarkersStore();
   const relatedBiomarkers = getRelatedBiomarkers(biomarkers, labReport.id);
 
   const [index, setIndex] = useState(0);
@@ -42,6 +44,14 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
 
   // Local state to track deleted biomarker IDs
   const [deletedBiomarkerIds, setDeletedBiomarkerIds] = useState<string[]>([]);
+
+  // Biomarker editing state
+  const [selectedBiomarker, setSelectedBiomarker] = useState<Biomarker | null>(
+    null
+  );
+  const [isBiomarkerEditModalVisible, setIsBiomarkerEditModalVisible] =
+    useState(false);
+  const [modifiedBiomarkers, setModifiedBiomarkers] = useState<Biomarker[]>([]);
 
   const {
     date,
@@ -87,19 +97,57 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
       lastHasChangesRef.current = currentHasChanges;
       navigation.setParams({ hasChanges: currentHasChanges });
     }
-  }, [date, laboratory, notes, deletedBiomarkerIds, navigation]);
+  }, [
+    date,
+    laboratory,
+    notes,
+    deletedBiomarkerIds,
+    modifiedBiomarkers,
+    navigation,
+  ]);
 
-  // Check if there are changes including deleted biomarkers
+  // Check if there are changes including deleted and modified biomarkers
   const hasChangesWithBiomarkers = () => {
-    return hasChanges() || deletedBiomarkerIds.length > 0;
+    return (
+      hasChanges() ||
+      deletedBiomarkerIds.length > 0 ||
+      modifiedBiomarkers.length > 0
+    );
   };
 
   // Handle biomarker deletion (local state only)
   const handleDeleteBiomarker = (biomarkerId: string) => {
     setDeletedBiomarkerIds((prev) => [...prev, biomarkerId]);
+    // Clear selection if deleted biomarker was selected
+    if (selectedBiomarker?.id === biomarkerId) {
+      setSelectedBiomarker(null);
+    }
   };
 
-  // Handle save with biomarker deletions
+  // Handle biomarker editing
+  const handleEditBiomarker = (biomarker: Biomarker) => {
+    setSelectedBiomarker(biomarker);
+    setIsBiomarkerEditModalVisible(true);
+  };
+
+  // Handle biomarker save from modal
+  const handleSaveBiomarker = (updatedBiomarker: Biomarker) => {
+    // Update local modified biomarkers state
+    setModifiedBiomarkers((prev) => {
+      const existingIndex = prev.findIndex((b) => b.id === updatedBiomarker.id);
+      if (existingIndex >= 0) {
+        const updated = [...prev];
+        updated[existingIndex] = updatedBiomarker;
+        return updated;
+      } else {
+        return [...prev, updatedBiomarker];
+      }
+    });
+
+    setSelectedBiomarker(null);
+  };
+
+  // Handle save with biomarker deletions and modifications
   const handleSaveWithBiomarkers = async () => {
     try {
       // First save the lab report changes
@@ -110,7 +158,12 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
         await deleteBiomarkerFromDb(biomarkerId);
       }
 
-      // Remove deleted biomarkers from local store after all deletions are complete
+      // Update modified biomarkers
+      for (const modifiedBiomarker of modifiedBiomarkers) {
+        await updateBiomarker(modifiedBiomarker);
+      }
+
+      // Remove deleted biomarkers from local store after all operations are complete
       if (deletedBiomarkerIds.length > 0) {
         const updatedBiomarkers = biomarkers.filter(
           (b) => !deletedBiomarkerIds.includes(b.id)
@@ -118,8 +171,10 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
         setBiomarkers(updatedBiomarkers);
       }
 
-      // Clear the local deleted list after successful save
+      // Clear local state after successful save
       setDeletedBiomarkerIds([]);
+      setModifiedBiomarkers([]);
+      setSelectedBiomarker(null);
     } catch (error) {
       console.error("Error saving changes:", error);
     }
@@ -129,19 +184,28 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
   const handleRevertWithBiomarkers = () => {
     revertChanges();
     setDeletedBiomarkerIds([]);
+    setModifiedBiomarkers([]);
+    setSelectedBiomarker(null);
   };
 
-  // Filter biomarkers to exclude locally deleted ones
-  const displayedBiomarkers = relatedBiomarkers.filter(
-    (biomarker) => !deletedBiomarkerIds.includes(biomarker.id)
-  );
+  // Filter biomarkers to exclude locally deleted ones and apply local modifications
+  const displayedBiomarkers = relatedBiomarkers
+    .filter((biomarker) => !deletedBiomarkerIds.includes(biomarker.id))
+    .map((biomarker) => {
+      const modifiedVersion = modifiedBiomarkers.find(
+        (m) => m.id === biomarker.id
+      );
+      return modifiedVersion || biomarker;
+    });
 
   const renderScene = SceneMap({
     results: () => (
       <BiomarkersTab
         biomarkers={displayedBiomarkers}
         isEditMode={isEditMode}
+        selectedBiomarkerId={selectedBiomarker?.id || null}
         onDeleteBiomarker={handleDeleteBiomarker}
+        onEditBiomarker={handleEditBiomarker}
       />
     ),
     docs: () => <DocumentsTab />,
@@ -232,6 +296,13 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
         numberOfLines={6}
         maxLength={140}
         showCharacterCount={true}
+      />
+
+      <BiomarkerEditModal
+        isVisible={isBiomarkerEditModalVisible}
+        biomarker={selectedBiomarker}
+        onClose={() => setIsBiomarkerEditModalVisible(false)}
+        onSave={handleSaveBiomarker}
       />
     </View>
   );
