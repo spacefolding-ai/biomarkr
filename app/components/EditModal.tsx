@@ -65,8 +65,10 @@ export const EditModal: React.FC<EditModalProps> = ({
       isVisible={isVisible}
       onBackdropPress={onClose}
       style={styles.modal}
-      children={modalContent}
-    />
+      {...({} as any)}
+    >
+      {modalContent}
+    </ReactNativeModal>
   );
 };
 
