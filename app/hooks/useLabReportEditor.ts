@@ -13,17 +13,31 @@ export const useLabReportEditor = (labReport: LabReport) => {
   const [isDateModalVisible, setDateModalVisible] = useState(false);
   const [isLabModalVisible, setLabModalVisible] = useState(false);
   const [isNotesModalVisible, setNotesModalVisible] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const { updateReport } = useLabReportsStore();
 
-  const handleSave = () => {
-    const updatedReport: LabReport = {
-      ...labReport,
-      report_date: date,
-      laboratory_name: laboratory,
-      notes: notes,
-    };
-    updateReport(updatedReport);
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      const updatedReport: LabReport = {
+        ...labReport,
+        report_date: date,
+        laboratory_name: laboratory,
+        notes: notes,
+      };
+      await updateReport(updatedReport);
+    } catch (error) {
+      // Error handling is done in the store/service layer with Toast
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const revertChanges = () => {
+    setDate(labReport.report_date || new Date().toISOString());
+    setLaboratory(labReport.laboratory_name);
+    setNotes(labReport.notes);
   };
 
   const openDateModal = () => setDateModalVisible(true);
@@ -50,6 +64,7 @@ export const useLabReportEditor = (labReport: LabReport) => {
     date,
     laboratory,
     notes,
+    isSaving,
 
     // Modal visibility
     isDateModalVisible,
@@ -75,5 +90,6 @@ export const useLabReportEditor = (labReport: LabReport) => {
 
     // Actions
     handleSave,
+    revertChanges,
   };
 };
