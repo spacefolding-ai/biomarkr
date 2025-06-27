@@ -143,14 +143,6 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
         swipeEnabled={!isEditMode}
       />
 
-      {isEditMode && (
-        <Button
-          title={isSaving ? "Saving..." : "Save"}
-          onPress={handleSave}
-          disabled={isSaving}
-        />
-      )}
-
       <DatePickerModal
         isVisible={isDateModalVisible}
         currentDate={date}
