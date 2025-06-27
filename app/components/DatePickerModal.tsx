@@ -35,6 +35,7 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
       isVisible={isVisible}
       onBackdropPress={handleCancel}
       style={styles.modal}
+      {...({} as any)}
     >
       <View style={styles.modalContent}>
         <View style={styles.modalHeader}>
