@@ -1,14 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
-import { format } from "date-fns";
+import { Picker } from "@react-native-picker/picker";
+import { format, subMonths, subYears } from "date-fns";
 import React, { useCallback, useMemo, useState } from "react";
 import {
+  Button,
   RefreshControl,
   SectionList,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  useColorScheme,
 } from "react-native";
+import ReactNativeModal from "react-native-modal";
 import { Biomarker } from "../types/Biomarker";
 
 interface BiomarkersScreenProps {
@@ -22,6 +26,8 @@ interface BiomarkerSection {
   data: Biomarker[];
 }
 
+type TimePeriod = "all time" | "last year" | "last six months";
+
 const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
   biomarkers,
   refreshing,
@@ -29,9 +35,64 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
 }) => {
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [selectedTimePeriod, setSelectedTimePeriod] =
+    useState<TimePeriod>("all time");
+  const [isTimePeriodModalVisible, setTimePeriodModalVisible] = useState(false);
+  const [tempTimePeriod, setTempTimePeriod] = useState<TimePeriod>("all time");
+
+  const colorScheme = useColorScheme();
+  const isDarkMode = colorScheme === "dark";
 
   const groupedBiomarkers = useMemo(() => {
-    const filtered = biomarkers.filter((b) =>
+    // First filter by time period
+    let filteredByTime = biomarkers;
+    const now = new Date();
+
+    // Helper function to safely parse date and handle edge cases
+    const parseReportDate = (dateString: string): Date | null => {
+      if (!dateString) return null;
+
+      // Try parsing the date string
+      const parsed = new Date(dateString);
+
+      // Check if the date is valid
+      if (isNaN(parsed.getTime())) {
+        return null;
+      }
+
+      return parsed;
+    };
+
+    if (selectedTimePeriod === "last year") {
+      const lastYear = subYears(now, 1);
+
+      filteredByTime = biomarkers.filter((biomarker) => {
+        const reportDate = parseReportDate(biomarker.report_date);
+
+        if (!reportDate) {
+          return false;
+        }
+
+        const isWithinPeriod = reportDate >= lastYear && reportDate <= now;
+        return isWithinPeriod;
+      });
+    } else if (selectedTimePeriod === "last six months") {
+      const lastSixMonths = subMonths(now, 6);
+
+      filteredByTime = biomarkers.filter((biomarker) => {
+        const reportDate = parseReportDate(biomarker.report_date);
+
+        if (!reportDate) {
+          return false;
+        }
+
+        const isWithinPeriod = reportDate >= lastSixMonths && reportDate <= now;
+        return isWithinPeriod;
+      });
+    }
+
+    // Then filter by search text
+    const filtered = filteredByTime.filter((b) =>
       (b.marker_name?.toLowerCase() || "").includes(searchText?.toLowerCase())
     );
 
@@ -49,11 +110,28 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
     return Object.entries(groups)
       .map(([title, data]) => ({ title, data }))
       .sort((a, b) => a.title.localeCompare(b.title));
-  }, [biomarkers, searchText]);
+  }, [biomarkers, searchText, selectedTimePeriod]);
 
   const toggleSearch = () => {
     setSearchVisible(!searchVisible);
     setSearchText("");
+  };
+
+  const toggleTimePeriodModal = () => {
+    if (!isTimePeriodModalVisible) {
+      setTempTimePeriod(selectedTimePeriod);
+    }
+    setTimePeriodModalVisible(!isTimePeriodModalVisible);
+  };
+
+  const handleDone = () => {
+    setSelectedTimePeriod(tempTimePeriod);
+    setTimePeriodModalVisible(false);
+  };
+
+  const handleCancel = () => {
+    setTempTimePeriod(selectedTimePeriod); // Reset to original selection
+    setTimePeriodModalVisible(false);
   };
 
   const handleRefresh = useCallback(() => {
@@ -137,6 +215,110 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
     );
   };
 
+  const getTimePeriodDisplayName = (period: TimePeriod) => {
+    switch (period) {
+      case "all time":
+        return "All time";
+      case "last year":
+        return "Last year";
+      case "last six months":
+        return "Last six months";
+      default:
+        return period;
+    }
+  };
+
+  // Dynamic styles based on color scheme
+  const dynamicStyles = {
+    modalContent: {
+      backgroundColor: isDarkMode ? "#1c1c1e" : "white",
+    },
+    modalHeader: {
+      borderColor: isDarkMode ? "#48484a" : "#ccc",
+    },
+    modalTitle: {
+      color: isDarkMode ? "white" : "black",
+    },
+  };
+
+  const renderTimePeriodModal = () => {
+    return (
+      <ReactNativeModal
+        isVisible={isTimePeriodModalVisible}
+        onBackdropPress={handleCancel}
+        style={{
+          justifyContent: "flex-end",
+          margin: 0,
+        }}
+        {...({} as any)}
+      >
+        <View
+          style={[
+            {
+              borderRadius: 10,
+              alignItems: "center",
+              height: "33%",
+            },
+            dynamicStyles.modalContent,
+          ]}
+        >
+          <View
+            style={[
+              {
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                width: "100%",
+                paddingHorizontal: 10,
+                height: 50,
+                borderBottomWidth: 1,
+              },
+              dynamicStyles.modalHeader,
+            ]}
+          >
+            <Button
+              title="Cancel"
+              onPress={handleCancel}
+              color={isDarkMode ? "#007AFF" : undefined}
+            />
+            <Text
+              style={[
+                {
+                  fontSize: 18,
+                  fontWeight: "500",
+                },
+                dynamicStyles.modalTitle,
+              ]}
+            >
+              Time Period
+            </Text>
+            <Button
+              title="Done"
+              onPress={handleDone}
+              color={isDarkMode ? "#007AFF" : undefined}
+            />
+          </View>
+          <Picker
+            selectedValue={tempTimePeriod}
+            onValueChange={(itemValue) => setTempTimePeriod(itemValue)}
+            style={{
+              width: "100%",
+              flex: 1,
+              color: isDarkMode ? "white" : "black",
+            }}
+            itemStyle={{
+              color: isDarkMode ? "white" : "black",
+            }}
+          >
+            <Picker.Item label="All time" value="all time" />
+            <Picker.Item label="Last year" value="last year" />
+            <Picker.Item label="Last six months" value="last six months" />
+          </Picker>
+        </View>
+      </ReactNativeModal>
+    );
+  };
+
   return (
     <View
       style={{
@@ -166,7 +348,7 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
           <View
             style={{
               flexDirection: "row",
-              justifyContent: "flex-end",
+              justifyContent: "space-between",
               alignItems: "center",
               paddingHorizontal: 16,
               paddingVertical: 8,
@@ -174,45 +356,74 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
               backgroundColor: "white",
             }}
           >
-            {searchVisible ? (
-              <View
+            <TouchableOpacity
+              onPress={toggleTimePeriodModal}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: "#f0f0f0",
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                borderRadius: 20,
+              }}
+            >
+              <Text
                 style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  borderColor: "#ccc",
-                  borderWidth: 1,
-                  borderRadius: 8,
-                  padding: 8,
-                  flex: 1,
-                  marginRight: 8,
+                  fontSize: 16,
+                  fontWeight: "500",
+                  color: "#000",
+                  marginRight: 4,
                 }}
               >
-                <Ionicons
-                  name="search"
-                  size={16}
-                  color="#ccc"
-                  style={{ marginRight: 5 }}
-                />
-                <TextInput
-                  style={{ flex: 1 }}
-                  placeholder="Search by biomarker name"
-                  value={searchText}
-                  onChangeText={setSearchText}
-                />
-              </View>
-            ) : (
-              <View style={{ flex: 1 }} />
-            )}
-            <TouchableOpacity
-              onPress={toggleSearch}
-              style={{ justifyContent: "center", paddingVertical: 8 }}
-            >
-              {searchVisible ? (
-                <Text style={{ color: "red" }}>Cancel</Text>
-              ) : (
-                <Ionicons name="search" size={24} color="black" />
-              )}
+                {getTimePeriodDisplayName(selectedTimePeriod)}
+              </Text>
+              <Ionicons name="chevron-down" size={16} color="#666" />
             </TouchableOpacity>
+
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              {searchVisible && (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    borderColor: "#ccc",
+                    borderWidth: 1,
+                    borderRadius: 8,
+                    padding: 8,
+                    marginRight: 8,
+                    minWidth: 200,
+                  }}
+                >
+                  <Ionicons
+                    name="search"
+                    size={16}
+                    color="#ccc"
+                    style={{ marginRight: 5 }}
+                  />
+                  <TextInput
+                    style={{ flex: 1 }}
+                    placeholder="Search by biomarker name"
+                    value={searchText}
+                    onChangeText={setSearchText}
+                  />
+                </View>
+              )}
+
+              <TouchableOpacity
+                onPress={toggleSearch}
+                style={{
+                  justifyContent: "center",
+                  paddingVertical: 8,
+                  paddingHorizontal: 8,
+                }}
+              >
+                {searchVisible ? (
+                  <Text style={{ color: "red", fontSize: 16 }}>Cancel</Text>
+                ) : (
+                  <Ionicons name="search" size={24} color="black" />
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
 
           <SectionList
@@ -231,6 +442,8 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
           />
         </>
       )}
+
+      {renderTimePeriodModal()}
     </View>
   );
 };
