@@ -11,6 +11,7 @@ export interface File {
   report_id: string | null;
   original_file_name?: string;
   size?: number;
+  content_hash?: string;
 }
 
 export interface SupabaseStorageFile {
