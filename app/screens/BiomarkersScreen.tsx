@@ -1,9 +1,9 @@
 import { Ionicons } from "@expo/vector-icons";
 import { format } from "date-fns";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
-  FlatList,
   RefreshControl,
+  SectionList,
   Text,
   TextInput,
   TouchableOpacity,
@@ -17,6 +17,11 @@ interface BiomarkersScreenProps {
   onRefresh: () => void;
 }
 
+interface BiomarkerSection {
+  title: string;
+  data: Biomarker[];
+}
+
 const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
   biomarkers,
   refreshing,
@@ -25,9 +30,26 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
 
-  const filteredBiomarkers = biomarkers.filter((b) =>
-    (b.marker_name?.toLowerCase() || "").includes(searchText?.toLowerCase())
-  );
+  const groupedBiomarkers = useMemo(() => {
+    const filtered = biomarkers.filter((b) =>
+      (b.marker_name?.toLowerCase() || "").includes(searchText?.toLowerCase())
+    );
+
+    // Group biomarkers by biomarker_group
+    const groups = filtered.reduce((acc, biomarker) => {
+      const group = biomarker.biomarker_group || "Other";
+      if (!acc[group]) {
+        acc[group] = [];
+      }
+      acc[group].push(biomarker);
+      return acc;
+    }, {} as Record<string, Biomarker[]>);
+
+    // Convert to SectionList format and sort groups
+    return Object.entries(groups)
+      .map(([title, data]) => ({ title, data }))
+      .sort((a, b) => a.title.localeCompare(b.title));
+  }, [biomarkers, searchText]);
 
   const toggleSearch = () => {
     setSearchVisible(!searchVisible);
@@ -48,10 +70,12 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
           padding: 16,
           borderBottomWidth: 1,
           borderColor: "#eee",
-          width: "100%",
+          backgroundColor: "white",
         }}
       >
-        <Text style={{ fontWeight: "bold" }}>{item?.marker_name}</Text>
+        <Text style={{ fontWeight: "bold", flex: 1, marginRight: 16 }}>
+          {item?.marker_name}
+        </Text>
         <View style={{ flexDirection: "row", alignItems: "center" }}>
           <View
             style={{
@@ -60,29 +84,55 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
               marginRight: 8,
             }}
           >
-            <Text>
+            <Text style={{ fontSize: 16, fontWeight: "500" }}>
               {item?.value} {item?.unit}
             </Text>
 
             {item?.report_date && !isNaN(Date.parse(item.report_date)) && (
-              <Text style={{ color: "#666" }}>
+              <Text style={{ color: "#666", fontSize: 12 }}>
                 {format(new Date(item.report_date), "d MMM yyyy")}
               </Text>
             )}
           </View>
 
           {item?.abnormal_flag?.toLowerCase() === "very high" ? (
-            <Text style={{ color: "red" }}>▲</Text>
+            <Text style={{ color: "red", fontSize: 16 }}>▲</Text>
           ) : item?.abnormal_flag?.toLowerCase() === "high" ? (
-            <Text style={{ color: "orange" }}>▲</Text>
+            <Text style={{ color: "orange", fontSize: 16 }}>▲</Text>
           ) : item?.abnormal_flag?.toLowerCase() === "very low" ? (
-            <Text style={{ color: "red" }}>▼</Text>
+            <Text style={{ color: "red", fontSize: 16 }}>▼</Text>
           ) : item?.abnormal_flag?.toLowerCase() === "low" ? (
-            <Text style={{ color: "orange" }}>▼</Text>
+            <Text style={{ color: "orange", fontSize: 16 }}>▼</Text>
           ) : (
-            <Text style={{ color: "green" }}>●</Text>
+            <Text style={{ color: "green", fontSize: 16 }}>●</Text>
           )}
         </View>
+      </View>
+    );
+  };
+
+  const renderSectionHeader = ({ section }: { section: BiomarkerSection }) => {
+    return (
+      <View
+        style={{
+          backgroundColor: "#f8f9fa",
+          paddingHorizontal: 16,
+          paddingVertical: 12,
+          borderTopWidth: 1,
+          borderTopColor: "#e9ecef",
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 14,
+            fontWeight: "600",
+            color: "#6c757d",
+            textTransform: "uppercase",
+            letterSpacing: 0.5,
+          }}
+        >
+          {section.title}
+        </Text>
       </View>
     );
   };
@@ -92,12 +142,17 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
       style={{
         flex: 1,
         backgroundColor: "white",
-        justifyContent: "center",
-        alignItems: "center",
       }}
     >
       {biomarkers.length === 0 ? (
-        <View style={{ alignItems: "center" }}>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+            paddingHorizontal: 32,
+          }}
+        >
           <Text style={{ fontSize: 18, fontWeight: "bold", color: "#000" }}>
             Biomarkers will appear here
           </Text>
@@ -116,6 +171,7 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
               paddingHorizontal: 16,
               paddingVertical: 8,
               marginTop: 16,
+              backgroundColor: "white",
             }}
           >
             {searchVisible ? (
@@ -159,18 +215,19 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
             </TouchableOpacity>
           </View>
 
-          <FlatList
-            data={searchVisible ? filteredBiomarkers : biomarkers}
+          <SectionList
+            sections={groupedBiomarkers}
             keyExtractor={(item) => `${item?.id}-${item?.created_at}`}
             renderItem={renderBiomarkerItem}
+            renderSectionHeader={renderSectionHeader}
             refreshControl={
               <RefreshControl
                 refreshing={refreshing}
                 onRefresh={handleRefresh}
               />
             }
-            contentContainerStyle={{ paddingTop: 0 }}
-            extraData={biomarkers}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            stickySectionHeadersEnabled={true}
           />
         </>
       )}
