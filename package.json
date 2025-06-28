@@ -27,6 +27,7 @@
     "@hookform/resolvers": "^5.1.1",
     "@react-native-async-storage/async-storage": "^2.1.2",
     "@react-native-community/datetimepicker": "^8.4.2",
+    "@react-native-picker/picker": "^2.11.1",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/material-top-tabs": "^7.2.15",
     "@react-navigation/native": "^7.1.14",
@@ -49,6 +50,7 @@
     "expo-local-authentication": "~16.0.4",
     "expo-notifications": "~0.31.3",
     "expo-random": "^14.0.1",
+    "expo-screen-orientation": "~8.1.7",
     "js-base64": "^3.7.7",
     "lucide-react-native": "^0.514.0",
     "nativewind": "^4.1.23",
@@ -76,8 +78,7 @@
     "uuid": "^11.1.0",
     "victory-native": "^41.17.4",
     "zod": "^3.25.63",
-    "zustand": "^5.0.5",
-    "expo-screen-orientation": "~8.1.7"
+    "zustand": "^5.0.5"
   },
   "expo": {
     "doctor": {
