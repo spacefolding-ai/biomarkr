@@ -16,6 +16,53 @@ export async function getAllBiomarkers(): Promise<Biomarker[]> {
   }
 }
 
+export async function createBiomarkerInDb(biomarkerData: {
+  marker_name: string;
+  value: number;
+  unit: string;
+  report_id: string;
+  user_id: string;
+  report_date: string;
+}): Promise<Biomarker> {
+  try {
+    const newBiomarker: Omit<Biomarker, "id" | "created_at"> = {
+      ...biomarkerData,
+      reference_range: "",
+      abnormal_flag: null,
+      biomarker_group: undefined,
+    };
+
+    const { data, error } = await supabase
+      .from("biomarkers")
+      .insert(newBiomarker)
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error("Failed to create biomarker: " + error.message);
+    }
+
+    if (!data) {
+      throw new Error("No data returned after creating biomarker");
+    }
+
+    Toast.show({
+      type: "success",
+      text1: "Success",
+      text2: "Biomarker created successfully!",
+    });
+
+    return data;
+  } catch (error) {
+    Toast.show({
+      type: "error",
+      text1: "Error",
+      text2: "Failed to create biomarker!",
+    });
+    throw new Error("Unexpected error: " + error);
+  }
+}
+
 export async function updateBiomarkerInDb(
   biomarker: Biomarker
 ): Promise<Biomarker> {

@@ -1,6 +1,6 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
 import React, { useState } from "react";
-import { Button, StyleSheet, Text, View } from "react-native";
+import { Button, StyleSheet, Text, View, useColorScheme } from "react-native";
 import ReactNativeModal from "react-native-modal";
 
 interface DatePickerModalProps {
@@ -20,6 +20,9 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
     new Date(currentDate)
   );
 
+  const colorScheme = useColorScheme();
+  const isDarkMode = colorScheme === "dark";
+
   const handleDone = () => {
     onDateChange(selectedTempDate.toISOString());
     onClose();
@@ -30,6 +33,19 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
     onClose();
   };
 
+  // Dynamic styles based on color scheme
+  const dynamicStyles = {
+    modalContent: {
+      backgroundColor: isDarkMode ? "#1c1c1e" : "white",
+    },
+    modalHeader: {
+      borderColor: isDarkMode ? "#48484a" : "#ccc",
+    },
+    modalTitle: {
+      color: isDarkMode ? "white" : "black",
+    },
+  };
+
   return (
     <ReactNativeModal
       isVisible={isVisible}
@@ -37,11 +53,21 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
       style={styles.modal}
       {...({} as any)}
     >
-      <View style={styles.modalContent}>
-        <View style={styles.modalHeader}>
-          <Button title="Cancel" onPress={handleCancel} />
-          <Text style={styles.modalTitle}>Change Date</Text>
-          <Button title="Done" onPress={handleDone} />
+      <View style={[styles.modalContent, dynamicStyles.modalContent]}>
+        <View style={[styles.modalHeader, dynamicStyles.modalHeader]}>
+          <Button
+            title="Cancel"
+            onPress={handleCancel}
+            color={isDarkMode ? "#007AFF" : undefined}
+          />
+          <Text style={[styles.modalTitle, dynamicStyles.modalTitle]}>
+            Change Date
+          </Text>
+          <Button
+            title="Done"
+            onPress={handleDone}
+            color={isDarkMode ? "#007AFF" : undefined}
+          />
         </View>
         <DateTimePicker
           value={selectedTempDate}
@@ -52,6 +78,8 @@ export const DatePickerModal: React.FC<DatePickerModalProps> = ({
               setSelectedTempDate(selectedDate);
             }
           }}
+          textColor={isDarkMode ? "white" : "black"}
+          themeVariant={isDarkMode ? "dark" : "light"}
         />
       </View>
     </ReactNativeModal>
@@ -64,7 +92,6 @@ const styles = StyleSheet.create({
     margin: 0,
   },
   modalContent: {
-    backgroundColor: "white",
     borderRadius: 10,
     alignItems: "center",
     height: "33%",
@@ -77,10 +104,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     height: 50,
     borderBottomWidth: 1,
-    borderColor: "#ccc",
   },
   modalTitle: {
-    color: "black",
     fontSize: 18,
     fontWeight: "500",
   },
