@@ -6,6 +6,7 @@ import {
   Button,
   RefreshControl,
   SectionList,
+  Switch,
   Text,
   TextInput,
   TouchableOpacity,
@@ -39,6 +40,7 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
     useState<TimePeriod>("all time");
   const [isTimePeriodModalVisible, setTimePeriodModalVisible] = useState(false);
   const [tempTimePeriod, setTempTimePeriod] = useState<TimePeriod>("all time");
+  const [showAbnormalOnly, setShowAbnormalOnly] = useState(false);
 
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === "dark";
@@ -91,8 +93,17 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
       });
     }
 
+    // Filter by abnormal flag if enabled
+    let filteredByAbnormal = filteredByTime;
+    if (showAbnormalOnly) {
+      filteredByAbnormal = filteredByTime.filter((biomarker) => {
+        const abnormalFlag = biomarker.abnormal_flag?.toLowerCase();
+        return abnormalFlag && abnormalFlag !== "normal" && abnormalFlag !== "";
+      });
+    }
+
     // Then filter by search text
-    const filtered = filteredByTime.filter((b) =>
+    const filtered = filteredByAbnormal.filter((b) =>
       (b.marker_name?.toLowerCase() || "").includes(searchText?.toLowerCase())
     );
 
@@ -110,7 +121,7 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
     return Object.entries(groups)
       .map(([title, data]) => ({ title, data }))
       .sort((a, b) => a.title.localeCompare(b.title));
-  }, [biomarkers, searchText, selectedTimePeriod]);
+  }, [biomarkers, searchText, selectedTimePeriod, showAbnormalOnly]);
 
   const toggleSearch = () => {
     setSearchVisible(!searchVisible);
@@ -440,6 +451,34 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
                 <Ionicons name="search" size={24} color="black" />
               </TouchableOpacity>
             )}
+          </View>
+
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              backgroundColor: "white",
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "500",
+                color: "#000",
+                marginRight: 12,
+              }}
+            >
+              Abnormal
+            </Text>
+            <Switch
+              value={showAbnormalOnly}
+              onValueChange={setShowAbnormalOnly}
+              trackColor={{ false: "#E5E5E5", true: "#007AFF" }}
+              thumbColor="#FFFFFF"
+              style={{ transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }] }}
+            />
           </View>
 
           <SectionList
