@@ -348,7 +348,6 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
           <View
             style={{
               flexDirection: "row",
-              justifyContent: "space-between",
               alignItems: "center",
               paddingHorizontal: 16,
               paddingVertical: 8,
@@ -365,6 +364,7 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
                 paddingHorizontal: 12,
                 paddingVertical: 8,
                 borderRadius: 20,
+                marginRight: 12,
               }}
             >
               <Text
@@ -380,10 +380,17 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
               <Ionicons name="chevron-down" size={16} color="#666" />
             </TouchableOpacity>
 
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              {searchVisible && (
+            {searchVisible ? (
+              <View
+                style={{
+                  flex: 1,
+                  flexDirection: "row",
+                  alignItems: "center",
+                }}
+              >
                 <View
                   style={{
+                    flex: 1,
                     flexDirection: "row",
                     alignItems: "center",
                     borderColor: "#ccc",
@@ -391,7 +398,6 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
                     borderRadius: 8,
                     padding: 8,
                     marginRight: 8,
-                    minWidth: 200,
                   }}
                 >
                   <Ionicons
@@ -407,8 +413,22 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
                     onChangeText={setSearchText}
                   />
                 </View>
-              )}
+                <TouchableOpacity
+                  onPress={toggleSearch}
+                  style={{
+                    justifyContent: "center",
+                    paddingVertical: 8,
+                    paddingHorizontal: 4,
+                  }}
+                >
+                  <Text style={{ color: "red", fontSize: 16 }}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View style={{ flex: 1 }} />
+            )}
 
+            {!searchVisible && (
               <TouchableOpacity
                 onPress={toggleSearch}
                 style={{
@@ -417,13 +437,9 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
                   paddingHorizontal: 8,
                 }}
               >
-                {searchVisible ? (
-                  <Text style={{ color: "red", fontSize: 16 }}>Cancel</Text>
-                ) : (
-                  <Ionicons name="search" size={24} color="black" />
-                )}
+                <Ionicons name="search" size={24} color="black" />
               </TouchableOpacity>
-            </View>
+            )}
           </View>
 
           <SectionList
