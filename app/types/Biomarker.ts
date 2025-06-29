@@ -10,4 +10,11 @@ export interface Biomarker {
   created_at: string;
   report_date: string;
   biomarker_group?: string;
+  about?: string;
+  what_deviations_mean?: string;
+  when_is_test_prescribed?: string;
+  standard_values?: string;
+  optimal_value?: string;
+  testing_methods?: string;
+  which_specialist_is_needed?: string;
 }
