@@ -122,3 +122,32 @@ export async function deleteBiomarkerFromDb(id: string): Promise<string> {
     throw new Error("Unexpected error: " + error);
   }
 }
+
+export async function updateBiomarkerFavouriteStatus(
+  biomarkerId: string,
+  isFavourite: boolean
+): Promise<void> {
+  try {
+    const { error } = await supabase
+      .from("biomarkers")
+      .update({ is_favourite: isFavourite })
+      .eq("id", biomarkerId);
+
+    if (error) {
+      throw new Error("Failed to update favourite status: " + error.message);
+    }
+
+    Toast.show({
+      type: "success",
+      text1: "Success",
+      text2: isFavourite ? "Added to favourites!" : "Removed from favourites!",
+    });
+  } catch (error) {
+    Toast.show({
+      type: "error",
+      text1: "Error",
+      text2: "Failed to update favourite status!",
+    });
+    throw new Error("Unexpected error: " + error);
+  }
+}
