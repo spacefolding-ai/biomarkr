@@ -298,6 +298,7 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
         onDeleteBiomarker={handleDeleteBiomarker}
         onEditBiomarker={handleEditBiomarker}
         onAddBiomarker={isEditMode ? handleOpenAddBiomarkerModal : undefined}
+        navigation={navigation}
       />
     ),
     docs: () => <DocumentsTab />,

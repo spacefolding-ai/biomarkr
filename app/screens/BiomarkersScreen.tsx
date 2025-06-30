@@ -20,6 +20,7 @@ interface BiomarkersScreenProps {
   biomarkers: Biomarker[];
   refreshing: boolean;
   onRefresh: () => void;
+  navigation?: any;
 }
 
 interface BiomarkerSection {
@@ -33,6 +34,7 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
   biomarkers,
   refreshing,
   onRefresh,
+  navigation,
 }) => {
   const [searchVisible, setSearchVisible] = useState(false);
   const [searchText, setSearchText] = useState("");
@@ -150,8 +152,14 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
   }, [onRefresh]);
 
   const renderBiomarkerItem = ({ item }: { item: Biomarker }) => {
+    const handleBiomarkerPress = () => {
+      if (navigation) {
+        navigation.navigate("BiomarkerDetails", { biomarker: item });
+      }
+    };
+
     return (
-      <View
+      <TouchableOpacity
         style={{
           flexDirection: "row",
           justifyContent: "space-between",
@@ -161,6 +169,8 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
           borderColor: "#eee",
           backgroundColor: "white",
         }}
+        onPress={handleBiomarkerPress}
+        activeOpacity={0.7}
       >
         <Text style={{ fontWeight: "bold", flex: 1, marginRight: 16 }}>
           {item?.marker_name}
@@ -196,7 +206,7 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
             <Text style={{ color: "green", fontSize: 16 }}>●</Text>
           )}
         </View>
-      </View>
+      </TouchableOpacity>
     );
   };
 

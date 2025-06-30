@@ -5,6 +5,7 @@ import { LogIn, UserPlus } from "lucide-react-native";
 import React, { useState } from "react";
 import { Alert, TouchableOpacity } from "react-native";
 import { AppIcon, IconName } from "../components/IconRegistry";
+import BiomarkerDetailsScreen from "../screens/BiomarkerDetailsScreen";
 import HealthLabScreen from "../screens/HealthLabScreen";
 import LabAssistantScreen from "../screens/LabAssistantScreen";
 import LabReportDetailsScreen from "../screens/LabReportDetailsScreen";
@@ -164,6 +165,13 @@ const AppNavigator = () => {
           },
           gestureEnabled: true,
         })}
+      />
+      <Stack.Screen
+        name="BiomarkerDetails"
+        component={BiomarkerDetailsScreen}
+        options={{
+          headerShown: false,
+        }}
       />
     </Stack.Navigator>
   );
