@@ -89,10 +89,10 @@ const BiomarkerDetailsScreen: React.FC<BiomarkerDetailsScreenProps> = ({
       </View>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        {/* Current Value Card */}
+        {/* Combined Value and Ranges Card */}
         <View style={styles.valueCard}>
-          <View style={styles.valueHeader}>
-            <Text style={styles.valueLabel}>Current Value</Text>
+          {/* Top row: abnormal flag and date */}
+          <View style={styles.topRow}>
             <View style={styles.statusContainer}>
               <Text
                 style={[styles.statusSymbol, { color: abnormalFlag.color }]}
@@ -103,35 +103,76 @@ const BiomarkerDetailsScreen: React.FC<BiomarkerDetailsScreenProps> = ({
                 {abnormalFlag.text}
               </Text>
             </View>
+
+            {biomarker.report_date && (
+              <Text style={styles.dateText}>
+                {new Date(biomarker.report_date).toLocaleDateString()}
+              </Text>
+            )}
           </View>
 
+          {/* Value and unit */}
           <Text style={styles.currentValue}>
             {biomarker.value} {biomarker.unit}
           </Text>
 
-          {biomarker.reference_range && (
-            <Text style={styles.referenceRange}>
-              Reference Range: {biomarker.reference_range}
-            </Text>
-          )}
+          {/* Reference ranges section */}
+          <View style={styles.rangesSection}>
+            {biomarker.standard_values && (
+              <View style={styles.rangeItem}>
+                <View style={styles.rangeIndicator}>
+                  <View
+                    style={[styles.rangeDot, { backgroundColor: "#34C759" }]}
+                  />
+                  <Text style={styles.rangeLabel}>Normal</Text>
+                </View>
+                <Text style={styles.rangeValue} numberOfLines={0}>
+                  {biomarker.standard_values}
+                </Text>
+              </View>
+            )}
 
-          {biomarker.report_date && (
-            <Text style={styles.testDate}>
-              Test Date: {new Date(biomarker.report_date).toLocaleDateString()}
-            </Text>
-          )}
+            {biomarker.optimal_value && (
+              <View style={styles.rangeItem}>
+                <View style={styles.rangeIndicator}>
+                  <View
+                    style={[styles.rangeDot, { backgroundColor: "#007AFF" }]}
+                  />
+                  <Text style={styles.rangeLabel}>Optimal</Text>
+                </View>
+                <Text style={styles.rangeValue} numberOfLines={0}>
+                  {biomarker.optimal_value}
+                </Text>
+              </View>
+            )}
+
+            {/* Reference range if available and different from standard values */}
+            {biomarker.reference_range && (
+              <View style={styles.rangeItem}>
+                <View style={styles.rangeIndicator}>
+                  <View
+                    style={[styles.rangeDot, { backgroundColor: "#8E8E93" }]}
+                  />
+                  <Text style={styles.rangeLabel}>Reference</Text>
+                </View>
+                <Text style={styles.rangeValue} numberOfLines={0}>
+                  {biomarker.reference_range}
+                </Text>
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Information Sections */}
         {biomarker.about && (
-          <View style={styles.infoSection}>
+          <View style={styles.infoCard}>
             <Text style={styles.sectionTitle}>About</Text>
             <Text style={styles.sectionContent}>{biomarker.about}</Text>
           </View>
         )}
 
         {biomarker.what_deviations_mean && (
-          <View style={styles.infoSection}>
+          <View style={styles.infoCard}>
             <Text style={styles.sectionTitle}>What Deviations Mean</Text>
             <Text style={styles.sectionContent}>
               {biomarker.what_deviations_mean}
@@ -140,7 +181,7 @@ const BiomarkerDetailsScreen: React.FC<BiomarkerDetailsScreenProps> = ({
         )}
 
         {biomarker.when_is_test_prescribed && (
-          <View style={styles.infoSection}>
+          <View style={styles.infoCard}>
             <Text style={styles.sectionTitle}>When is Test Prescribed</Text>
             <Text style={styles.sectionContent}>
               {biomarker.when_is_test_prescribed}
@@ -149,7 +190,7 @@ const BiomarkerDetailsScreen: React.FC<BiomarkerDetailsScreenProps> = ({
         )}
 
         {biomarker.standard_values && (
-          <View style={styles.infoSection}>
+          <View style={styles.infoCard}>
             <Text style={styles.sectionTitle}>Standard Values</Text>
             <Text style={styles.sectionContent}>
               {biomarker.standard_values}
@@ -158,14 +199,14 @@ const BiomarkerDetailsScreen: React.FC<BiomarkerDetailsScreenProps> = ({
         )}
 
         {biomarker.optimal_value && (
-          <View style={styles.infoSection}>
-            <Text style={styles.sectionTitle}>Optimal Value</Text>
+          <View style={styles.infoCard}>
+            <Text style={styles.sectionTitle}>Optimal Values</Text>
             <Text style={styles.sectionContent}>{biomarker.optimal_value}</Text>
           </View>
         )}
 
         {biomarker.testing_methods && (
-          <View style={styles.infoSection}>
+          <View style={styles.infoCard}>
             <Text style={styles.sectionTitle}>Testing Methods</Text>
             <Text style={styles.sectionContent}>
               {biomarker.testing_methods}
@@ -174,7 +215,7 @@ const BiomarkerDetailsScreen: React.FC<BiomarkerDetailsScreenProps> = ({
         )}
 
         {biomarker.which_specialist_is_needed && (
-          <View style={styles.infoSection}>
+          <View style={styles.infoCard}>
             <Text style={styles.sectionTitle}>Which Specialist is Needed</Text>
             <Text style={styles.sectionContent}>
               {biomarker.which_specialist_is_needed}
@@ -189,7 +230,7 @@ const BiomarkerDetailsScreen: React.FC<BiomarkerDetailsScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#f2f2f7",
   },
   header: {
     flexDirection: "row",
@@ -198,7 +239,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    borderBottomColor: "#e9ecef",
+    backgroundColor: "#fff",
   },
   backButton: {
     padding: 8,
@@ -215,6 +257,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 20,
     alignItems: "center",
+    backgroundColor: "#fff",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e9ecef",
   },
   title: {
     fontSize: 24,
@@ -225,25 +270,28 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 16,
+    paddingTop: 16,
   },
   valueCard: {
-    backgroundColor: "#f8f9fa",
-    borderRadius: 12,
+    backgroundColor: "#fff",
+    borderRadius: 16,
     padding: 20,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: "#e9ecef",
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  valueHeader: {
+  topRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "center",
+    gap: 10,
     alignItems: "center",
     marginBottom: 12,
-  },
-  valueLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#666",
   },
   statusContainer: {
     flexDirection: "row",
@@ -257,23 +305,74 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
   },
+  dateText: {
+    fontSize: 14,
+    color: "#8E8E93",
+  },
   currentValue: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#000",
     marginBottom: 8,
+    textAlign: "center",
+  },
+  rangesSection: {
+    marginBottom: 12,
+    justifyContent: "space-between",
+  },
+  rangeItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 12,
+    paddingHorizontal: 4,
+    overflow: "hidden",
+  },
+  rangeIndicator: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    marginRight: 12,
+  },
+  rangeDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 8,
+    flexShrink: 0,
+  },
+  rangeLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000",
+    flexShrink: 0,
+  },
+  rangeValue: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#8E8E93",
+    textAlign: "right",
+    flexShrink: 1,
+    maxWidth: "50%",
   },
   referenceRange: {
     fontSize: 14,
-    color: "#666",
+    color: "#8E8E93",
     marginBottom: 4,
   },
-  testDate: {
-    fontSize: 14,
-    color: "#666",
-  },
-  infoSection: {
-    marginBottom: 24,
+  infoCard: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   sectionTitle: {
     fontSize: 18,
@@ -284,7 +383,7 @@ const styles = StyleSheet.create({
   sectionContent: {
     fontSize: 16,
     lineHeight: 24,
-    color: "#333",
+    color: "#3C3C43",
   },
 });
 
