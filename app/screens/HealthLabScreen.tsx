@@ -11,7 +11,11 @@ import LabReportsScreen from "./LabReportsScreen";
 
 const Tab = createMaterialTopTabNavigator();
 
-const HealthLabScreen = () => {
+interface HealthLabScreenProps {
+  navigation?: any;
+}
+
+const HealthLabScreen: React.FC<HealthLabScreenProps> = ({ navigation }) => {
   const { biomarkers, setBiomarkers } = useBiomarkersStore();
   const { reports, setReports } = useLabReportsStore();
   const [refreshing, setRefreshing] = useState(false);
@@ -78,6 +82,7 @@ const HealthLabScreen = () => {
       biomarkers={biomarkers}
       refreshing={refreshing}
       onRefresh={onRefresh}
+      navigation={navigation}
       {...props}
     />
   );

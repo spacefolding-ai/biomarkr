@@ -17,6 +17,7 @@ interface BiomarkersTabProps {
   onDeleteBiomarker?: (biomarkerId: string) => void;
   onEditBiomarker?: (biomarker: Biomarker) => void;
   onAddBiomarker?: () => void;
+  navigation?: any;
 }
 
 export const BiomarkersTab: React.FC<BiomarkersTabProps> = ({
@@ -26,6 +27,7 @@ export const BiomarkersTab: React.FC<BiomarkersTabProps> = ({
   onDeleteBiomarker,
   onEditBiomarker,
   onAddBiomarker,
+  navigation,
 }) => {
   return (
     <ScrollView style={styles.container}>
@@ -46,6 +48,7 @@ export const BiomarkersTab: React.FC<BiomarkersTabProps> = ({
           isSelected={selectedBiomarkerId === biomarker.id}
           onDelete={onDeleteBiomarker}
           onEdit={onEditBiomarker}
+          navigation={navigation}
         />
       ))}
     </ScrollView>
@@ -58,6 +61,7 @@ interface BiomarkerItemProps {
   isSelected?: boolean;
   onDelete?: (biomarkerId: string) => void;
   onEdit?: (biomarker: Biomarker) => void;
+  navigation?: any;
 }
 
 const BiomarkerItem: React.FC<BiomarkerItemProps> = ({
@@ -66,6 +70,7 @@ const BiomarkerItem: React.FC<BiomarkerItemProps> = ({
   isSelected = false,
   onDelete,
   onEdit,
+  navigation,
 }) => {
   const getAbnormalFlag = (flag?: string) => {
     const normalizedFlag = flag?.toLowerCase();
@@ -107,7 +112,11 @@ const BiomarkerItem: React.FC<BiomarkerItemProps> = ({
   const biomarkerContent = (
     <TouchableOpacity
       style={[styles.biomarkerItem, isSelected && styles.biomarkerItemSelected]}
-      onPress={isEditMode ? handleEdit : undefined}
+      onPress={
+        isEditMode
+          ? handleEdit
+          : () => navigation?.navigate("BiomarkerDetails", { biomarker })
+      }
       activeOpacity={isEditMode ? 0.7 : 1}
     >
       <View style={styles.biomarkerLeft}>
