@@ -4,6 +4,7 @@ import { format, subMonths, subYears } from "date-fns";
 import React, { useCallback, useMemo, useState } from "react";
 import {
   Button,
+  Pressable,
   RefreshControl,
   SectionList,
   Switch,
@@ -174,18 +175,19 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
     };
 
     return (
-      <TouchableOpacity
-        style={{
-          flexDirection: "row",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: 16,
-          borderBottomWidth: 1,
-          borderColor: "#eee",
-          backgroundColor: "white",
-        }}
+      <Pressable
         onPress={handleBiomarkerPress}
-        activeOpacity={0.7}
+        style={({ pressed }) => [
+          {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: 16,
+            borderBottomWidth: 1,
+            borderColor: "#eee",
+            backgroundColor: pressed ? "#f5f5f5" : "white",
+          },
+        ]}
       >
         <Text style={{ fontWeight: "bold", flex: 1, marginRight: 16 }}>
           {item?.marker_name}
@@ -221,7 +223,7 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
             <Text style={{ color: "green", fontSize: 16 }}>●</Text>
           )}
         </View>
-      </TouchableOpacity>
+      </Pressable>
     );
   };
 

@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import {
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
@@ -110,14 +111,17 @@ const BiomarkerItem: React.FC<BiomarkerItemProps> = ({
   };
 
   const biomarkerContent = (
-    <TouchableOpacity
-      style={[styles.biomarkerItem, isSelected && styles.biomarkerItemSelected]}
+    <Pressable
+      style={({ pressed }) => [
+        styles.biomarkerItem,
+        isSelected && styles.biomarkerItemSelected,
+        pressed && styles.biomarkerItemPressed,
+      ]}
       onPress={
         isEditMode
           ? handleEdit
           : () => navigation?.navigate("BiomarkerDetails", { biomarker })
       }
-      activeOpacity={isEditMode ? 0.7 : 1}
     >
       <View style={styles.biomarkerLeft}>
         <Text style={styles.biomarkerName} numberOfLines={0}>
@@ -130,7 +134,7 @@ const BiomarkerItem: React.FC<BiomarkerItemProps> = ({
         </Text>
         {getAbnormalFlag(biomarker.abnormal_flag)}
       </View>
-    </TouchableOpacity>
+    </Pressable>
   );
 
   if (isEditMode) {
@@ -192,6 +196,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#f0f8ff",
     borderColor: "#007AFF",
     borderWidth: 1,
+  },
+  biomarkerItemPressed: {
+    backgroundColor: "#e0e0e0",
   },
   biomarkerLeft: {
     flex: 3,
