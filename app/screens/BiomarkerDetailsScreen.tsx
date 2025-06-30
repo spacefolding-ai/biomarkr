@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { updateBiomarkerFavouriteStatus } from "../services/biomarkers";
 import { Biomarker } from "../types/Biomarker";
 
 interface BiomarkerDetailsScreenProps {
@@ -24,15 +25,22 @@ const BiomarkerDetailsScreen: React.FC<BiomarkerDetailsScreenProps> = ({
   navigation,
 }) => {
   const { biomarker } = route.params;
-  const [isFavorite, setIsFavorite] = useState(false);
+  const [isFavorite, setIsFavorite] = useState(biomarker.is_favourite || false);
 
   const handleBack = () => {
     navigation.goBack();
   };
 
-  const handleToggleFavorite = () => {
-    setIsFavorite(!isFavorite);
-    // TODO: Implement favorite functionality
+  const handleToggleFavorite = async () => {
+    try {
+      const newFavoriteStatus = !isFavorite;
+      setIsFavorite(newFavoriteStatus);
+      await updateBiomarkerFavouriteStatus(biomarker.id, newFavoriteStatus);
+    } catch (error) {
+      // Revert state on error
+      setIsFavorite(isFavorite);
+      console.error("Failed to update favorite status:", error);
+    }
   };
 
   const handleSend = () => {

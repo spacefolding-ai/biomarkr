@@ -17,4 +17,5 @@ export interface Biomarker {
   optimal_value?: string;
   testing_methods?: string;
   which_specialist_is_needed?: string;
+  is_favourite?: boolean;
 }

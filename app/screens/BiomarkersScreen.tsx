@@ -43,6 +43,7 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
   const [isTimePeriodModalVisible, setTimePeriodModalVisible] = useState(false);
   const [tempTimePeriod, setTempTimePeriod] = useState<TimePeriod>("all time");
   const [showAbnormalOnly, setShowAbnormalOnly] = useState(false);
+  const [showFavouritesOnly, setShowFavouritesOnly] = useState(false);
 
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === "dark";
@@ -104,8 +105,16 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
       });
     }
 
+    // Filter by favourites if enabled
+    let filteredByFavourites = filteredByAbnormal;
+    if (showFavouritesOnly) {
+      filteredByFavourites = filteredByAbnormal.filter((biomarker) => {
+        return biomarker.is_favourite === true;
+      });
+    }
+
     // Then filter by search text
-    const filtered = filteredByAbnormal.filter((b) =>
+    const filtered = filteredByFavourites.filter((b) =>
       (b.marker_name?.toLowerCase() || "").includes(searchText?.toLowerCase())
     );
 
@@ -123,7 +132,13 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
     return Object.entries(groups)
       .map(([title, data]) => ({ title, data }))
       .sort((a, b) => a.title.localeCompare(b.title));
-  }, [biomarkers, searchText, selectedTimePeriod, showAbnormalOnly]);
+  }, [
+    biomarkers,
+    searchText,
+    selectedTimePeriod,
+    showAbnormalOnly,
+    showFavouritesOnly,
+  ]);
 
   const toggleSearch = () => {
     setSearchVisible(!searchVisible);
@@ -485,6 +500,34 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
             <Switch
               value={showAbnormalOnly}
               onValueChange={setShowAbnormalOnly}
+              trackColor={{ false: "#E5E5E5", true: "#007AFF" }}
+              thumbColor="#FFFFFF"
+              style={{ transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }] }}
+            />
+          </View>
+
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              backgroundColor: "white",
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "500",
+                color: "#000",
+                marginRight: 12,
+              }}
+            >
+              Favourites
+            </Text>
+            <Switch
+              value={showFavouritesOnly}
+              onValueChange={setShowFavouritesOnly}
               trackColor={{ false: "#E5E5E5", true: "#007AFF" }}
               thumbColor="#FFFFFF"
               style={{ transform: [{ scaleX: 0.9 }, { scaleY: 0.9 }] }}
