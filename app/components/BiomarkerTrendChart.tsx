@@ -454,6 +454,26 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
         })
       );
 
+      // Show vertical line for selected point
+      if (isSelected) {
+        const lineX = x(index);
+        // Extend line to full chart height to connect with X-axis
+        const chartHeight = 150; // Chart container height
+        const lineBottom = chartHeight; // Bottom of chart container (X-axis position)
+        const lineTop = 0; // Top of chart container
+
+        elements.push(
+          React.createElement(Path, {
+            key: `vertical-line-${index}`,
+            d: `M ${lineX} ${lineBottom} L ${lineX} ${lineTop}`,
+            stroke: "#007AFF",
+            strokeWidth: 1,
+            strokeDasharray: "3,3",
+            opacity: 0.5,
+          })
+        );
+      }
+
       // Show value bubble for selected point only
       if (isSelected) {
         const dotX = x(index);
@@ -462,12 +482,12 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
         // Position tooltip to the right of the dot
         const bubbleWidth = 50; // Reduced width for less internal padding
         const bubbleHeight = 20; // Reduced height for less internal padding
-        const bubbleX = dotX + 20; // More margin between dot and tooltip
+        const bubbleX = dotX + 25; // Distance from dot to bubble
         const bubbleY = dotY - bubbleHeight / 2; // Vertically centered on dot
-        const cornerRadius = 10; // Slightly smaller corner radius
-        const pointerSize = 6;
+        const cornerRadius = 10; // Corner radius for pill shape
+        const pointerSize = 4; // Small pointer extension
 
-        // Pill-shaped tooltip with small pointer notch
+        // Unified speech bubble with integrated pointer
         const tooltipPath = `
           M ${bubbleX + cornerRadius} ${bubbleY}
           L ${bubbleX + bubbleWidth - cornerRadius} ${bubbleY}
@@ -483,7 +503,7 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
           bubbleY + bubbleHeight - cornerRadius
         }
           L ${bubbleX} ${dotY + pointerSize}
-          L ${dotX + 6} ${dotY}
+          L ${bubbleX - 8} ${dotY}
           L ${bubbleX} ${dotY - pointerSize}
           L ${bubbleX} ${bubbleY + cornerRadius}
           Q ${bubbleX} ${bubbleY} ${bubbleX + cornerRadius} ${bubbleY}
