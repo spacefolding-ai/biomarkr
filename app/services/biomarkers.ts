@@ -151,3 +151,26 @@ export async function updateBiomarkerFavouriteStatus(
     throw new Error("Unexpected error: " + error);
   }
 }
+
+export async function getBiomarkerHistoricalData(
+  markerName: string,
+  userId: string
+): Promise<Biomarker[]> {
+  try {
+    const { data, error } = await supabase
+      .from("biomarkers")
+      .select("*")
+      .eq("marker_name", markerName)
+      .eq("user_id", userId)
+      .order("report_date", { ascending: true });
+
+    if (error) {
+      throw new Error("Failed to fetch historical data: " + error.message);
+    }
+
+    return data || [];
+  } catch (error) {
+    console.error("Error fetching historical biomarker data:", error);
+    return [];
+  }
+}

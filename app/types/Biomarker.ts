@@ -14,7 +14,7 @@ export interface Biomarker {
   what_deviations_mean?: string;
   when_is_test_prescribed?: string;
   standard_values?: string;
-  optimal_value?: string;
+  optimal_valuess?: string;
   testing_methods?: string;
   which_specialist_is_needed?: string;
   is_favourite?: boolean;
