@@ -1,7 +1,7 @@
 import { format } from "date-fns";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
-import { Circle, G, Path, Rect } from "react-native-svg";
+import { Circle, G, Path, Rect, Text as SvgText } from "react-native-svg";
 import { Grid, LineChart } from "react-native-svg-charts";
 
 interface DataPoint {
@@ -44,9 +44,29 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
   referenceRange,
   optimalRange,
 }) => {
+  // Initialize with the last data point selected by default (if data exists)
   const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(
-    null
+    data && data.length > 0 ? data.length - 1 : null
   );
+
+  const formatListDate = (date: string) => {
+    return format(new Date(date), "MMM d");
+  };
+
+  const getAbnormalFlagIcon = (flag?: string) => {
+    const normalizedFlag = flag?.toLowerCase();
+    if (normalizedFlag === "very high") {
+      return { icon: "▲", color: "#FF3B30" }; // Red triangle
+    } else if (normalizedFlag === "high") {
+      return { icon: "▲", color: "#FF9500" }; // Orange triangle
+    } else if (normalizedFlag === "very low") {
+      return { icon: "▼", color: "#FF3B30" }; // Red triangle down
+    } else if (normalizedFlag === "low") {
+      return { icon: "▼", color: "#FF9500" }; // Orange triangle down
+    } else {
+      return { icon: "●", color: "#34C759" }; // Green circle
+    }
+  };
 
   if (!data || data.length === 0) {
     return (
@@ -66,6 +86,11 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
   const sortedData = [...data].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
+
+  // Update selected index to match sorted data (last item)
+  useEffect(() => {
+    setSelectedPointIndex(sortedData.length - 1);
+  }, [data]);
 
   const values = sortedData.map((item) => item.value);
   const dates = sortedData.map((item) => item.date);
@@ -238,6 +263,23 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
             {format(new Date(singlePoint.date), "MM/dd/yy")}
           </Text>
         </View>
+
+        {/* Biomarker Values List for single point */}
+        <View style={styles.valuesList}>
+          <View style={styles.valueItem}>
+            <Text style={styles.valueDate}>
+              {formatListDate(singlePoint.date)}
+            </Text>
+            <View style={styles.valueRight}>
+              <Text style={styles.valueText}>
+                {singlePoint.value} {unit}
+              </Text>
+              <Text style={[styles.flagIcon, { color }]}>
+                {getAbnormalFlagIcon(singlePoint.abnormal_flag).icon}
+              </Text>
+            </View>
+          </View>
+        </View>
       </View>
     );
   }
@@ -262,6 +304,21 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
     ? ([Math.max(0, minValue * 0.8), maxValue * 1.2] as [number, number])
     : null;
 
+  // Create extended data array to position last data point at 70% of X-axis
+  const extendedValues = [...values];
+  if (values.length > 1) {
+    // Calculate how many additional points needed to make last real point at 70%
+    const realDataLength = values.length;
+    const targetPosition = 0.7; // 70%
+    const extendedLength = Math.ceil((realDataLength - 1) / targetPosition) + 1;
+    const additionalPoints = extendedLength - realDataLength;
+
+    // Add duplicate values to extend the X-axis (these won't be drawn)
+    for (let i = 0; i < additionalPoints; i++) {
+      extendedValues.push(values[values.length - 1]); // Repeat last value
+    }
+  }
+
   // Color function based on value and ranges
   const getLineColor = (value: number) => {
     if (optimalRange && value >= optimalRange[0] && value <= optimalRange[1]) {
@@ -281,6 +338,9 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
   const MultiColorDecorator = ({ x, y, data: chartData }: any) => {
     const elements = [];
 
+    // Only use the real data values for drawing, not the extended ones
+    const realDataLength = values.length;
+
     // Helper function to calculate control points for smooth curves
     const getControlPoints = (i: number) => {
       const smoothing = 0.4; // Increased smoothing for more pronounced curves
@@ -296,7 +356,7 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
           : { x: current.x - (next.x - current.x), y: current.y };
 
       const nextNext =
-        i < chartData.length - 2
+        i < realDataLength - 2
           ? { x: x(i + 2), y: y(chartData[i + 2]) }
           : { x: next.x + (next.x - current.x), y: next.y };
 
@@ -320,8 +380,8 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
       return { cp1x, cp1y, cp2x, cp2y };
     };
 
-    // Add cubic Bézier curve segments between points
-    for (let i = 0; i < chartData.length - 1; i++) {
+    // Add cubic Bézier curve segments between points (only for real data)
+    for (let i = 0; i < realDataLength - 1; i++) {
       const currentValue = chartData[i];
       const nextValue = chartData[i + 1];
 
@@ -337,7 +397,7 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
       let pathData;
 
       // Special handling for 2-point curves
-      if (chartData.length === 2) {
+      if (realDataLength === 2) {
         const midX = (x1 + x2) / 2;
         const cp1x = x1 + (x2 - x1) * 0.3;
         const cp1y = y1;
@@ -363,9 +423,10 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
       );
     }
 
-    // Add dots for each point with zone-based colors
-    chartData.forEach((value: number, index: number) => {
-      const isLatest = index === chartData.length - 1;
+    // Add dots for each point with zone-based colors (only for real data)
+    for (let index = 0; index < realDataLength; index++) {
+      const value = chartData[index];
+      const isLatest = index === realDataLength - 1;
       const isSelected = selectedPointIndex === index;
       const color = getLineColor(value);
 
@@ -386,66 +447,79 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
           key: `point-${index}`,
           cx: x(index),
           cy: y(value),
-          r: isSelected ? 10 : isLatest ? 8 : 4,
+          r: isSelected ? 10 : 4,
           stroke: color,
           strokeWidth: 2,
-          fill: isLatest || isSelected ? color : "white",
+          fill: isSelected ? color : "white",
         })
       );
 
-      // Show value bubble for selected point
+      // Show value bubble for selected point only
       if (isSelected) {
-        const bubbleX = x(index);
-        const bubbleY = y(value) - 30;
+        const dotX = x(index);
+        const dotY = y(value);
 
-        // White bubble background
+        // Position tooltip to the right of the dot
+        const bubbleWidth = 50; // Reduced width for less internal padding
+        const bubbleHeight = 20; // Reduced height for less internal padding
+        const bubbleX = dotX + 20; // More margin between dot and tooltip
+        const bubbleY = dotY - bubbleHeight / 2; // Vertically centered on dot
+        const cornerRadius = 10; // Slightly smaller corner radius
+        const pointerSize = 6;
+
+        // Pill-shaped tooltip with small pointer notch
+        const tooltipPath = `
+          M ${bubbleX + cornerRadius} ${bubbleY}
+          L ${bubbleX + bubbleWidth - cornerRadius} ${bubbleY}
+          Q ${bubbleX + bubbleWidth} ${bubbleY} ${bubbleX + bubbleWidth} ${
+          bubbleY + cornerRadius
+        }
+          L ${bubbleX + bubbleWidth} ${bubbleY + bubbleHeight - cornerRadius}
+          Q ${bubbleX + bubbleWidth} ${bubbleY + bubbleHeight} ${
+          bubbleX + bubbleWidth - cornerRadius
+        } ${bubbleY + bubbleHeight}
+          L ${bubbleX + cornerRadius} ${bubbleY + bubbleHeight}
+          Q ${bubbleX} ${bubbleY + bubbleHeight} ${bubbleX} ${
+          bubbleY + bubbleHeight - cornerRadius
+        }
+          L ${bubbleX} ${dotY + pointerSize}
+          L ${dotX + 6} ${dotY}
+          L ${bubbleX} ${dotY - pointerSize}
+          L ${bubbleX} ${bubbleY + cornerRadius}
+          Q ${bubbleX} ${bubbleY} ${bubbleX + cornerRadius} ${bubbleY}
+          Z
+        `;
+
         elements.push(
-          React.createElement(Rect, {
-            key: `bubble-bg-${index}`,
-            x: bubbleX - 25,
-            y: bubbleY - 10,
-            width: 50,
-            height: 20,
-            rx: 10,
+          React.createElement(Path, {
+            key: `tooltip-${index}`,
+            d: tooltipPath,
             fill: "white",
             stroke: "#E5E5E7",
             strokeWidth: 1,
+            strokeLinejoin: "round",
           })
         );
 
-        // Value text in bubble
+        // Value text in tooltip - vertically centered
         elements.push(
           React.createElement(
-            "text",
+            SvgText,
             {
               key: `bubble-text-${index}`,
-              x: bubbleX,
-              y: bubbleY + 5,
+              x: bubbleX + bubbleWidth / 2, // Center in the tooltip
+              y: dotY + 1, // Slight adjustment for perfect vertical centering
               textAnchor: "middle",
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: "600",
               fill: color,
+              alignmentBaseline: "middle",
             },
             `${value}`
           )
         );
-
-        // Vertical guide line to X-axis
-        elements.push(
-          React.createElement("line", {
-            key: `guide-line-${index}`,
-            x1: bubbleX,
-            y1: y(value), // Start from center of the dot
-            x2: bubbleX,
-            y2: y(yMin), // End at X-axis (yMin = 0)
-            stroke: color,
-            strokeWidth: 1,
-            strokeDasharray: "3,3",
-            opacity: 0.6,
-          })
-        );
       }
-    });
+    }
 
     return React.createElement(G, {}, ...elements);
   };
@@ -453,8 +527,9 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
   // Background zones with horizontal rectangles
   const BackgroundZones = ({ x, y }: any) => {
     const zones = [];
-    const chartWidth = x(values.length - 1) - x(0);
-    const chartStartX = x(0);
+    // Start zones from Y-axis (x=0) and extend to the full chart width
+    const zoneStartX = 0; // Start from Y-axis
+    const zoneWidth = x(extendedValues.length - 1); // Extend to full chart width
 
     // Abnormal HIGH zone (above normal range) - Gray
     if (referenceRange) {
@@ -465,9 +540,9 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
         zones.push(
           React.createElement(Rect, {
             key: "abnormal-high-zone",
-            x: chartStartX,
+            x: zoneStartX,
             y: abnormalHighY,
-            width: chartWidth,
+            width: zoneWidth,
             height: abnormalHighHeight,
             fill: "#8E8E93",
             fillOpacity: 0.2,
@@ -484,9 +559,9 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
       zones.push(
         React.createElement(Rect, {
           key: "normal-zone",
-          x: chartStartX,
+          x: zoneStartX,
           y: normalY,
-          width: chartWidth,
+          width: zoneWidth,
           height: normalHeight,
           fill: "#34C759",
           fillOpacity: 0.2,
@@ -502,9 +577,9 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
       zones.push(
         React.createElement(Rect, {
           key: "optimal-zone",
-          x: chartStartX,
+          x: zoneStartX,
           y: optimalY,
-          width: chartWidth,
+          width: zoneWidth,
           height: optimalHeight,
           fill: "#007AFF",
           fillOpacity: 0.15,
@@ -521,9 +596,9 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
         zones.push(
           React.createElement(Rect, {
             key: "abnormal-low-zone",
-            x: chartStartX,
+            x: zoneStartX,
             y: abnormalLowY,
-            width: chartWidth,
+            width: zoneWidth,
             height: abnormalLowHeight,
             fill: "#8E8E93",
             fillOpacity: 0.2,
@@ -540,9 +615,9 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
       zones.push(
         React.createElement(Rect, {
           key: "fallback-zone",
-          x: chartStartX,
+          x: zoneStartX,
           y: fallbackY,
-          width: chartWidth,
+          width: zoneWidth,
           height: fallbackHeight,
           fill: "#34C759",
           fillOpacity: 0.1,
@@ -553,12 +628,45 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
     return React.createElement(G, {}, ...zones);
   };
 
+  // Date labels positioned under each data point
+  const DateLabels = ({ x }: any) => {
+    const elements = [];
+
+    sortedData.forEach((dataPoint: DataPoint, index: number) => {
+      const isSelected = selectedPointIndex === index;
+      const dateX = x(index);
+
+      // Calculate percentage position for absolute positioning based on extended chart width
+      const percentageFromLeft =
+        ((dateX - 20) / (x(extendedValues.length - 1) + 20)) * 100;
+
+      elements.push(
+        React.createElement(
+          Text,
+          {
+            key: `date-${index}`,
+            style: [
+              styles.dateLabel,
+              {
+                left: `${Math.max(0, Math.min(90, percentageFromLeft))}%`,
+                color: isSelected ? "#007AFF" : "#8E8E93",
+                fontWeight: isSelected ? "600" : "400",
+              },
+            ],
+          },
+          formatDate(dataPoint.date)
+        )
+      );
+    });
+
+    return elements;
+  };
+
   const formatDate = (date: string) => {
     return format(new Date(date), "MM/dd/yy");
   };
 
   const latestValue = values[values.length - 1];
-  const latestDate = dates[dates.length - 1];
 
   return (
     <View style={styles.container}>
@@ -571,7 +679,7 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
         <View style={styles.chart}>
           <LineChart
             style={{ flex: 1 }}
-            data={values}
+            data={extendedValues}
             svg={{ stroke: "transparent" }} // Hide default line since we draw custom segments
             contentInset={{ top: 20, bottom: 20, left: 20, right: 20 }}
             yMin={yMin}
@@ -589,31 +697,45 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
           <View style={styles.chartYAxisLine} />
         </View>
 
-        {/* Latest value indicator */}
-        <View style={styles.valueIndicator}>
-          <Text
-            style={[styles.currentValue, { color: getLineColor(latestValue) }]}
-          >
-            {latestValue} {unit}
-          </Text>
-        </View>
-
-        {/* X-axis dates */}
+        {/* X-axis dates - positioned under each data point */}
         <View style={styles.xAxisContainer}>
-          <Text style={[styles.dateLabel, styles.earliestDate]}>
-            {formatDate(dates[0])}
-          </Text>
-          {selectedPointIndex !== null &&
-            selectedPointIndex > 0 &&
-            selectedPointIndex < dates.length - 1 && (
-              <Text style={[styles.dateLabel, styles.selectedDate]}>
-                {formatDate(dates[selectedPointIndex])}
-              </Text>
-            )}
-          <Text style={[styles.dateLabel, styles.latestDate]}>
-            {formatDate(latestDate)}
-          </Text>
+          <LineChart
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              height: 1,
+              opacity: 0,
+            }}
+            data={extendedValues}
+            contentInset={{ top: 20, bottom: 20, left: 20, right: 20 }}
+          >
+            <DateLabels />
+          </LineChart>
         </View>
+      </View>
+
+      {/* Biomarker Values List */}
+      <View style={styles.valuesList}>
+        {sortedData.map((dataPoint, index) => {
+          const flagInfo = getAbnormalFlagIcon(dataPoint.abnormal_flag);
+          return (
+            <View key={index} style={styles.valueItem}>
+              <Text style={styles.valueDate}>
+                {formatListDate(dataPoint.date)}
+              </Text>
+              <View style={styles.valueRight}>
+                <Text style={styles.valueText}>
+                  {dataPoint.value} {unit}
+                </Text>
+                <Text style={[styles.flagIcon, { color: flagInfo.color }]}>
+                  {flagInfo.icon}
+                </Text>
+              </View>
+            </View>
+          );
+        })}
       </View>
     </View>
   );
@@ -658,15 +780,7 @@ const styles = StyleSheet.create({
     height: 150,
     marginBottom: 10,
   },
-  valueIndicator: {
-    position: "absolute",
-    top: 10,
-    right: 20,
-  },
-  currentValue: {
-    fontSize: 16,
-    fontWeight: "bold",
-  },
+
   xAxisContainer: {
     flexDirection: "row",
     position: "relative",
@@ -675,24 +789,10 @@ const styles = StyleSheet.create({
   },
   dateLabel: {
     fontSize: 12,
-    color: "#8E8E93",
     position: "absolute",
+    transform: [{ translateX: -20 }], // Center the text under the point
   },
-  latestDate: {
-    color: "#34C759",
-    fontWeight: "600",
-    right: "20%", // Position at ~80% from left
-  },
-  earliestDate: {
-    color: "#8E8E93",
-    fontWeight: "600",
-    left: "10%", // Position at ~10% from left
-  },
-  selectedDate: {
-    color: "#007AFF",
-    fontWeight: "600",
-    right: "20%", // Position at ~80% from left
-  },
+
   noDataContainer: {
     height: 150,
     justifyContent: "center",
@@ -779,5 +879,38 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: 1,
     backgroundColor: "#E5E5E7",
+  },
+  valuesList: {
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: "#E5E5E7",
+  },
+  valueItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#F2F2F7",
+  },
+  valueDate: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#000",
+  },
+  valueRight: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  valueText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#8E8E93",
+    marginRight: 8,
+  },
+  flagIcon: {
+    fontSize: 16,
+    fontWeight: "600",
   },
 });
