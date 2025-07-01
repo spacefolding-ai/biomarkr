@@ -228,11 +228,13 @@ const BiomarkerDetailsScreen: React.FC<BiomarkerDetailsScreenProps> = ({
               date: item.report_date,
               value: item.value,
               abnormal_flag: item.abnormal_flag || undefined,
+              report_id: item.report_id,
             }))}
             unit={biomarker.unit}
             markerName={biomarker.marker_name}
             referenceRange={referenceRange}
             optimalRange={optimalRange}
+            navigation={navigation}
           />
         )}
 

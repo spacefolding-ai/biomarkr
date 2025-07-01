@@ -1,13 +1,15 @@
 import { format } from "date-fns";
 import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { Circle, G, Path, Rect, Text as SvgText } from "react-native-svg";
 import { Grid, LineChart } from "react-native-svg-charts";
+import { useLabReportsStore } from "../store/useLabReportsStore";
 
 interface DataPoint {
   date: string;
   value: number;
   abnormal_flag?: string;
+  report_id: string;
 }
 
 interface BiomarkerTrendChartProps {
@@ -16,6 +18,7 @@ interface BiomarkerTrendChartProps {
   markerName: string;
   referenceRange?: [number, number]; // [min, max]
   optimalRange?: [number, number]; // [min, max]
+  navigation?: any;
 }
 
 // Helper function to get color for a value based on ranges
@@ -43,11 +46,28 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
   markerName,
   referenceRange,
   optimalRange,
+  navigation,
 }) => {
   // Initialize with the last data point selected by default (if data exists)
   const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(
     data && data.length > 0 ? data.length - 1 : null
   );
+
+  // Get lab reports from store for navigation
+  const { reports } = useLabReportsStore();
+
+  // Handle navigation to lab report
+  const handleNavigateToLabReport = (reportId: string) => {
+    if (!navigation) return;
+
+    const labReport = reports.find((report) => report.id === reportId);
+    if (labReport) {
+      navigation.navigate("LabReportDetails", {
+        labReport,
+        isEditMode: false,
+      });
+    }
+  };
 
   const formatListDate = (date: string) => {
     return format(new Date(date), "MMM d");
@@ -732,7 +752,12 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
         {sortedData.map((dataPoint, index) => {
           const flagInfo = getAbnormalFlagIcon(dataPoint.abnormal_flag);
           return (
-            <View key={index} style={styles.valueItem}>
+            <TouchableOpacity
+              key={index}
+              style={styles.valueItem}
+              onPress={() => handleNavigateToLabReport(dataPoint.report_id)}
+              activeOpacity={0.7}
+            >
               <Text style={styles.valueDate}>
                 {formatListDate(dataPoint.date)}
               </Text>
@@ -744,7 +769,7 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
                   {flagInfo.icon}
                 </Text>
               </View>
-            </View>
+            </TouchableOpacity>
           );
         })}
       </View>
