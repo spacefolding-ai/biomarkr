@@ -5,6 +5,7 @@ import { Circle, G, Path, Rect, Text as SvgText } from "react-native-svg";
 import { Grid, LineChart } from "react-native-svg-charts";
 import { useLabReportsStore } from "../store/useLabReportsStore";
 
+// ========================= TYPES =========================
 interface DataPoint {
   date: string;
   value: number;
@@ -16,12 +17,18 @@ interface BiomarkerTrendChartProps {
   data: DataPoint[];
   unit: string;
   markerName: string;
-  referenceRange?: [number, number]; // [min, max]
-  optimalRange?: [number, number]; // [min, max]
+  referenceRange?: [number, number];
+  optimalRange?: [number, number];
   navigation?: any;
 }
 
-// Helper function to get color for a value based on ranges
+interface ChartRange {
+  yMin: number;
+  yMax: number;
+  fallbackRange?: [number, number];
+}
+
+// ========================= HELPER FUNCTIONS =========================
 const getLineColorForValue = (
   value: number,
   referenceRange?: [number, number],
@@ -38,6 +45,670 @@ const getLineColorForValue = (
   } else {
     return "#FF9500"; // Orange for abnormal
   }
+};
+
+const getAbnormalFlagIcon = (flag?: string) => {
+  const normalizedFlag = flag?.toLowerCase();
+  if (normalizedFlag === "very high") {
+    return { icon: "▲", color: "#FF3B30" };
+  } else if (normalizedFlag === "high") {
+    return { icon: "▲", color: "#FF9500" };
+  } else if (normalizedFlag === "very low") {
+    return { icon: "▼", color: "#FF3B30" };
+  } else if (normalizedFlag === "low") {
+    return { icon: "▼", color: "#FF9500" };
+  } else {
+    return { icon: "●", color: "#34C759" };
+  }
+};
+
+const formatListDate = (date: string) => {
+  return format(new Date(date), "MMM d");
+};
+
+const formatChartDate = (date: string) => {
+  return format(new Date(date), "MM/dd/yy");
+};
+
+const calculateChartRange = (
+  values: number[],
+  referenceRange?: [number, number],
+  optimalRange?: [number, number]
+): ChartRange => {
+  const minValue = Math.min(...values);
+  const maxValue = Math.max(...values);
+  const ranges = [referenceRange, optimalRange].filter(Boolean) as [
+    number,
+    number
+  ][];
+  const allValues = [...values, ...ranges.flat()];
+  const adjustedYMax = Math.max(...allValues) + Math.max(...allValues) * 0.2;
+
+  const fallbackRange = !referenceRange
+    ? ([Math.max(0, minValue * 0.8), maxValue * 1.2] as [number, number])
+    : undefined;
+
+  return {
+    yMin: 0, // Y-axis always starts from 0 for biomarker values
+    yMax: adjustedYMax,
+    fallbackRange,
+  };
+};
+
+const extendDataForPositioning = (values: number[]): number[] => {
+  const extendedValues = [...values];
+  if (values.length > 1) {
+    const realDataLength = values.length;
+    const targetPosition = 0.95; // 95%
+    const extendedLength = Math.ceil((realDataLength - 1) / targetPosition) + 1;
+    const additionalPoints = extendedLength - realDataLength;
+
+    for (let i = 0; i < additionalPoints; i++) {
+      extendedValues.push(values[values.length - 1]);
+    }
+  }
+  return extendedValues;
+};
+
+// ========================= CHART COMPONENTS =========================
+
+interface SinglePointChartProps {
+  dataPoint: DataPoint;
+  unit: string;
+  referenceRange?: [number, number];
+  optimalRange?: [number, number];
+}
+
+const SinglePointChart: React.FC<SinglePointChartProps> = ({
+  dataPoint,
+  unit,
+  referenceRange,
+  optimalRange,
+}) => {
+  const color = getLineColorForValue(
+    dataPoint.value,
+    referenceRange,
+    optimalRange
+  );
+
+  // Calculate Y-axis range
+  const ranges = [referenceRange, optimalRange].filter(Boolean) as [
+    number,
+    number
+  ][];
+  const allValues = [dataPoint.value, ...ranges.flat()];
+  const maxValue = Math.max(...allValues);
+  const padding = maxValue * 0.2;
+  const yMin = 0;
+  const yMax = maxValue + padding;
+
+  // Create fallback range if no reference range provided
+  const fallbackRange = !referenceRange
+    ? [Math.max(0, dataPoint.value * 0.8), dataPoint.value * 1.2]
+    : null;
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Dynamics</Text>
+        <Text style={styles.timeRange}>all time</Text>
+      </View>
+
+      <View style={styles.singlePointContainer}>
+        <View style={styles.singlePointChart}>
+          {/* Background zones */}
+          <View style={styles.singlePointBackground}>
+            {/* Gray abnormal zones */}
+            {referenceRange && (
+              <>
+                {/* Abnormal HIGH zone (above reference range) */}
+                <View
+                  style={[
+                    styles.singlePointZone,
+                    {
+                      height: `${
+                        ((yMax - referenceRange[1]) / (yMax - yMin)) * 100
+                      }%`,
+                      backgroundColor: "#8E8E93",
+                      opacity: 0.2,
+                      top: 0,
+                    },
+                  ]}
+                />
+                {/* Abnormal LOW zone (below reference range) */}
+                <View
+                  style={[
+                    styles.singlePointZone,
+                    {
+                      height: `${(referenceRange[0] / (yMax - yMin)) * 100}%`,
+                      backgroundColor: "#8E8E93",
+                      opacity: 0.2,
+                      bottom: 0,
+                    },
+                  ]}
+                />
+              </>
+            )}
+
+            {/* Green normal zone */}
+            {referenceRange && (
+              <View
+                style={[
+                  styles.singlePointZone,
+                  {
+                    height: `${
+                      ((referenceRange[1] - referenceRange[0]) /
+                        (yMax - yMin)) *
+                      100
+                    }%`,
+                    backgroundColor: "#34C759",
+                    opacity: 0.2,
+                    bottom: `${(referenceRange[0] / (yMax - yMin)) * 100}%`,
+                  },
+                ]}
+              />
+            )}
+
+            {/* Blue optimal zone (striped overlay) */}
+            {optimalRange && (
+              <View
+                style={[
+                  styles.singlePointZone,
+                  {
+                    height: `${
+                      ((optimalRange[1] - optimalRange[0]) / (yMax - yMin)) *
+                      100
+                    }%`,
+                    backgroundColor: "#007AFF",
+                    opacity: 0.15,
+                    bottom: `${(optimalRange[0] / (yMax - yMin)) * 100}%`,
+                  },
+                ]}
+              />
+            )}
+
+            {/* Fallback zone */}
+            {fallbackRange && !referenceRange && (
+              <View
+                style={[
+                  styles.singlePointZone,
+                  {
+                    height: `${
+                      ((fallbackRange[1] - fallbackRange[0]) / (yMax - yMin)) *
+                      100
+                    }%`,
+                    backgroundColor: "#34C759",
+                    opacity: 0.1,
+                    bottom: `${(fallbackRange[0] / (yMax - yMin)) * 100}%`,
+                  },
+                ]}
+              />
+            )}
+          </View>
+
+          {/* Dot positioned at correct Y-value */}
+          <View
+            style={[
+              styles.singlePointDotContainer,
+              {
+                bottom: `${((dataPoint.value - yMin) / (yMax - yMin)) * 150}px`,
+              },
+            ]}
+          >
+            <View style={[styles.singleDot, { backgroundColor: color }]} />
+          </View>
+
+          {/* Full vertical line passing through the dot */}
+          <View
+            style={[
+              styles.singlePointVerticalLine,
+              { left: "50%", transform: [{ translateX: -0.5 }] },
+            ]}
+          />
+
+          {/* X-axis line */}
+          <View style={styles.xAxisLine} />
+          {/* Y-axis line */}
+          <View style={styles.yAxisLine} />
+        </View>
+
+        {/* Date at bottom */}
+        <Text style={[styles.singlePointDate, { color }]}>
+          {formatChartDate(dataPoint.date)}
+        </Text>
+      </View>
+
+      {/* Biomarker Values List for single point */}
+      <View style={styles.valuesList}>
+        <View style={styles.valueItem}>
+          <Text style={styles.valueDate}>{formatListDate(dataPoint.date)}</Text>
+          <View style={styles.valueRight}>
+            <Text style={styles.valueText}>
+              {dataPoint.value} {unit}
+            </Text>
+            <Text style={[styles.flagIcon, { color }]}>
+              {getAbnormalFlagIcon(dataPoint.abnormal_flag).icon}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+};
+
+interface BackgroundZonesProps {
+  x: any;
+  y: any;
+  extendedValues: number[];
+  referenceRange?: [number, number];
+  optimalRange?: [number, number];
+  fallbackRange?: [number, number];
+  yMin: number;
+  yMax: number;
+}
+
+const BackgroundZones: React.FC<BackgroundZonesProps> = ({
+  x,
+  y,
+  extendedValues,
+  referenceRange,
+  optimalRange,
+  fallbackRange,
+  yMin,
+  yMax,
+}) => {
+  const zones = [];
+  const zoneStartX = 0; // Start from Y-axis
+  const zoneWidth = x(extendedValues.length - 1); // Extend to full chart width
+
+  // Abnormal HIGH zone (above normal range) - Gray
+  if (referenceRange) {
+    const abnormalHighY = y(yMax);
+    const abnormalHighHeight = y(referenceRange[1]) - y(yMax);
+
+    if (abnormalHighHeight > 0) {
+      zones.push(
+        React.createElement(Rect, {
+          key: "abnormal-high-zone",
+          x: zoneStartX,
+          y: abnormalHighY,
+          width: zoneWidth,
+          height: abnormalHighHeight,
+          fill: "#8E8E93",
+          fillOpacity: 0.2,
+        })
+      );
+    }
+  }
+
+  // Normal range zone - Green
+  if (referenceRange) {
+    const normalY = y(referenceRange[1]);
+    const normalHeight = y(referenceRange[0]) - y(referenceRange[1]);
+
+    zones.push(
+      React.createElement(Rect, {
+        key: "normal-zone",
+        x: zoneStartX,
+        y: normalY,
+        width: zoneWidth,
+        height: normalHeight,
+        fill: "#34C759",
+        fillOpacity: 0.2,
+      })
+    );
+  }
+
+  // Optimal zone (blue striped overlay) - Blue over green
+  if (optimalRange) {
+    const optimalY = y(optimalRange[1]);
+    const optimalHeight = y(optimalRange[0]) - y(optimalRange[1]);
+
+    zones.push(
+      React.createElement(Rect, {
+        key: "optimal-zone",
+        x: zoneStartX,
+        y: optimalY,
+        width: zoneWidth,
+        height: optimalHeight,
+        fill: "#007AFF",
+        fillOpacity: 0.15,
+      })
+    );
+  }
+
+  // Abnormal LOW zone (below normal range) - Gray
+  if (referenceRange) {
+    const abnormalLowY = y(referenceRange[0]);
+    const abnormalLowHeight = y(yMin) - y(referenceRange[0]);
+
+    if (abnormalLowHeight > 0) {
+      zones.push(
+        React.createElement(Rect, {
+          key: "abnormal-low-zone",
+          x: zoneStartX,
+          y: abnormalLowY,
+          width: zoneWidth,
+          height: abnormalLowHeight,
+          fill: "#8E8E93",
+          fillOpacity: 0.2,
+        })
+      );
+    }
+  }
+
+  // Add fallback range if no normal range provided
+  if (fallbackRange && !referenceRange) {
+    const fallbackY = y(fallbackRange[1]);
+    const fallbackHeight = y(fallbackRange[0]) - y(fallbackRange[1]);
+
+    zones.push(
+      React.createElement(Rect, {
+        key: "fallback-zone",
+        x: zoneStartX,
+        y: fallbackY,
+        width: zoneWidth,
+        height: fallbackHeight,
+        fill: "#34C759",
+        fillOpacity: 0.1,
+      })
+    );
+  }
+
+  return React.createElement(G, {}, ...zones);
+};
+
+interface MultiColorDecoratorProps {
+  x: any;
+  y: any;
+  data: number[];
+  sortedData: DataPoint[];
+  selectedPointIndex: number | null;
+  setSelectedPointIndex: (index: number) => void;
+  referenceRange?: [number, number];
+  optimalRange?: [number, number];
+}
+
+const MultiColorDecorator: React.FC<MultiColorDecoratorProps> = ({
+  x,
+  y,
+  data: chartData,
+  sortedData,
+  selectedPointIndex,
+  setSelectedPointIndex,
+  referenceRange,
+  optimalRange,
+}) => {
+  const elements = [];
+  const realDataLength = sortedData.length;
+
+  // Helper function to calculate control points for smooth curves
+  const getControlPoints = (i: number) => {
+    const smoothing = 0.4;
+
+    const current = { x: x(i), y: y(chartData[i]) };
+    const next = { x: x(i + 1), y: y(chartData[i + 1]) };
+
+    const prev =
+      i > 0
+        ? { x: x(i - 1), y: y(chartData[i - 1]) }
+        : { x: current.x - (next.x - current.x), y: current.y };
+
+    const nextNext =
+      i < realDataLength - 2
+        ? { x: x(i + 2), y: y(chartData[i + 2]) }
+        : { x: next.x + (next.x - current.x), y: next.y };
+
+    const tangent1 = {
+      x: (next.x - prev.x) * smoothing,
+      y: (next.y - prev.y) * smoothing,
+    };
+
+    const tangent2 = {
+      x: (nextNext.x - current.x) * smoothing,
+      y: (nextNext.y - current.y) * smoothing,
+    };
+
+    const cp1x = current.x + tangent1.x;
+    const cp1y = current.y + tangent1.y;
+    const cp2x = next.x - tangent2.x;
+    const cp2y = next.y - tangent2.y;
+
+    return { cp1x, cp1y, cp2x, cp2y };
+  };
+
+  // Add cubic Bézier curve segments between points (only for real data)
+  for (let i = 0; i < realDataLength - 1; i++) {
+    const currentValue = chartData[i];
+    const segmentColor = getLineColorForValue(
+      currentValue,
+      referenceRange,
+      optimalRange
+    );
+
+    const x1 = x(i);
+    const y1 = y(currentValue);
+    const x2 = x(i + 1);
+    const y2 = y(chartData[i + 1]);
+
+    let pathData;
+
+    if (realDataLength === 2) {
+      const cp1x = x1 + (x2 - x1) * 0.3;
+      const cp1y = y1;
+      const cp2x = x2 - (x2 - x1) * 0.3;
+      const cp2y = y2;
+      pathData = `M ${x1} ${y1} C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${x2} ${y2}`;
+    } else {
+      const { cp1x, cp1y, cp2x, cp2y } = getControlPoints(i);
+      pathData = `M ${x1} ${y1} C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${x2} ${y2}`;
+    }
+
+    elements.push(
+      React.createElement(Path, {
+        key: `curve-${i}`,
+        d: pathData,
+        stroke: segmentColor,
+        strokeWidth: 3,
+        strokeLinecap: "round",
+        strokeLinejoin: "round",
+        fill: "none",
+      })
+    );
+  }
+
+  // Add dots for each point with zone-based colors (only for real data)
+  for (let index = 0; index < realDataLength; index++) {
+    const value = chartData[index];
+    const isSelected = selectedPointIndex === index;
+    const color = getLineColorForValue(value, referenceRange, optimalRange);
+
+    // Create touchable area around each dot
+    elements.push(
+      React.createElement(Circle, {
+        key: `touch-area-${index}`,
+        cx: x(index),
+        cy: y(value),
+        r: 20,
+        fill: "transparent",
+        onPress: () => setSelectedPointIndex(index),
+      })
+    );
+
+    elements.push(
+      React.createElement(Circle, {
+        key: `point-${index}`,
+        cx: x(index),
+        cy: y(value),
+        r: isSelected ? 10 : 4,
+        stroke: color,
+        strokeWidth: 2,
+        fill: isSelected ? color : "white",
+      })
+    );
+
+    // Show vertical line for selected point
+    if (isSelected) {
+      const lineX = x(index);
+      const chartHeight = 150;
+      const lineBottom = chartHeight;
+      const lineTop = 0;
+
+      elements.push(
+        React.createElement(Path, {
+          key: `vertical-line-${index}`,
+          d: `M ${lineX} ${lineBottom} L ${lineX} ${lineTop}`,
+          stroke: "#007AFF",
+          strokeWidth: 1,
+          strokeDasharray: "3,3",
+          opacity: 0.5,
+        })
+      );
+    }
+
+    // Show value bubble for selected point only
+    if (isSelected) {
+      const dotX = x(index);
+      const dotY = y(value);
+
+      const bubbleWidth = 50;
+      const bubbleHeight = 20;
+      const bubbleX = dotX + 25;
+      const bubbleY = dotY - bubbleHeight / 2;
+      const cornerRadius = 10;
+      const pointerSize = 4;
+
+      const tooltipPath = `
+        M ${bubbleX + cornerRadius} ${bubbleY}
+        L ${bubbleX + bubbleWidth - cornerRadius} ${bubbleY}
+        Q ${bubbleX + bubbleWidth} ${bubbleY} ${bubbleX + bubbleWidth} ${
+        bubbleY + cornerRadius
+      }
+        L ${bubbleX + bubbleWidth} ${bubbleY + bubbleHeight - cornerRadius}
+        Q ${bubbleX + bubbleWidth} ${bubbleY + bubbleHeight} ${
+        bubbleX + bubbleWidth - cornerRadius
+      } ${bubbleY + bubbleHeight}
+        L ${bubbleX + cornerRadius} ${bubbleY + bubbleHeight}
+        Q ${bubbleX} ${bubbleY + bubbleHeight} ${bubbleX} ${
+        bubbleY + bubbleHeight - cornerRadius
+      }
+        L ${bubbleX} ${dotY + pointerSize}
+        L ${bubbleX - 8} ${dotY}
+        L ${bubbleX} ${dotY - pointerSize}
+        L ${bubbleX} ${bubbleY + cornerRadius}
+        Q ${bubbleX} ${bubbleY} ${bubbleX + cornerRadius} ${bubbleY}
+        Z
+      `;
+
+      elements.push(
+        React.createElement(Path, {
+          key: `tooltip-${index}`,
+          d: tooltipPath,
+          fill: "white",
+          stroke: "#E5E5E7",
+          strokeWidth: 1,
+          strokeLinejoin: "round",
+        })
+      );
+
+      elements.push(
+        React.createElement(
+          SvgText,
+          {
+            key: `bubble-text-${index}`,
+            x: bubbleX + bubbleWidth / 2,
+            y: dotY + 1,
+            textAnchor: "middle",
+            fontSize: 14,
+            fontWeight: "600",
+            fill: color,
+            alignmentBaseline: "middle",
+          },
+          `${value}`
+        )
+      );
+    }
+  }
+
+  return React.createElement(G, {}, ...elements);
+};
+
+interface DateLabelsProps {
+  x: any;
+  sortedData: DataPoint[];
+  selectedPointIndex: number | null;
+}
+
+const DateLabels: React.FC<DateLabelsProps> = ({
+  x,
+  sortedData,
+  selectedPointIndex,
+}) => {
+  const elements = [];
+
+  for (let index = 0; index < sortedData.length; index++) {
+    const dataPoint = sortedData[index];
+    const isSelected = selectedPointIndex === index;
+    const dotX = x(index);
+
+    elements.push(
+      React.createElement(
+        SvgText,
+        {
+          key: `date-${index}`,
+          x: dotX,
+          y: 15,
+          textAnchor: "middle",
+          fontSize: 12,
+          fontWeight: isSelected ? "600" : "400",
+          fill: isSelected ? "#007AFF" : "#8E8E93",
+        },
+        formatChartDate(dataPoint.date)
+      )
+    );
+  }
+
+  return React.createElement(G, {}, ...elements);
+};
+
+interface ValuesListProps {
+  sortedData: DataPoint[];
+  unit: string;
+  onNavigate: (reportId: string) => void;
+}
+
+const ValuesList: React.FC<ValuesListProps> = ({
+  sortedData,
+  unit,
+  onNavigate,
+}) => {
+  return (
+    <View style={styles.valuesList}>
+      {sortedData.map((dataPoint, index) => {
+        const flagInfo = getAbnormalFlagIcon(dataPoint.abnormal_flag);
+        return (
+          <TouchableOpacity
+            key={index}
+            style={styles.valueItem}
+            onPress={() => onNavigate(dataPoint.report_id)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.valueDate}>
+              {formatListDate(dataPoint.date)}
+            </Text>
+            <View style={styles.valueRight}>
+              <Text style={styles.valueText}>
+                {dataPoint.value} {unit}
+              </Text>
+              <Text style={[styles.flagIcon, { color: flagInfo.color }]}>
+                {flagInfo.icon}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
 };
 
 export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
@@ -69,25 +740,6 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
     }
   };
 
-  const formatListDate = (date: string) => {
-    return format(new Date(date), "MMM d");
-  };
-
-  const getAbnormalFlagIcon = (flag?: string) => {
-    const normalizedFlag = flag?.toLowerCase();
-    if (normalizedFlag === "very high") {
-      return { icon: "▲", color: "#FF3B30" }; // Red triangle
-    } else if (normalizedFlag === "high") {
-      return { icon: "▲", color: "#FF9500" }; // Orange triangle
-    } else if (normalizedFlag === "very low") {
-      return { icon: "▼", color: "#FF3B30" }; // Red triangle down
-    } else if (normalizedFlag === "low") {
-      return { icon: "▼", color: "#FF9500" }; // Orange triangle down
-    } else {
-      return { icon: "●", color: "#34C759" }; // Green circle
-    }
-  };
-
   if (!data || data.length === 0) {
     return (
       <View style={styles.container}>
@@ -113,591 +765,62 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
   }, [data]);
 
   const values = sortedData.map((item) => item.value);
-  const dates = sortedData.map((item) => item.date);
 
   // Handle single data point case
   if (data.length === 1) {
     const singlePoint = sortedData[0];
-    const color = getLineColorForValue(
-      singlePoint.value,
-      referenceRange,
-      optimalRange
-    );
-
-    // Calculate Y-axis range
-    const ranges = [referenceRange, optimalRange].filter(Boolean) as [
-      number,
-      number
-    ][];
-    const allValues = [singlePoint.value, ...ranges.flat()];
-    const maxValue = Math.max(...allValues);
-    const padding = maxValue * 0.2;
-    const yMin = 0;
-    const yMax = maxValue + padding;
-
-    // Create fallback range if no reference range provided
-    const fallbackRange = !referenceRange
-      ? [Math.max(0, singlePoint.value * 0.8), singlePoint.value * 1.2]
-      : null;
-
     return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Dynamics</Text>
-          <Text style={styles.timeRange}>all time</Text>
-        </View>
-
-        <View style={styles.singlePointContainer}>
-          <View style={styles.singlePointChart}>
-            {/* Background zones */}
-            <View style={styles.singlePointBackground}>
-              {/* Gray abnormal zones */}
-              {referenceRange && (
-                <>
-                  {/* Abnormal HIGH zone (above reference range) */}
-                  <View
-                    style={[
-                      styles.singlePointZone,
-                      {
-                        height: `${
-                          ((yMax - referenceRange[1]) / (yMax - yMin)) * 100
-                        }%`,
-                        backgroundColor: "#8E8E93",
-                        opacity: 0.2,
-                        top: 0,
-                      },
-                    ]}
-                  />
-                  {/* Abnormal LOW zone (below reference range) */}
-                  <View
-                    style={[
-                      styles.singlePointZone,
-                      {
-                        height: `${(referenceRange[0] / (yMax - yMin)) * 100}%`,
-                        backgroundColor: "#8E8E93",
-                        opacity: 0.2,
-                        bottom: 0,
-                      },
-                    ]}
-                  />
-                </>
-              )}
-
-              {/* Green normal zone */}
-              {referenceRange && (
-                <View
-                  style={[
-                    styles.singlePointZone,
-                    {
-                      height: `${
-                        ((referenceRange[1] - referenceRange[0]) /
-                          (yMax - yMin)) *
-                        100
-                      }%`,
-                      backgroundColor: "#34C759",
-                      opacity: 0.2,
-                      bottom: `${(referenceRange[0] / (yMax - yMin)) * 100}%`,
-                    },
-                  ]}
-                />
-              )}
-
-              {/* Blue optimal zone (striped overlay) */}
-              {optimalRange && (
-                <View
-                  style={[
-                    styles.singlePointZone,
-                    {
-                      height: `${
-                        ((optimalRange[1] - optimalRange[0]) / (yMax - yMin)) *
-                        100
-                      }%`,
-                      backgroundColor: "#007AFF",
-                      opacity: 0.15,
-                      bottom: `${(optimalRange[0] / (yMax - yMin)) * 100}%`,
-                    },
-                  ]}
-                />
-              )}
-
-              {/* Fallback zone */}
-              {fallbackRange && !referenceRange && (
-                <View
-                  style={[
-                    styles.singlePointZone,
-                    {
-                      height: `${
-                        ((fallbackRange[1] - fallbackRange[0]) /
-                          (yMax - yMin)) *
-                        100
-                      }%`,
-                      backgroundColor: "#34C759",
-                      opacity: 0.1,
-                      bottom: `${(fallbackRange[0] / (yMax - yMin)) * 100}%`,
-                    },
-                  ]}
-                />
-              )}
-            </View>
-
-            {/* Dot positioned at correct Y-value */}
-            <View
-              style={[
-                styles.singlePointDotContainer,
-                {
-                  bottom: `${
-                    ((singlePoint.value - yMin) / (yMax - yMin)) * 150
-                  }px`,
-                },
-              ]}
-            >
-              {/* Dot */}
-              <View style={[styles.singleDot, { backgroundColor: color }]} />
-            </View>
-
-            {/* Full vertical line passing through the dot */}
-            <View
-              style={[
-                styles.singlePointVerticalLine,
-                {
-                  left: "50%",
-                  transform: [{ translateX: -0.5 }],
-                },
-              ]}
-            />
-
-            {/* X-axis line */}
-            <View style={styles.xAxisLine} />
-
-            {/* Y-axis line */}
-            <View style={styles.yAxisLine} />
-          </View>
-
-          {/* Date at bottom */}
-          <Text style={[styles.singlePointDate, { color }]}>
-            {format(new Date(singlePoint.date), "MM/dd/yy")}
-          </Text>
-        </View>
-
-        {/* Biomarker Values List for single point */}
-        <View style={styles.valuesList}>
-          <View style={styles.valueItem}>
-            <Text style={styles.valueDate}>
-              {formatListDate(singlePoint.date)}
-            </Text>
-            <View style={styles.valueRight}>
-              <Text style={styles.valueText}>
-                {singlePoint.value} {unit}
-              </Text>
-              <Text style={[styles.flagIcon, { color }]}>
-                {getAbnormalFlagIcon(singlePoint.abnormal_flag).icon}
-              </Text>
-            </View>
-          </View>
-        </View>
-      </View>
+      <SinglePointChart
+        dataPoint={singlePoint}
+        unit={unit}
+        referenceRange={referenceRange}
+        optimalRange={optimalRange}
+      />
     );
   }
 
-  // Continue with multi-point chart logic...
-  const minValue = Math.min(...values);
-  const maxValue = Math.max(...values);
-  const padding = (maxValue - minValue) * 0.2;
-  const yMin = 0; // Y-axis always starts from 0 for biomarker values
-  const yMax = maxValue + padding;
+  // Multi-point chart logic
+  const { yMin, yMax, fallbackRange } = calculateChartRange(
+    values,
+    referenceRange,
+    optimalRange
+  );
+  const extendedValues = extendDataForPositioning(values);
 
-  // Calculate Y-axis range including reference and optimal ranges
-  const ranges = [referenceRange, optimalRange].filter(Boolean) as [
-    number,
-    number
-  ][];
-  const allValues = [...values, ...ranges.flat()];
-  const adjustedYMax = Math.max(...allValues) + Math.max(...allValues) * 0.2;
+  // Create decorator components that receive x, y from LineChart context
+  const BackgroundZonesDecorator = ({ x, y }: any) => (
+    <BackgroundZones
+      x={x}
+      y={y}
+      extendedValues={extendedValues}
+      referenceRange={referenceRange}
+      optimalRange={optimalRange}
+      fallbackRange={fallbackRange}
+      yMin={yMin}
+      yMax={yMax}
+    />
+  );
 
-  // Create fallback range based on data if no ranges provided
-  const fallbackRange = !referenceRange
-    ? ([Math.max(0, minValue * 0.8), maxValue * 1.2] as [number, number])
-    : null;
+  const MultiColorDecoratorWrapper = ({ x, y, data: chartData }: any) => (
+    <MultiColorDecorator
+      x={x}
+      y={y}
+      data={chartData}
+      sortedData={sortedData}
+      selectedPointIndex={selectedPointIndex}
+      setSelectedPointIndex={setSelectedPointIndex}
+      referenceRange={referenceRange}
+      optimalRange={optimalRange}
+    />
+  );
 
-  // Create extended data array to position last data point at 80% of X-axis
-  const extendedValues = [...values];
-  if (values.length > 1) {
-    // Calculate how many additional points needed to make last real point at 80%
-    const realDataLength = values.length;
-    const targetPosition = 0.95; // 95%
-    const extendedLength = Math.ceil((realDataLength - 1) / targetPosition) + 1;
-    const additionalPoints = extendedLength - realDataLength;
-
-    // Add duplicate values to extend the X-axis (these won't be drawn)
-    for (let i = 0; i < additionalPoints; i++) {
-      extendedValues.push(values[values.length - 1]); // Repeat last value
-    }
-  }
-
-  // Color function based on value and ranges
-  const getLineColor = (value: number) => {
-    if (optimalRange && value >= optimalRange[0] && value <= optimalRange[1]) {
-      return "#007AFF"; // Blue for optimal
-    } else if (
-      referenceRange &&
-      value >= referenceRange[0] &&
-      value <= referenceRange[1]
-    ) {
-      return "#34C759"; // Green for normal
-    } else {
-      return "#FF9500"; // Orange for abnormal
-    }
-  };
-
-  // Multi-colored line decorator with cubic Bézier curves
-  const MultiColorDecorator = ({ x, y, data: chartData }: any) => {
-    const elements = [];
-
-    // Only use the real data values for drawing, not the extended ones
-    const realDataLength = values.length;
-
-    // Helper function to calculate control points for smooth curves
-    const getControlPoints = (i: number) => {
-      const smoothing = 0.4; // Increased smoothing for more pronounced curves
-
-      // Get current and adjacent points
-      const current = { x: x(i), y: y(chartData[i]) };
-      const next = { x: x(i + 1), y: y(chartData[i + 1]) };
-
-      // Get previous and next-next points for better curve calculation
-      const prev =
-        i > 0
-          ? { x: x(i - 1), y: y(chartData[i - 1]) }
-          : { x: current.x - (next.x - current.x), y: current.y };
-
-      const nextNext =
-        i < realDataLength - 2
-          ? { x: x(i + 2), y: y(chartData[i + 2]) }
-          : { x: next.x + (next.x - current.x), y: next.y };
-
-      // Calculate tangent vectors for smooth curves
-      const tangent1 = {
-        x: (next.x - prev.x) * smoothing,
-        y: (next.y - prev.y) * smoothing,
-      };
-
-      const tangent2 = {
-        x: (nextNext.x - current.x) * smoothing,
-        y: (nextNext.y - current.y) * smoothing,
-      };
-
-      // Control points for cubic Bézier curve
-      const cp1x = current.x + tangent1.x;
-      const cp1y = current.y + tangent1.y;
-      const cp2x = next.x - tangent2.x;
-      const cp2y = next.y - tangent2.y;
-
-      return { cp1x, cp1y, cp2x, cp2y };
-    };
-
-    // Add cubic Bézier curve segments between points (only for real data)
-    for (let i = 0; i < realDataLength - 1; i++) {
-      const currentValue = chartData[i];
-      const nextValue = chartData[i + 1];
-
-      // Determine color based on the current point's zone
-      const segmentColor = getLineColor(currentValue);
-
-      // Get start and end points
-      const x1 = x(i);
-      const y1 = y(currentValue);
-      const x2 = x(i + 1);
-      const y2 = y(nextValue);
-
-      let pathData;
-
-      // Special handling for 2-point curves
-      if (realDataLength === 2) {
-        const midX = (x1 + x2) / 2;
-        const cp1x = x1 + (x2 - x1) * 0.3;
-        const cp1y = y1;
-        const cp2x = x2 - (x2 - x1) * 0.3;
-        const cp2y = y2;
-        pathData = `M ${x1} ${y1} C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${x2} ${y2}`;
-      } else {
-        // Calculate control points for smooth curve
-        const { cp1x, cp1y, cp2x, cp2y } = getControlPoints(i);
-        pathData = `M ${x1} ${y1} C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${x2} ${y2}`;
-      }
-
-      elements.push(
-        React.createElement(Path, {
-          key: `curve-${i}`,
-          d: pathData,
-          stroke: segmentColor,
-          strokeWidth: 3,
-          strokeLinecap: "round",
-          strokeLinejoin: "round",
-          fill: "none",
-        })
-      );
-    }
-
-    // Add dots for each point with zone-based colors (only for real data)
-    for (let index = 0; index < realDataLength; index++) {
-      const value = chartData[index];
-      const isLatest = index === realDataLength - 1;
-      const isSelected = selectedPointIndex === index;
-      const color = getLineColor(value);
-
-      // Create touchable area around each dot
-      elements.push(
-        React.createElement(Circle, {
-          key: `touch-area-${index}`,
-          cx: x(index),
-          cy: y(value),
-          r: 20, // Larger touch area
-          fill: "transparent",
-          onPress: () => setSelectedPointIndex(index),
-        })
-      );
-
-      elements.push(
-        React.createElement(Circle, {
-          key: `point-${index}`,
-          cx: x(index),
-          cy: y(value),
-          r: isSelected ? 10 : 4,
-          stroke: color,
-          strokeWidth: 2,
-          fill: isSelected ? color : "white",
-        })
-      );
-
-      // Show vertical line for selected point
-      if (isSelected) {
-        const lineX = x(index);
-        // Extend line to full chart height to connect with X-axis
-        const chartHeight = 150; // Chart container height
-        const lineBottom = chartHeight; // Bottom of chart container (X-axis position)
-        const lineTop = 0; // Top of chart container
-
-        elements.push(
-          React.createElement(Path, {
-            key: `vertical-line-${index}`,
-            d: `M ${lineX} ${lineBottom} L ${lineX} ${lineTop}`,
-            stroke: "#007AFF",
-            strokeWidth: 1,
-            strokeDasharray: "3,3",
-            opacity: 0.5,
-          })
-        );
-      }
-
-      // Show value bubble for selected point only
-      if (isSelected) {
-        const dotX = x(index);
-        const dotY = y(value);
-
-        // Position tooltip to the right of the dot
-        const bubbleWidth = 50; // Reduced width for less internal padding
-        const bubbleHeight = 20; // Reduced height for less internal padding
-        const bubbleX = dotX + 25; // Distance from dot to bubble
-        const bubbleY = dotY - bubbleHeight / 2; // Vertically centered on dot
-        const cornerRadius = 10; // Corner radius for pill shape
-        const pointerSize = 4; // Small pointer extension
-
-        // Unified speech bubble with integrated pointer
-        const tooltipPath = `
-          M ${bubbleX + cornerRadius} ${bubbleY}
-          L ${bubbleX + bubbleWidth - cornerRadius} ${bubbleY}
-          Q ${bubbleX + bubbleWidth} ${bubbleY} ${bubbleX + bubbleWidth} ${
-          bubbleY + cornerRadius
-        }
-          L ${bubbleX + bubbleWidth} ${bubbleY + bubbleHeight - cornerRadius}
-          Q ${bubbleX + bubbleWidth} ${bubbleY + bubbleHeight} ${
-          bubbleX + bubbleWidth - cornerRadius
-        } ${bubbleY + bubbleHeight}
-          L ${bubbleX + cornerRadius} ${bubbleY + bubbleHeight}
-          Q ${bubbleX} ${bubbleY + bubbleHeight} ${bubbleX} ${
-          bubbleY + bubbleHeight - cornerRadius
-        }
-          L ${bubbleX} ${dotY + pointerSize}
-          L ${bubbleX - 8} ${dotY}
-          L ${bubbleX} ${dotY - pointerSize}
-          L ${bubbleX} ${bubbleY + cornerRadius}
-          Q ${bubbleX} ${bubbleY} ${bubbleX + cornerRadius} ${bubbleY}
-          Z
-        `;
-
-        elements.push(
-          React.createElement(Path, {
-            key: `tooltip-${index}`,
-            d: tooltipPath,
-            fill: "white",
-            stroke: "#E5E5E7",
-            strokeWidth: 1,
-            strokeLinejoin: "round",
-          })
-        );
-
-        // Value text in tooltip - vertically centered
-        elements.push(
-          React.createElement(
-            SvgText,
-            {
-              key: `bubble-text-${index}`,
-              x: bubbleX + bubbleWidth / 2, // Center in the tooltip
-              y: dotY + 1, // Slight adjustment for perfect vertical centering
-              textAnchor: "middle",
-              fontSize: 14,
-              fontWeight: "600",
-              fill: color,
-              alignmentBaseline: "middle",
-            },
-            `${value}`
-          )
-        );
-      }
-    }
-
-    return React.createElement(G, {}, ...elements);
-  };
-
-  // Background zones with horizontal rectangles
-  const BackgroundZones = ({ x, y }: any) => {
-    const zones = [];
-    // Start zones from Y-axis (x=0) and extend to the full chart width
-    const zoneStartX = 0; // Start from Y-axis
-    const zoneWidth = x(extendedValues.length - 1); // Extend to full chart width
-
-    // Abnormal HIGH zone (above normal range) - Gray
-    if (referenceRange) {
-      const abnormalHighY = y(yMax);
-      const abnormalHighHeight = y(referenceRange[1]) - y(yMax);
-
-      if (abnormalHighHeight > 0) {
-        zones.push(
-          React.createElement(Rect, {
-            key: "abnormal-high-zone",
-            x: zoneStartX,
-            y: abnormalHighY,
-            width: zoneWidth,
-            height: abnormalHighHeight,
-            fill: "#8E8E93",
-            fillOpacity: 0.2,
-          })
-        );
-      }
-    }
-
-    // Normal range zone - Green
-    if (referenceRange) {
-      const normalY = y(referenceRange[1]);
-      const normalHeight = y(referenceRange[0]) - y(referenceRange[1]);
-
-      zones.push(
-        React.createElement(Rect, {
-          key: "normal-zone",
-          x: zoneStartX,
-          y: normalY,
-          width: zoneWidth,
-          height: normalHeight,
-          fill: "#34C759",
-          fillOpacity: 0.2,
-        })
-      );
-    }
-
-    // Optimal zone (blue striped overlay) - Blue over green
-    if (optimalRange) {
-      const optimalY = y(optimalRange[1]);
-      const optimalHeight = y(optimalRange[0]) - y(optimalRange[1]);
-
-      zones.push(
-        React.createElement(Rect, {
-          key: "optimal-zone",
-          x: zoneStartX,
-          y: optimalY,
-          width: zoneWidth,
-          height: optimalHeight,
-          fill: "#007AFF",
-          fillOpacity: 0.15,
-        })
-      );
-    }
-
-    // Abnormal LOW zone (below normal range) - Gray
-    if (referenceRange) {
-      const abnormalLowY = y(referenceRange[0]);
-      const abnormalLowHeight = y(yMin) - y(referenceRange[0]);
-
-      if (abnormalLowHeight > 0) {
-        zones.push(
-          React.createElement(Rect, {
-            key: "abnormal-low-zone",
-            x: zoneStartX,
-            y: abnormalLowY,
-            width: zoneWidth,
-            height: abnormalLowHeight,
-            fill: "#8E8E93",
-            fillOpacity: 0.2,
-          })
-        );
-      }
-    }
-
-    // Add fallback range if no normal range provided
-    if (fallbackRange && !referenceRange) {
-      const fallbackY = y(fallbackRange[1]);
-      const fallbackHeight = y(fallbackRange[0]) - y(fallbackRange[1]);
-
-      zones.push(
-        React.createElement(Rect, {
-          key: "fallback-zone",
-          x: zoneStartX,
-          y: fallbackY,
-          width: zoneWidth,
-          height: fallbackHeight,
-          fill: "#34C759",
-          fillOpacity: 0.1,
-        })
-      );
-    }
-
-    return React.createElement(G, {}, ...zones);
-  };
-
-  // Date labels positioned directly under each biomarker dot
-  const DateLabels = ({ x }: any) => {
-    const elements = [];
-
-    // Only show dates for real data points (not extended ones)
-    for (let index = 0; index < sortedData.length; index++) {
-      const dataPoint = sortedData[index];
-      const isSelected = selectedPointIndex === index;
-      const dotX = x(index); // Same X position as the biomarker dot
-
-      elements.push(
-        React.createElement(
-          SvgText,
-          {
-            key: `date-${index}`,
-            x: dotX,
-            y: 15, // Position below the chart area
-            textAnchor: "middle", // Center the text under the dot
-            fontSize: 12,
-            fontWeight: isSelected ? "600" : "400",
-            fill: isSelected ? "#007AFF" : "#8E8E93",
-          },
-          formatDate(dataPoint.date)
-        )
-      );
-    }
-
-    return React.createElement(G, {}, ...elements);
-  };
-
-  const formatDate = (date: string) => {
-    return format(new Date(date), "MM/dd/yy");
-  };
-
-  const latestValue = values[values.length - 1];
+  const DateLabelsWrapper = ({ x }: any) => (
+    <DateLabels
+      x={x}
+      sortedData={sortedData}
+      selectedPointIndex={selectedPointIndex}
+    />
+  );
 
   return (
     <View style={styles.container}>
@@ -711,19 +834,18 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
           <LineChart
             style={{ flex: 1 }}
             data={extendedValues}
-            svg={{ stroke: "transparent" }} // Hide default line since we draw custom segments
+            svg={{ stroke: "transparent" }}
             contentInset={{ top: 20, bottom: 20, left: 20, right: 20 }}
             yMin={yMin}
             yMax={yMax}
           >
-            <BackgroundZones />
+            <BackgroundZonesDecorator />
             <Grid />
-            <MultiColorDecorator />
+            <MultiColorDecoratorWrapper />
           </LineChart>
 
           {/* X-axis line */}
           <View style={styles.chartXAxisLine} />
-
           {/* Y-axis line */}
           <View style={styles.chartYAxisLine} />
         </View>
@@ -742,37 +864,16 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
             data={extendedValues}
             contentInset={{ top: 20, bottom: 20, left: 20, right: 20 }}
           >
-            <DateLabels />
+            <DateLabelsWrapper />
           </LineChart>
         </View>
       </View>
 
-      {/* Biomarker Values List */}
-      <View style={styles.valuesList}>
-        {sortedData.map((dataPoint, index) => {
-          const flagInfo = getAbnormalFlagIcon(dataPoint.abnormal_flag);
-          return (
-            <TouchableOpacity
-              key={index}
-              style={styles.valueItem}
-              onPress={() => handleNavigateToLabReport(dataPoint.report_id)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.valueDate}>
-                {formatListDate(dataPoint.date)}
-              </Text>
-              <View style={styles.valueRight}>
-                <Text style={styles.valueText}>
-                  {dataPoint.value} {unit}
-                </Text>
-                <Text style={[styles.flagIcon, { color: flagInfo.color }]}>
-                  {flagInfo.icon}
-                </Text>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      <ValuesList
+        sortedData={sortedData}
+        unit={unit}
+        onNavigate={handleNavigateToLabReport}
+      />
     </View>
   );
 };
