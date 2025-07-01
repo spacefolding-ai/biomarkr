@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   SafeAreaView,
   ScrollView,
@@ -8,7 +8,12 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { updateBiomarkerFavouriteStatus } from "../services/biomarkers";
+import { BiomarkerTrendChart } from "../components/BiomarkerTrendChart";
+import {
+  getBiomarkerHistoricalData,
+  updateBiomarkerFavouriteStatus,
+} from "../services/biomarkers";
+import { useAuthStore } from "../store/useAuthStore";
 import { Biomarker } from "../types/Biomarker";
 
 interface BiomarkerDetailsScreenProps {
@@ -25,7 +30,9 @@ const BiomarkerDetailsScreen: React.FC<BiomarkerDetailsScreenProps> = ({
   navigation,
 }) => {
   const { biomarker } = route.params;
+  const { user } = useAuthStore();
   const [isFavorite, setIsFavorite] = useState(biomarker.is_favourite || false);
+  const [historicalData, setHistoricalData] = useState<Biomarker[]>([]);
 
   const handleBack = () => {
     navigation.goBack();
@@ -64,6 +71,49 @@ const BiomarkerDetailsScreen: React.FC<BiomarkerDetailsScreenProps> = ({
   };
 
   const abnormalFlag = getAbnormalFlagDisplay(biomarker.abnormal_flag);
+
+  // Helper function to parse range strings into arrays
+  const parseRangeToArray = (range?: string): [number, number] | undefined => {
+    if (!range) return undefined;
+
+    const patterns = [
+      /(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)/, // "4.0-11.0"
+      /(\d+(?:\.\d+)?)\s*–\s*(\d+(?:\.\d+)?)/, // "4.0–11.0" (en dash)
+      /(\d+(?:\.\d+)?)\s*—\s*(\d+(?:\.\d+)?)/, // "4.0—11.0" (em dash)
+      /(\d+(?:\.\d+)?)\s*to\s*(\d+(?:\.\d+)?)/i, // "4.0 to 11.0"
+    ];
+
+    for (const pattern of patterns) {
+      const match = range?.match(pattern);
+      if (match) {
+        return [parseFloat(match[1]), parseFloat(match[2])];
+      }
+    }
+    return undefined;
+  };
+
+  const referenceRange = parseRangeToArray(biomarker.standard_values);
+  const optimalRange = parseRangeToArray(biomarker.optimal_values);
+
+  useEffect(() => {
+    const fetchHistoricalData = async () => {
+      if (!user?.id) return;
+
+      try {
+        const data = await getBiomarkerHistoricalData(
+          biomarker.marker_name,
+          user.id
+        );
+        setHistoricalData(data);
+      } catch (error) {
+        console.error("Failed to fetch historical data:", error);
+      }
+    };
+
+    fetchHistoricalData();
+  }, [biomarker.marker_name, user?.id]);
+
+  console.log(historicalData);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -140,7 +190,7 @@ const BiomarkerDetailsScreen: React.FC<BiomarkerDetailsScreenProps> = ({
               </View>
             )}
 
-            {biomarker.optimal_value && (
+            {biomarker.optimal_values && (
               <View style={styles.rangeItem}>
                 <View style={styles.rangeIndicator}>
                   <View
@@ -149,7 +199,7 @@ const BiomarkerDetailsScreen: React.FC<BiomarkerDetailsScreenProps> = ({
                   <Text style={styles.rangeLabel}>Optimal</Text>
                 </View>
                 <Text style={styles.rangeValue} numberOfLines={0}>
-                  {biomarker.optimal_value}
+                  {biomarker.optimal_values}
                 </Text>
               </View>
             )}
@@ -170,6 +220,23 @@ const BiomarkerDetailsScreen: React.FC<BiomarkerDetailsScreenProps> = ({
             )}
           </View>
         </View>
+
+        {/* Biomarker Trend Chart */}
+        {historicalData.length >= 1 && (
+          <BiomarkerTrendChart
+            data={historicalData.map((item) => ({
+              date: item.report_date,
+              value: item.value,
+              abnormal_flag: item.abnormal_flag || undefined,
+              report_id: item.report_id,
+            }))}
+            unit={biomarker.unit}
+            markerName={biomarker.marker_name}
+            referenceRange={referenceRange}
+            optimalRange={optimalRange}
+            navigation={navigation}
+          />
+        )}
 
         {/* Information Sections */}
         {biomarker.about && (
@@ -206,10 +273,12 @@ const BiomarkerDetailsScreen: React.FC<BiomarkerDetailsScreenProps> = ({
           </View>
         )}
 
-        {biomarker.optimal_value && (
+        {biomarker.optimal_values && (
           <View style={styles.infoCard}>
             <Text style={styles.sectionTitle}>Optimal Values</Text>
-            <Text style={styles.sectionContent}>{biomarker.optimal_value}</Text>
+            <Text style={styles.sectionContent}>
+              {biomarker.optimal_values}
+            </Text>
           </View>
         )}
 
