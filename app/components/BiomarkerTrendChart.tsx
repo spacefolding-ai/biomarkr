@@ -304,12 +304,12 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
     ? ([Math.max(0, minValue * 0.8), maxValue * 1.2] as [number, number])
     : null;
 
-  // Create extended data array to position last data point at 70% of X-axis
+  // Create extended data array to position last data point at 80% of X-axis
   const extendedValues = [...values];
   if (values.length > 1) {
-    // Calculate how many additional points needed to make last real point at 70%
+    // Calculate how many additional points needed to make last real point at 80%
     const realDataLength = values.length;
-    const targetPosition = 0.7; // 70%
+    const targetPosition = 0.95; // 95%
     const extendedLength = Math.ceil((realDataLength - 1) / targetPosition) + 1;
     const additionalPoints = extendedLength - realDataLength;
 
@@ -648,38 +648,34 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
     return React.createElement(G, {}, ...zones);
   };
 
-  // Date labels positioned under each data point
+  // Date labels positioned directly under each biomarker dot
   const DateLabels = ({ x }: any) => {
     const elements = [];
 
-    sortedData.forEach((dataPoint: DataPoint, index: number) => {
+    // Only show dates for real data points (not extended ones)
+    for (let index = 0; index < sortedData.length; index++) {
+      const dataPoint = sortedData[index];
       const isSelected = selectedPointIndex === index;
-      const dateX = x(index);
-
-      // Calculate percentage position for absolute positioning based on extended chart width
-      const percentageFromLeft =
-        ((dateX - 20) / (x(extendedValues.length - 1) + 20)) * 100;
+      const dotX = x(index); // Same X position as the biomarker dot
 
       elements.push(
         React.createElement(
-          Text,
+          SvgText,
           {
             key: `date-${index}`,
-            style: [
-              styles.dateLabel,
-              {
-                left: `${Math.max(0, Math.min(90, percentageFromLeft))}%`,
-                color: isSelected ? "#007AFF" : "#8E8E93",
-                fontWeight: isSelected ? "600" : "400",
-              },
-            ],
+            x: dotX,
+            y: 15, // Position below the chart area
+            textAnchor: "middle", // Center the text under the dot
+            fontSize: 12,
+            fontWeight: isSelected ? "600" : "400",
+            fill: isSelected ? "#007AFF" : "#8E8E93",
           },
           formatDate(dataPoint.date)
         )
       );
-    });
+    }
 
-    return elements;
+    return React.createElement(G, {}, ...elements);
   };
 
   const formatDate = (date: string) => {
@@ -717,7 +713,7 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
           <View style={styles.chartYAxisLine} />
         </View>
 
-        {/* X-axis dates - positioned under each data point */}
+        {/* X-axis dates - positioned directly under biomarker dots */}
         <View style={styles.xAxisContainer}>
           <LineChart
             style={{
@@ -725,8 +721,8 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
               top: 0,
               left: 0,
               right: 0,
-              height: 1,
-              opacity: 0,
+              height: 30,
+              opacity: 1,
             }}
             data={extendedValues}
             contentInset={{ top: 20, bottom: 20, left: 20, right: 20 }}
@@ -804,13 +800,8 @@ const styles = StyleSheet.create({
   xAxisContainer: {
     flexDirection: "row",
     position: "relative",
-    height: 20,
+    height: 30,
     paddingHorizontal: 20,
-  },
-  dateLabel: {
-    fontSize: 12,
-    position: "absolute",
-    transform: [{ translateX: -20 }], // Center the text under the point
   },
 
   noDataContainer: {
