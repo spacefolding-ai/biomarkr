@@ -235,18 +235,13 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
               <View style={[styles.singleDot, { backgroundColor: color }]} />
             </View>
 
-            {/* Vertical line extending from dot to X-axis */}
+            {/* Full vertical line passing through the dot */}
             <View
               style={[
-                styles.singlePointLine,
+                styles.singlePointVerticalLine,
                 {
-                  backgroundColor: color,
-                  bottom: 0,
-                  height: `${
-                    150 - ((singlePoint.value - yMin) / (yMax - yMin)) * 150
-                  }px`,
                   left: "50%",
-                  transform: [{ translateX: -1 }],
+                  transform: [{ translateX: -0.5 }],
                 },
               ]}
             />
@@ -848,6 +843,14 @@ const styles = StyleSheet.create({
   singlePointLine: {
     position: "absolute",
     width: 2,
+  },
+  singlePointVerticalLine: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    width: 1,
+    backgroundColor: "#007AFF",
+    opacity: 0.5,
   },
   singleDot: {
     width: 16,
