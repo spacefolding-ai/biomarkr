@@ -78,54 +78,6 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
       await debugLabReports(user.id);
     }
 
-    // Side-by-side subscription test
-
-    // Test both tables with identical setup
-    // DISABLED: Realtime subscription tests disabled to avoid CLOSED status issues
-    // const testBiomarkers = () => {
-    //   const biomarkersChannel = supabase.channel(
-    //     `test_biomarkers_${Date.now()}`
-    //   );
-    //   biomarkersChannel
-    //     .on(
-    //       "postgres_changes",
-    //       { event: "INSERT", schema: "public", table: "biomarkers" },
-    //       (payload) => console.log("🧪 Biomarkers test event:", payload)
-    //     )
-    //     .subscribe((status) => {
-    //       console.log("🧪 Biomarkers test status:", status);
-    //       if (status !== "CHANNEL_ERROR" && status !== "TIMED_OUT") {
-    //         setTimeout(() => biomarkersChannel.unsubscribe(), 2000);
-    //       }
-    //     });
-    // };
-
-    // const testLabReports = () => {
-    //   const labReportsChannel = supabase.channel(
-    //     `test_lab_reports_${Date.now()}`
-    //   );
-    //   labReportsChannel
-    //     .on(
-    //       "postgres_changes",
-    //       { event: "INSERT", schema: "public", table: "lab_reports" },
-    //       (payload) => console.log("🧪 Lab reports test event:", payload)
-    //     )
-    //     .subscribe((status) => {
-    //       console.log("🧪 Lab reports test status:", status);
-    //       if (status !== "CHANNEL_ERROR" && status !== "TIMED_OUT") {
-    //         setTimeout(() => labReportsChannel.unsubscribe(), 2000);
-    //       }
-    //     });
-    // };
-
-    // console.log("🧪 Testing biomarkers subscription...");
-    // testBiomarkers();
-
-    // setTimeout(() => {
-    //   console.log("🧪 Testing lab_reports subscription...");
-    //   testLabReports();
-    // }, 500);
-
     onRefresh();
   }, [onRefresh, user?.id]);
 
@@ -188,13 +140,10 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
             ) : (
               // Loading/processing lab report
               <View>
-                <Text style={{ fontWeight: "bold", marginBottom: 8 }}>
-                  Processing Lab Report
-                </Text>
-                <ExtractionProgressBar status={item?.extraction_status} />
-                <Text style={{ marginTop: 8, color: "#555" }}>
-                  Analyzing...
-                </Text>
+                <ExtractionProgressBar
+                  status={item?.extraction_status}
+                  reportId={item?.id}
+                />
               </View>
             )}
           </View>

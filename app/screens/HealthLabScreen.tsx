@@ -1,6 +1,5 @@
 import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
-import { useFocusEffect } from "@react-navigation/native";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { SafeAreaView } from "react-native";
 import { getAllBiomarkers } from "../services/biomarkers";
 import { getAllLabReports } from "../services/labReports";
@@ -16,55 +15,51 @@ interface HealthLabScreenProps {
 }
 
 const HealthLabScreen: React.FC<HealthLabScreenProps> = ({ navigation }) => {
-  const { biomarkers, setBiomarkers } = useBiomarkersStore();
-  const { setReports } = useLabReportsStore();
+  // Get data directly from stores (populated by polling system)
+  const {
+    biomarkers,
+    setBiomarkers,
+    setLoading: setBiomarkersLoading,
+  } = useBiomarkersStore();
+  const {
+    reports,
+    setReports,
+    setLoading: setLabReportsLoading,
+  } = useLabReportsStore();
   const [refreshing, setRefreshing] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [lastRefresh, setLastRefresh] = useState(0);
 
+  // Manual refresh function for pull-to-refresh (works with polling system)
   const loadBiomarkers = async () => {
     try {
+      setBiomarkersLoading(true);
       const biomarkers = await getAllBiomarkers();
       setBiomarkers(biomarkers);
     } catch (error) {
-      // Failed to load biomarkers
+      console.error("Failed to load biomarkers:", error);
+    } finally {
+      setBiomarkersLoading(false);
     }
   };
 
   const loadLabReports = async () => {
     try {
+      setLabReportsLoading(true);
       const labReports = await getAllLabReports();
       setReports(labReports);
     } catch (error) {
-      // Failed to load lab reports
+      console.error("Failed to load lab reports:", error);
+    } finally {
+      setLabReportsLoading(false);
     }
   };
 
   const loadAll = async () => {
-    setLoading(true);
+    console.log("🔄 Manual refresh triggered from HealthLabScreen");
     await Promise.all([loadBiomarkers(), loadLabReports()]);
-    setLoading(false);
   };
 
-  useEffect(() => {
-    loadAll();
-    return () => {
-      // Cleanup if needed
-    };
-  }, []);
-
-  // Refresh data when screen comes into focus (e.g., after upload)
-  // with debounce to prevent multiple rapid calls
-  useFocusEffect(
-    useCallback(() => {
-      const now = Date.now();
-      if (now - lastRefresh > 2000) {
-        // Debounce: only refresh if more than 2 seconds since last refresh
-        setLastRefresh(now);
-        loadAll();
-      }
-    }, [lastRefresh])
-  );
+  // Note: We don't do initial loading here since polling system handles it
+  // We only provide manual refresh capability for pull-to-refresh
 
   const onRefresh = useCallback(async () => {
     try {

@@ -19,10 +19,10 @@ export async function getAllLabReports(): Promise<LabReport[]> {
   }
 }
 
-// Test function to check lab_reports table accessibility and realtime capabilities
+// Test function to check lab_reports table accessibility
 export async function testLabReportsAccess(userId: string): Promise<void> {
   try {
-    console.log("🧪 Testing lab_reports table access and realtime...");
+    console.log("🧪 Testing lab_reports table access...");
 
     // Test 1: Basic table access
     console.log("🔍 Test 1: Basic SELECT access");
@@ -71,49 +71,6 @@ export async function testLabReportsAccess(userId: string): Promise<void> {
         "user records"
       );
     }
-
-    // Test 4: Try a simple realtime subscription
-    // DISABLED: Realtime subscriptions disabled to avoid CLOSED status issues
-    // console.log("🔍 Test 4: Simple realtime subscription test");
-    // const testChannelName = `test_lab_reports_${Date.now()}`;
-    // const testChannel = supabase.channel(testChannelName);
-
-    // let subscriptionResult = "pending";
-
-    // testChannel
-    //   .on(
-    //     "postgres_changes",
-    //     { event: "INSERT", schema: "public", table: "lab_reports" },
-    //     (payload) => {
-    //       console.log("🧪 Test realtime event received:", payload);
-    //     }
-    //   )
-    //   .subscribe((status) => {
-    //     console.log("🧪 Test subscription status:", status);
-    //     subscriptionResult = status;
-
-    //     if (status === "SUBSCRIBED") {
-    //       console.log("✅ Test subscription successful");
-    //       // Clean up test subscription
-    //       setTimeout(() => {
-    //         testChannel.unsubscribe();
-    //         console.log("🧹 Test subscription cleaned up");
-    //       }, 1000);
-    //     } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-    //       console.error("❌ Test subscription failed:", status);
-    //       testChannel.unsubscribe();
-    //     } else if (status === "CLOSED") {
-    //       console.warn("⚠️ Test subscription was closed");
-    //     }
-    //   });
-
-    // // Wait a bit to see the subscription result
-    // setTimeout(() => {
-    //   if (subscriptionResult === "pending") {
-    //     console.warn("⚠️ Test subscription still pending after 2 seconds");
-    //     testChannel.unsubscribe();
-    //   }
-    // }, 2000);
   } catch (error) {
     console.error("❌ Test function error:", error);
   }

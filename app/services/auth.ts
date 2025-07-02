@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { NavigationProp } from "@react-navigation/native";
 import * as AuthSession from "expo-auth-session";
 import Constants from "expo-constants";
@@ -6,6 +7,59 @@ import Toast from "react-native-toast-message";
 import { supabase } from "../supabase/supabaseClient";
 
 WebBrowser.maybeCompleteAuthSession();
+
+export async function clearCorruptedSession() {
+  console.log("🧹 Clearing corrupted session data...");
+
+  try {
+    // Clear Supabase session
+    await supabase.auth.signOut();
+
+    // Clear AsyncStorage data
+    await AsyncStorage.removeItem("auth-storage");
+
+    // Clear any other auth-related storage
+    await AsyncStorage.removeItem("supabase.auth.token");
+
+    console.log("✅ Session data cleared successfully");
+
+    Toast.show({
+      type: "info",
+      text1: "Session expired",
+      text2: "Please sign in again",
+    });
+  } catch (error) {
+    console.error("❌ Error clearing session:", error);
+
+    // Force clear AsyncStorage even if Supabase fails
+    try {
+      await AsyncStorage.multiRemove([
+        "auth-storage",
+        "supabase.auth.token",
+        "sb-localhost-auth-token",
+      ]);
+    } catch (storageError) {
+      console.error("❌ Error clearing storage:", storageError);
+    }
+  }
+}
+
+export async function handleAuthError(error: any) {
+  console.error("🚨 Authentication error:", error);
+
+  // Check if it's a refresh token error
+  if (
+    error?.message?.includes("Invalid Refresh Token") ||
+    error?.message?.includes("Refresh Token Not Found") ||
+    error?.message?.includes("refresh_token_not_found")
+  ) {
+    console.log("🔄 Detected invalid refresh token, clearing session...");
+    await clearCorruptedSession();
+    return true; // Indicates we handled the error
+  }
+
+  return false; // Indicates we didn't handle the error
+}
 
 export async function signInWithGoogle(navigation: NavigationProp<any>) {
   const redirectUri = AuthSession.makeRedirectUri({
@@ -21,6 +75,7 @@ export async function signInWithGoogle(navigation: NavigationProp<any>) {
   });
 
   if (error) {
+    await handleAuthError(error);
     return;
   }
 
@@ -53,7 +108,10 @@ export async function signInWithGoogle(navigation: NavigationProp<any>) {
 export async function handleSignUp(email: string, password: string) {
   // Signup via Supabase Auth
   const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error) throw error;
+  if (error) {
+    const handled = await handleAuthError(error);
+    if (!handled) throw error;
+  }
 
   // No immediate user profile insertion
   return data.user;
@@ -66,7 +124,8 @@ export async function handleLogin(email: string, password: string) {
   });
 
   if (error) {
-    throw error;
+    const handled = await handleAuthError(error);
+    if (!handled) throw error;
   }
 
   return data.user;
@@ -74,7 +133,13 @@ export async function handleLogin(email: string, password: string) {
 
 export async function handleLogout() {
   // Sign out the user
-  await supabase.auth.signOut();
+  try {
+    await supabase.auth.signOut();
+  } catch (error) {
+    console.error("❌ Error during logout:", error);
+    // Still clear local session even if signOut fails
+    await clearCorruptedSession();
+  }
 }
 
 export async function signInWithOAuth() {
@@ -85,7 +150,10 @@ export async function signInWithOAuth() {
     },
   });
 
-  if (error) throw error;
+  if (error) {
+    await handleAuthError(error);
+    throw error;
+  }
 
   if (data.url) {
     await WebBrowser.openAuthSessionAsync(
