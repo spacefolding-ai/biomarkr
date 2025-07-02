@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { format } from "date-fns";
-import React, { useCallback, useState } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Button,
   FlatList,
@@ -14,26 +14,105 @@ import {
 import { RootStackParamList } from "../navigation/types";
 
 import { FileText } from "lucide-react-native";
-import { useMemo } from "react";
 import ExtractionProgressBar from "../components/ExtractionProgressBar";
 import { ThumbnailLoader } from "../components/ThumbnailLoader";
+import { debugLabReports } from "../services/labReports";
+import { useAuthStore } from "../store/useAuthStore";
+import { useLabReportsStore } from "../store/useLabReportsStore";
 import { ExtractionStatus } from "../types/ExtractionStatus.enum";
 import { LabReport } from "../types/LabReport";
 
 interface LabReportsScreenProps {
-  reports: LabReport[];
   refreshing: boolean;
   onRefresh: () => void;
+  navigation?: any;
 }
 
+// Memoized report item component to prevent unnecessary re-renders
+const ReportItem = memo(
+  ({ item, onPress }: { item: LabReport; onPress: () => void }) => {
+    return (
+      <TouchableOpacity onPress={onPress}>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            paddingVertical: 12,
+            paddingHorizontal: 16,
+            borderBottomWidth: 1,
+            borderColor: "#eee",
+          }}
+        >
+          {/* Always show thumbnail on the left */}
+          <View style={{ marginRight: 12 }}>
+            {/\.(jpeg|png|jpg)$/i.test(item?.file_name || "") ? (
+              <ThumbnailLoader path={item.thumbnail_path} size={56} />
+            ) : (
+              <FileText size={56} color="#000" />
+            )}
+          </View>
+
+          {/* Content area - shows different content based on extraction status */}
+          <View style={{ flex: 1 }}>
+            {item?.extraction_status === ExtractionStatus.DONE &&
+            item?.description ? (
+              // Completed lab report
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontWeight: "bold" }}>
+                    {item?.laboratory_name}
+                  </Text>
+                  <Text style={{ color: "#444" }}>{item?.description}</Text>
+                  {item?.report_date &&
+                    !isNaN(Date.parse(item.report_date)) && (
+                      <Text style={{ color: "#888" }}>
+                        {format(new Date(item.report_date), "d MMM yyyy")}
+                      </Text>
+                    )}
+                </View>
+                <Text style={{ color: "green", fontSize: 12, marginLeft: 10 }}>
+                  Extracted ✅
+                </Text>
+              </View>
+            ) : (
+              // Loading/processing lab report
+              <View>
+                <ExtractionProgressBar
+                  status={item?.extraction_status}
+                  reportId={item?.id}
+                />
+              </View>
+            )}
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  }
+);
+
 const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
-  reports,
   refreshing,
   onRefresh,
+  navigation: propNavigation,
 }) => {
   const [filter, setFilter] = useState("By date Added");
   const [isModalVisible, setModalVisible] = useState(false);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const { user } = useAuthStore();
+
+  // Get reports directly from the store to ensure immediate re-renders on updates
+  const { reports } = useLabReportsStore();
+
+  // Debug: Log when reports change
+  useEffect(() => {
+    // Reports changed
+  }, [reports]);
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -58,69 +137,35 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
     });
   }, [reports, filter]);
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
+    console.log("🔄 Manual refresh triggered");
+
+    // Debug: Check what's actually in the database
+    if (user?.id) {
+      await debugLabReports(user.id);
+    }
+
     onRefresh();
-  }, [onRefresh]);
+  }, [onRefresh, user?.id]);
 
-  const renderReportItem = ({ item }: { item: LabReport }) => {
-    return (
-      <TouchableOpacity
-        onPress={() => {
-          if (item.extraction_status === ExtractionStatus.DONE) {
-            navigation.navigate("LabReportDetails", { labReport: item });
-          }
-        }}
-      >
-        <View
-          style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            alignItems: "center",
-            paddingVertical: 12,
-            paddingHorizontal: 16,
-            borderBottomWidth: 1,
-            borderColor: "#eee",
-          }}
-        >
-          {item?.extraction_status === ExtractionStatus.DONE &&
-            item?.description && (
-              <>
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  {/\.(jpeg|png|jpg)$/i.test(item?.file_name) ? (
-                    <ThumbnailLoader path={item.thumbnail_path} size={56} />
-                  ) : (
-                    <FileText size={56} color="#000" />
-                  )}
-                  <View style={{ marginLeft: 8 }}>
-                    <Text style={{ fontWeight: "bold" }}>
-                      {item?.laboratory_name}
-                    </Text>
-                    <Text style={{ color: "#444" }}>{item?.description}</Text>
+  // Memoized render function
+  const renderReportItem = useCallback(
+    ({ item }: { item: LabReport }) => {
+      const handlePress = () => {
+        if (item.extraction_status === ExtractionStatus.DONE) {
+          navigation.navigate("LabReportDetails", { labReport: item });
+        }
+      };
 
-                    {item?.report_date &&
-                      !isNaN(Date.parse(item.report_date)) && (
-                        <Text style={{ color: "#888" }}>
-                          {format(new Date(item.report_date), "d MMM yyyy")}
-                        </Text>
-                      )}
-                  </View>
-                </View>
-                <Text style={{ color: "green", fontSize: 12, marginLeft: 10 }}>
-                  Extracted ✅
-                </Text>
-              </>
-            )}
+      return <ReportItem item={item} onPress={handlePress} />;
+    },
+    [navigation]
+  );
 
-          {item?.extraction_status !== ExtractionStatus.DONE && (
-            <View style={{ flex: 3 }}>
-              <ExtractionProgressBar status={item?.extraction_status} />
-              <Text style={{ marginTop: 8, color: "#555" }}>Analyzing...</Text>
-            </View>
-          )}
-        </View>
-      </TouchableOpacity>
-    );
-  };
+  // Stable keyExtractor that doesn't change on polling updates
+  const keyExtractor = useCallback((item: LabReport, index: number) => {
+    return item?.id || `temp-${index}`;
+  }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
@@ -172,9 +217,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
 
           <FlatList
             data={sortedReports}
-            keyExtractor={(item, index) =>
-              `${item?.id || `temp-${index}`}-${item?.created_at || Date.now()}`
-            }
+            keyExtractor={keyExtractor}
             renderItem={renderReportItem}
             refreshControl={
               <RefreshControl
@@ -182,7 +225,6 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
                 onRefresh={handleRefresh}
               />
             }
-            extraData={reports}
           />
 
           <Modal

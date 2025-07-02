@@ -6,18 +6,78 @@ import {
 } from "@expo-google-fonts/roboto";
 import { NavigationContainer } from "@react-navigation/native";
 import * as ScreenOrientation from "expo-screen-orientation";
-import React, { useEffect } from "react";
+import React, { memo, useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-get-random-values";
 import Toast from "react-native-toast-message";
 import "react-native-url-polyfill/auto";
+import { useBiomarkersPolling } from "./app/hooks/useBiomarkersPolling";
+import { useLabReportsPolling } from "./app/hooks/useLabReportsPolling";
 import AppNavigator from "./app/navigation/AppNavigator";
 import { useAuthStore } from "./app/store/useAuthStore";
 import { useBiomarkersStore } from "./app/store/useBiomarkersStore";
 import { useLabReportsStore } from "./app/store/useLabReportsStore";
-import { useBiomarkersRealtime } from "./app/supabase/hooks/useBiomarkersRealtime";
-import { useLabReportsRealtime } from "./app/supabase/hooks/useLabReportsRealtime";
+
+// Memoized component to prevent excessive re-renders and handle data syncing
+const DataSyncManager = memo(() => {
+  const { user } = useAuthStore();
+
+  // Use polling for biomarkers (less frequent updates)
+  const { refresh: refreshBiomarkers, isPolling: biomarkersPolling } =
+    useBiomarkersPolling({
+      interval: 15000, // 15 seconds
+      enabled: !!user?.id,
+    });
+
+  // Use polling for lab reports (smart intervals based on processing status)
+  const {
+    refresh: refreshLabReports,
+    isPolling: labReportsPolling,
+    hasActiveReports,
+    allReportsCompleted,
+  } = useLabReportsPolling({
+    activeInterval: 3000, // 3 seconds when processing
+    inactiveInterval: 10000, // 10 seconds when idle
+    enabled: !!user?.id,
+    onReportCompleted: (reportId, reportData) => {
+      console.log("🎉 Lab report extraction completed!", {
+        reportId,
+        laboratory_name: reportData.laboratory_name,
+        status: reportData.extraction_status,
+      });
+      console.log("🔄 Refreshing biomarkers for this completed report...");
+      refreshBiomarkers();
+    },
+  });
+
+  // Log polling status for debugging
+  useEffect(() => {
+    if (user?.id) {
+      const labReportsStatus = allReportsCompleted
+        ? "COMPLETED"
+        : hasActiveReports
+        ? "ACTIVE"
+        : "INACTIVE";
+
+      console.log(
+        `📊 Polling Status - Lab Reports: ${
+          labReportsPolling ? labReportsStatus : "STOPPED"
+        }, Biomarkers: ${
+          biomarkersPolling ? "POLLING" : "STOPPED"
+        }, Has Processing Reports: ${hasActiveReports}, All Completed: ${allReportsCompleted}`
+      );
+    }
+  }, [
+    user?.id,
+    labReportsPolling,
+    biomarkersPolling,
+    hasActiveReports,
+    allReportsCompleted,
+  ]);
+
+  return null;
+});
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -30,16 +90,12 @@ export default function App() {
   const { setUserId: setBiomarkersUserId } = useBiomarkersStore();
   const { setUserId: setLabReportsUserId } = useLabReportsStore();
 
-  // Initialize realtime hooks
-  useLabReportsRealtime();
-  useBiomarkersRealtime();
-
   useEffect(() => {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
     initAuth();
   }, []);
 
-  // Set user IDs when user is available
+  // Set user IDs when user is available (keeping for backward compatibility with other parts)
   useEffect(() => {
     if (user && session) {
       setBiomarkersUserId(user.id);
@@ -61,6 +117,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NavigationContainer>
+        <DataSyncManager />
         <AppNavigator />
         <Toast />
       </NavigationContainer>
