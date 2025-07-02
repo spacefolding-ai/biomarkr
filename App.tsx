@@ -21,9 +21,6 @@ import { useLabReportsStore } from "./app/store/useLabReportsStore";
 const RealtimeSubscriptions = memo(() => {
   const { user } = useAuthStore();
 
-  console.log("🔄 RealtimeSubscriptions component rendered");
-  console.log("👤 User in RealtimeSubscriptions:", user?.id || "No user");
-
   // DISABLED: Realtime subscriptions are causing CLOSED status issues
   // TODO: Re-enable once realtime issues are resolved
   // useLabReportsRealtime();

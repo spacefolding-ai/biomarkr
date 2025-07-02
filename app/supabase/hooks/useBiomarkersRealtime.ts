@@ -21,7 +21,6 @@ export const useBiomarkersRealtime = () => {
       {
         table: "biomarkers",
         onInsert: (payload: RealtimePostgresInsertPayload<Biomarker>) => {
-          console.log("Biomarker inserted via realtime:", payload.new);
           if (payload.new) {
             addBiomarker(payload.new);
           }
@@ -31,7 +30,6 @@ export const useBiomarkersRealtime = () => {
         //   updateBiomarker(payload.new);
         // },
         onDelete: (payload: RealtimePostgresDeletePayload<Biomarker>) => {
-          console.log("Biomarker deleted via realtime:", payload.old);
           const existing = biomarkers.find((b) => b.id === payload.old.id);
           if (existing) {
             deleteBiomarker(payload.old.id);

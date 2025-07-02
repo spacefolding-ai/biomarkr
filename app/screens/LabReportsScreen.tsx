@@ -44,14 +44,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
 
   // Debug: Log when reports change
   useEffect(() => {
-    console.log("LabReportsScreen: reports changed, count:", reports.length);
-    if (reports.length > 0) {
-      console.log(
-        "Latest report:",
-        reports[0]?.laboratory_name,
-        reports[0]?.extraction_status
-      );
-    }
+    // Reports changed
   }, [reports]);
 
   const toggleModal = () => {
@@ -86,7 +79,6 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
     }
 
     // Side-by-side subscription test
-    console.log("🧪 Side-by-side subscription comparison test");
 
     // Test both tables with identical setup
     // DISABLED: Realtime subscription tests disabled to avoid CLOSED status issues
@@ -149,7 +141,6 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
         <View
           style={{
             flexDirection: "row",
-            justifyContent: "space-between",
             alignItems: "center",
             paddingVertical: 12,
             paddingHorizontal: 16,
@@ -157,41 +148,56 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
             borderColor: "#eee",
           }}
         >
-          {item?.extraction_status === ExtractionStatus.DONE &&
-            item?.description && (
-              <>
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  {/\.(jpeg|png|jpg)$/i.test(item?.file_name) ? (
-                    <ThumbnailLoader path={item.thumbnail_path} size={56} />
-                  ) : (
-                    <FileText size={56} color="#000" />
-                  )}
-                  <View style={{ marginLeft: 8 }}>
-                    <Text style={{ fontWeight: "bold" }}>
-                      {item?.laboratory_name}
-                    </Text>
-                    <Text style={{ color: "#444" }}>{item?.description}</Text>
+          {/* Always show thumbnail on the left */}
+          <View style={{ marginRight: 12 }}>
+            {/\.(jpeg|png|jpg)$/i.test(item?.file_name || "") ? (
+              <ThumbnailLoader path={item.thumbnail_path} size={56} />
+            ) : (
+              <FileText size={56} color="#000" />
+            )}
+          </View>
 
-                    {item?.report_date &&
-                      !isNaN(Date.parse(item.report_date)) && (
-                        <Text style={{ color: "#888" }}>
-                          {format(new Date(item.report_date), "d MMM yyyy")}
-                        </Text>
-                      )}
-                  </View>
+          {/* Content area - shows different content based on extraction status */}
+          <View style={{ flex: 1 }}>
+            {item?.extraction_status === ExtractionStatus.DONE &&
+            item?.description ? (
+              // Completed lab report
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontWeight: "bold" }}>
+                    {item?.laboratory_name}
+                  </Text>
+                  <Text style={{ color: "#444" }}>{item?.description}</Text>
+                  {item?.report_date &&
+                    !isNaN(Date.parse(item.report_date)) && (
+                      <Text style={{ color: "#888" }}>
+                        {format(new Date(item.report_date), "d MMM yyyy")}
+                      </Text>
+                    )}
                 </View>
                 <Text style={{ color: "green", fontSize: 12, marginLeft: 10 }}>
                   Extracted ✅
                 </Text>
-              </>
+              </View>
+            ) : (
+              // Loading/processing lab report
+              <View>
+                <Text style={{ fontWeight: "bold", marginBottom: 8 }}>
+                  Processing Lab Report
+                </Text>
+                <ExtractionProgressBar status={item?.extraction_status} />
+                <Text style={{ marginTop: 8, color: "#555" }}>
+                  Analyzing...
+                </Text>
+              </View>
             )}
-
-          {item?.extraction_status !== ExtractionStatus.DONE && (
-            <View style={{ flex: 3 }}>
-              <ExtractionProgressBar status={item?.extraction_status} />
-              <Text style={{ marginTop: 8, color: "#555" }}>Analyzing...</Text>
-            </View>
-          )}
+          </View>
         </View>
       </TouchableOpacity>
     );

@@ -20,14 +20,11 @@ export const useFileUpload = () => {
     try {
       setUploading(true);
 
-      console.log("📤 Starting file upload...");
       const { dataFile, labReport } = await uploadFileAndInsertToDb(
         fileInfo.normalizedUri,
         fileInfo.fileName,
         userId
       );
-
-      console.log("✅ File uploaded successfully, adding lab report to store");
 
       // Add the lab report to the store immediately
       addReport(labReport);

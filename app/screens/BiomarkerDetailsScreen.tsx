@@ -52,7 +52,6 @@ const BiomarkerDetailsScreen: React.FC<BiomarkerDetailsScreenProps> = ({
 
   const handleSend = () => {
     // TODO: Implement send functionality
-    console.log("Send biomarker details");
   };
 
   const getAbnormalFlagDisplay = (flag?: string) => {
@@ -112,8 +111,6 @@ const BiomarkerDetailsScreen: React.FC<BiomarkerDetailsScreenProps> = ({
 
     fetchHistoricalData();
   }, [biomarker.marker_name, user?.id]);
-
-  console.log(historicalData);
 
   return (
     <SafeAreaView style={styles.container}>

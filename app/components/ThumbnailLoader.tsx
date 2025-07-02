@@ -18,11 +18,21 @@ export const ThumbnailLoader: React.FC<ThumbnailLoaderProps> = ({
   useEffect(() => {
     let mounted = true;
     const load = async () => {
-      if (!path) return;
-      const resolved = await getImageUrl(path);
-      if (mounted) {
-        setUrl(resolved);
-        setLoading(false);
+      if (!path) {
+        return;
+      }
+
+      try {
+        const resolved = await getImageUrl(path);
+        if (mounted) {
+          setUrl(resolved);
+          setLoading(false);
+        }
+      } catch (error) {
+        if (mounted) {
+          setUrl(null);
+          setLoading(false);
+        }
       }
     };
     load();

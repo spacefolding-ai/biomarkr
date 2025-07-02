@@ -65,7 +65,6 @@ export async function uploadFileAndInsertToDb(
   }
 
   // 3. Create lab_report record first (before file upload to avoid wasting storage if this fails)
-  console.log("📄 Creating lab_report record before file upload");
 
   // Generate file info for the lab report
   const fileExt = fileName.split(".").pop()?.toLowerCase();
@@ -93,8 +92,6 @@ export async function uploadFileAndInsertToDb(
     .select("*")
     .single();
 
-  console.log("labReportData", labReportData);
-
   if (labReportError) {
     console.error("Failed to create lab_report:", labReportError);
     throw new Error(
@@ -106,12 +103,7 @@ export async function uploadFileAndInsertToDb(
     throw new Error("Lab report data is null after insertion");
   }
 
-  console.log("✅ Lab report created successfully:", labReportData.id);
-
   // 4. Now proceed with file upload ONLY after lab_report is successfully created
-  console.log(
-    "📤 Starting file upload to storage (lab_report created successfully)"
-  );
 
   let fileData;
   let thumbData;
@@ -120,8 +112,6 @@ export async function uploadFileAndInsertToDb(
     // Upload the main file
     fileData = await uploadFileToStorage(fileUri, filePath, mimeType);
     if (!fileData) throw new Error("File upload failed");
-
-    console.log("✅ Main file uploaded successfully:", fileData.path);
 
     // Generate and upload the thumbnail only for images
     if (mimeType.startsWith("image")) {
@@ -134,19 +124,13 @@ export async function uploadFileAndInsertToDb(
           previewFilePath,
           "image/jpeg"
         );
-        console.log("✅ Thumbnail uploaded successfully:", thumbData.path);
       } catch (thumbnailError: any) {
-        console.warn(
-          "⚠️ Thumbnail upload failed, using main file as fallback:",
-          thumbnailError.message
-        );
         // If thumbnail fails, use the main file path as fallback
         thumbData = { path: fileData.path };
       }
     } else {
       // For PDFs and other non-image files, use the main file path as thumbnail path
       thumbData = { path: fileData.path };
-      console.log("📄 Using main file as thumbnail for non-image file");
     }
   } catch (uploadError) {
     console.error(
@@ -155,10 +139,8 @@ export async function uploadFileAndInsertToDb(
     );
 
     // Clean up the lab_report record since file upload failed
-    console.log("🧹 Cleaning up lab_report record due to file upload failure");
     try {
       await supabase.from("lab_reports").delete().eq("id", labReportData.id);
-      console.log("✅ Lab report cleanup successful");
     } catch (cleanupError) {
       console.error("❌ Failed to cleanup lab_report:", cleanupError);
     }
@@ -191,8 +173,6 @@ export async function uploadFileAndInsertToDb(
   if (!dataFile) {
     throw new Error("File data is null after insertion");
   }
-
-  console.log("✅ File record created successfully:", dataFile.id);
 
   return {
     dataFile,

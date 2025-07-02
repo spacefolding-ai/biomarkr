@@ -135,8 +135,22 @@ export async function getImageUrl(
   path: string,
   isPublic = true
 ): Promise<string | null> {
-  const [bucket, ...rest] = path.split("/");
-  const key = rest.join("/");
+  if (!path) return null;
+
+  // If path doesn't include bucket name, assume it's in the 'uploads' bucket
+  let bucket: string;
+  let key: string;
+
+  if (path.startsWith("uploads/")) {
+    // Path already includes bucket name
+    const [bucketName, ...rest] = path.split("/");
+    bucket = bucketName;
+    key = rest.join("/");
+  } else {
+    // Path doesn't include bucket name, use 'uploads' as default
+    bucket = "uploads";
+    key = path;
+  }
 
   if (isPublic) {
     return supabase.storage.from(bucket).getPublicUrl(key).data.publicUrl;
