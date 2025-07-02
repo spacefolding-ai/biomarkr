@@ -24,15 +24,11 @@ const DataSyncManager = memo(() => {
   const { user } = useAuthStore();
 
   // Use polling for biomarkers (less frequent updates)
-  const {
-    refresh: refreshBiomarkers,
-    refreshAndStop: refreshBiomarkersAndStop,
-    resumePolling: resumeBiomarkersPolling,
-    isPolling: biomarkersPolling,
-  } = useBiomarkersPolling({
-    interval: 15000, // 15 seconds
-    enabled: !!user?.id,
-  });
+  const { refresh: refreshBiomarkers, isPolling: biomarkersPolling } =
+    useBiomarkersPolling({
+      interval: 15000, // 15 seconds
+      enabled: !!user?.id,
+    });
 
   // Use polling for lab reports (smart intervals based on processing status)
   const {
@@ -50,22 +46,10 @@ const DataSyncManager = memo(() => {
         laboratory_name: reportData.laboratory_name,
         status: reportData.extraction_status,
       });
-      console.log(
-        "🔄 Triggering immediate biomarkers refresh and stopping polling..."
-      );
-      refreshBiomarkersAndStop();
+      console.log("🔄 Refreshing biomarkers for this completed report...");
+      refreshBiomarkers();
     },
   });
-
-  // Resume biomarkers polling when new reports start processing
-  useEffect(() => {
-    if (user?.id && hasActiveReports && !biomarkersPolling) {
-      console.log(
-        "🔄 New reports are processing - resuming biomarkers polling"
-      );
-      resumeBiomarkersPolling();
-    }
-  }, [user?.id, hasActiveReports, biomarkersPolling, resumeBiomarkersPolling]);
 
   // Log polling status for debugging
   useEffect(() => {

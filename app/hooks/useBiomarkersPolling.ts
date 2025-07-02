@@ -116,29 +116,30 @@ export function useBiomarkersPolling(
     }
   };
 
-  // Initial fetch when user is available
+  // Initial fetch when user is available (but don't start continuous polling)
   useEffect(() => {
     if (user?.id && enabled) {
-      console.log("👤 User authenticated, performing initial biomarkers fetch");
+      console.log(
+        "👤 User authenticated, performing initial biomarkers fetch (no continuous polling)"
+      );
       fetchBiomarkers();
     }
   }, [user?.id, enabled]);
 
-  // Set up polling based on user auth
+  // Polling is only started manually via resumePolling() or other explicit calls
+  // No automatic continuous polling on user auth to avoid conflicts with refresh-and-stop behavior
   useEffect(() => {
+    // Cleanup on unmount or when user logs out
     if (!user?.id || !enabled) {
       stopPolling();
       return;
     }
 
-    // Start polling
-    startPolling();
-
-    // Cleanup on unmount
+    // Return cleanup function
     return () => {
       stopPolling();
     };
-  }, [user?.id, enabled, interval]);
+  }, [user?.id, enabled]);
 
   // Manual refresh function
   const refresh = async () => {
@@ -165,11 +166,13 @@ export function useBiomarkersPolling(
     }
   };
 
-  // Resume polling (when new reports start processing)
+  // Resume polling (for manual scenarios only - no longer auto-resumed)
   const resumePolling = () => {
     if (!intervalRef.current && user?.id && enabled) {
-      console.log("🔄 Resuming biomarkers polling");
+      console.log("🔄 Manually resuming biomarkers polling");
       startPolling();
+    } else if (intervalRef.current) {
+      console.log("📊 Biomarkers polling already active");
     }
   };
 

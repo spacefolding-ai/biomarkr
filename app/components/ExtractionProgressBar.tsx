@@ -337,82 +337,87 @@ const ExtractionProgressBar: React.FC<Props> = ({ status, reportId }) => {
   const persistedState = getPersistedState();
 
   return (
-    <View style={{ marginTop: 8 }}>
-      {/* Progress Bar */}
+    <View
+      style={{
+        marginVertical: 16,
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {/* Status Message with Progress Fill */}
       <View
         style={{
-          height: 6,
-          width: "100%",
-          backgroundColor: "#F0F0F0",
-          borderRadius: 3,
+          paddingHorizontal: 16,
+          paddingVertical: 8,
+          borderRadius: 20,
           overflow: "hidden",
+          backgroundColor: "#F0F0F0", // Background color
+          width: "100%",
         }}
       >
         <Animated.View
           style={[
             {
-              height: "100%",
-              backgroundColor: statusConfig.color,
-              borderRadius: 3,
+              position: "absolute",
+              top: 0,
+              left: 0,
+              bottom: 0,
+              backgroundColor: statusConfig.pulseColor,
+              borderRadius: 20,
             },
             animatedStyle,
+            isActiveState ? pulseStyle : { opacity: 1 },
           ]}
         />
-      </View>
 
-      {/* Status Message */}
-      <Animated.View
-        style={[
-          {
-            flexDirection: "row",
-            alignItems: "center",
-            justifyContent: "center",
-            marginTop: 12,
-            paddingHorizontal: 16,
-            paddingVertical: 8,
-            backgroundColor: statusConfig.pulseColor,
-            borderRadius: 20,
-          },
-          isActiveState ? pulseStyle : {},
-        ]}
-      >
-        <Text
-          style={{
-            fontSize: 16,
-            marginRight: 8,
-          }}
+        <Animated.View
+          style={[
+            {
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              position: "relative",
+              zIndex: 1,
+            },
+          ]}
         >
-          {statusConfig.icon}
-        </Text>
-        <Text
-          style={{
-            fontSize: 14,
-            fontWeight: "500",
-            color: statusConfig.color,
-            textAlign: "center",
-          }}
-        >
-          {statusConfig.message}
-          {isActiveState ? "..." : ""}
-        </Text>
-      </Animated.View>
+          <View style={{ flexDirection: "row", alignItems: "center", flex: 1 }}>
+            <Text
+              style={{
+                fontSize: 16,
+                marginRight: 8,
+              }}
+            >
+              {statusConfig.icon}
+            </Text>
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: "500",
+                color: statusConfig.color,
+              }}
+            >
+              {statusConfig.message}
+              {isActiveState ? "..." : ""}
+            </Text>
+          </View>
 
-      {/* Progress Percentage (only show for active states) */}
-      {isActiveState && (
-        <Animated.View style={[{ marginTop: 4 }, pulseStyle]}>
-          <Text
-            style={{
-              fontSize: 12,
-              textAlign: "center",
-              color: "#666",
-              fontWeight: "400",
-            }}
-          >
-            {Math.round(persistedState.currentProgress || getProgress(status))}%
-            complete
-          </Text>
+          {isActiveState && (
+            <Text
+              style={{
+                fontSize: 14,
+                fontWeight: "600",
+                color: statusConfig.color,
+              }}
+            >
+              {Math.round(
+                persistedState.currentProgress || getProgress(status)
+              )}
+              %
+            </Text>
+          )}
         </Animated.View>
-      )}
+      </View>
     </View>
   );
 };
