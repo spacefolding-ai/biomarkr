@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { format } from "date-fns";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { memo, useCallback, useEffect, useMemo, useState } from "react";
 import {
   Button,
   FlatList,
@@ -14,7 +14,6 @@ import {
 import { RootStackParamList } from "../navigation/types";
 
 import { FileText } from "lucide-react-native";
-import { useMemo } from "react";
 import ExtractionProgressBar from "../components/ExtractionProgressBar";
 import { ThumbnailLoader } from "../components/ThumbnailLoader";
 import { debugLabReports } from "../services/labReports";
@@ -29,67 +28,11 @@ interface LabReportsScreenProps {
   navigation?: any;
 }
 
-const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
-  refreshing,
-  onRefresh,
-  navigation: propNavigation,
-}) => {
-  const [filter, setFilter] = useState("By date Added");
-  const [isModalVisible, setModalVisible] = useState(false);
-  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const { user } = useAuthStore();
-
-  // Get reports directly from the store to ensure immediate re-renders on updates
-  const { reports } = useLabReportsStore();
-
-  // Debug: Log when reports change
-  useEffect(() => {
-    // Reports changed
-  }, [reports]);
-
-  const toggleModal = () => {
-    setModalVisible(!isModalVisible);
-  };
-
-  const applyFilter = (selectedFilter: string) => {
-    setFilter(selectedFilter);
-    toggleModal();
-  };
-
-  const sortedReports = useMemo(() => {
-    return [...reports].sort((a, b) => {
-      if (filter === "By document date") {
-        return (
-          new Date(b.report_date).getTime() - new Date(a.report_date).getTime()
-        );
-      } else {
-        return (
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-      }
-    });
-  }, [reports, filter]);
-
-  const handleRefresh = useCallback(async () => {
-    console.log("🔄 Manual refresh triggered");
-
-    // Debug: Check what's actually in the database
-    if (user?.id) {
-      await debugLabReports(user.id);
-    }
-
-    onRefresh();
-  }, [onRefresh, user?.id]);
-
-  const renderReportItem = ({ item }: { item: LabReport }) => {
+// Memoized report item component to prevent unnecessary re-renders
+const ReportItem = memo(
+  ({ item, onPress }: { item: LabReport; onPress: () => void }) => {
     return (
-      <TouchableOpacity
-        onPress={() => {
-          if (item.extraction_status === ExtractionStatus.DONE) {
-            navigation.navigate("LabReportDetails", { labReport: item });
-          }
-        }}
-      >
+      <TouchableOpacity onPress={onPress}>
         <View
           style={{
             flexDirection: "row",
@@ -150,7 +93,79 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
         </View>
       </TouchableOpacity>
     );
+  }
+);
+
+const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
+  refreshing,
+  onRefresh,
+  navigation: propNavigation,
+}) => {
+  const [filter, setFilter] = useState("By date Added");
+  const [isModalVisible, setModalVisible] = useState(false);
+  const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const { user } = useAuthStore();
+
+  // Get reports directly from the store to ensure immediate re-renders on updates
+  const { reports } = useLabReportsStore();
+
+  // Debug: Log when reports change
+  useEffect(() => {
+    // Reports changed
+  }, [reports]);
+
+  const toggleModal = () => {
+    setModalVisible(!isModalVisible);
   };
+
+  const applyFilter = (selectedFilter: string) => {
+    setFilter(selectedFilter);
+    toggleModal();
+  };
+
+  const sortedReports = useMemo(() => {
+    return [...reports].sort((a, b) => {
+      if (filter === "By document date") {
+        return (
+          new Date(b.report_date).getTime() - new Date(a.report_date).getTime()
+        );
+      } else {
+        return (
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+      }
+    });
+  }, [reports, filter]);
+
+  const handleRefresh = useCallback(async () => {
+    console.log("🔄 Manual refresh triggered");
+
+    // Debug: Check what's actually in the database
+    if (user?.id) {
+      await debugLabReports(user.id);
+    }
+
+    onRefresh();
+  }, [onRefresh, user?.id]);
+
+  // Memoized render function
+  const renderReportItem = useCallback(
+    ({ item }: { item: LabReport }) => {
+      const handlePress = () => {
+        if (item.extraction_status === ExtractionStatus.DONE) {
+          navigation.navigate("LabReportDetails", { labReport: item });
+        }
+      };
+
+      return <ReportItem item={item} onPress={handlePress} />;
+    },
+    [navigation]
+  );
+
+  // Stable keyExtractor that doesn't change on polling updates
+  const keyExtractor = useCallback((item: LabReport, index: number) => {
+    return item?.id || `temp-${index}`;
+  }, []);
 
   return (
     <View style={{ flex: 1, backgroundColor: "white" }}>
@@ -202,9 +217,7 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
 
           <FlatList
             data={sortedReports}
-            keyExtractor={(item, index) =>
-              `${item?.id || `temp-${index}`}-${item?.created_at || Date.now()}`
-            }
+            keyExtractor={keyExtractor}
             renderItem={renderReportItem}
             refreshControl={
               <RefreshControl
@@ -212,7 +225,6 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
                 onRefresh={handleRefresh}
               />
             }
-            extraData={reports}
           />
 
           <Modal

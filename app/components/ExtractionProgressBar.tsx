@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Text, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
@@ -101,6 +101,9 @@ const ExtractionProgressBar: React.FC<Props> = ({ status, reportId }) => {
   const pulseOpacity = useSharedValue(1);
   const statusConfig = getStatusConfig(status);
 
+  // Add local state for current progress percentage to trigger re-renders
+  const [currentProgress, setCurrentProgress] = useState(0);
+
   // Create a unique key for this progress bar instance
   const instanceKey = reportId || `status-${status}-${Date.now()}`;
 
@@ -131,11 +134,17 @@ const ExtractionProgressBar: React.FC<Props> = ({ status, reportId }) => {
     }>
   ) => {
     const currentState = getPersistedState();
-    progressStateMap.set(instanceKey, {
+    const newState = {
       ...currentState,
       ...updates,
       lastUpdateTime: Date.now(),
-    });
+    };
+    progressStateMap.set(instanceKey, newState);
+
+    // Update local state to trigger re-render
+    if (updates.currentProgress !== undefined) {
+      setCurrentProgress(updates.currentProgress);
+    }
   };
 
   // Clear continuous progress timer
@@ -194,9 +203,10 @@ const ExtractionProgressBar: React.FC<Props> = ({ status, reportId }) => {
     const hasStatusChanged = persistedState.lastStatus !== status;
     const isFirstRender = !isInitializedRef.current;
 
-    // Initialize progress with persisted value
+    // Initialize progress with persisted value and update local state
     if (isFirstRender) {
       progress.value = persistedState.currentProgress;
+      setCurrentProgress(persistedState.currentProgress);
       isInitializedRef.current = true;
       console.log(
         `🎬 [${instanceKey}] Initializing with ${persistedState.currentProgress}% (status: ${status})`
@@ -334,8 +344,6 @@ const ExtractionProgressBar: React.FC<Props> = ({ status, reportId }) => {
     status === ExtractionStatus.PROCESSING ||
     status === ExtractionStatus.SAVING;
 
-  const persistedState = getPersistedState();
-
   return (
     <View
       style={{
@@ -410,10 +418,7 @@ const ExtractionProgressBar: React.FC<Props> = ({ status, reportId }) => {
                 color: statusConfig.color,
               }}
             >
-              {Math.round(
-                persistedState.currentProgress || getProgress(status)
-              )}
-              %
+              {Math.round(currentProgress || getProgress(status))}%
             </Text>
           )}
         </Animated.View>

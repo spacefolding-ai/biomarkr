@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { getAllLabReports } from "../services/labReports";
 import { useAuthStore } from "../store/useAuthStore";
 import { useLabReportsStore } from "../store/useLabReportsStore";
@@ -33,17 +33,17 @@ export function useLabReportsPolling(
   const isPollingRef = useRef<boolean>(false);
 
   // Check if any reports are actively being processed
-  const hasActiveReports = () => {
+  const hasActiveReports = useCallback(() => {
     return reports.some(
       (report) =>
         report.extraction_status === ExtractionStatus.PENDING ||
         report.extraction_status === ExtractionStatus.PROCESSING ||
         report.extraction_status === ExtractionStatus.SAVING
     );
-  };
+  }, [reports]);
 
   // Check if all reports are completed (done, error, or unsupported) - no need to poll
-  const allReportsCompleted = () => {
+  const allReportsCompleted = useCallback(() => {
     if (reports.length === 0) return false;
 
     return reports.every(
@@ -52,10 +52,10 @@ export function useLabReportsPolling(
         report.extraction_status === ExtractionStatus.ERROR ||
         report.extraction_status === ExtractionStatus.UNSUPPORTED
     );
-  };
+  }, [reports]);
 
   // Determine if we should poll and at what interval
-  const getPollingStrategy = () => {
+  const getPollingStrategy = useCallback(() => {
     if (allReportsCompleted()) {
       return { shouldPoll: false, interval: 0, status: "COMPLETED" };
     }
@@ -66,10 +66,10 @@ export function useLabReportsPolling(
       interval: isActive ? activeInterval : inactiveInterval,
       status: isActive ? "ACTIVE" : "INACTIVE",
     };
-  };
+  }, [allReportsCompleted, hasActiveReports, activeInterval, inactiveInterval]);
 
   // Fetch lab reports and update store if changes detected
-  const fetchLabReports = async () => {
+  const fetchLabReports = useCallback(async () => {
     if (!user?.id || isPollingRef.current) {
       return;
     }
@@ -153,10 +153,10 @@ export function useLabReportsPolling(
     } finally {
       isPollingRef.current = false;
     }
-  };
+  }, [user?.id, reports, setReports, onReportCompleted]);
 
   // Start/restart polling with appropriate interval
-  const startPolling = () => {
+  const startPolling = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
@@ -174,16 +174,16 @@ export function useLabReportsPolling(
       `🚀 Starting polling every ${strategy.interval}ms (${strategy.status})`
     );
     intervalRef.current = setInterval(fetchLabReports, strategy.interval);
-  };
+  }, [getPollingStrategy, fetchLabReports]);
 
   // Stop polling
-  const stopPolling = () => {
+  const stopPolling = useCallback(() => {
     if (intervalRef.current) {
       console.log("⏹️ Stopping polling");
       clearInterval(intervalRef.current);
       intervalRef.current = null;
     }
-  };
+  }, []);
 
   // Initial fetch when user is available
   useEffect(() => {
@@ -191,7 +191,7 @@ export function useLabReportsPolling(
       console.log("👤 User authenticated, performing initial fetch");
       fetchLabReports();
     }
-  }, [user?.id, enabled]);
+  }, [user?.id, enabled, fetchLabReports]);
 
   // Set up polling based on user auth and active reports
   useEffect(() => {
@@ -207,7 +207,7 @@ export function useLabReportsPolling(
     return () => {
       stopPolling();
     };
-  }, [user?.id, enabled, activeInterval, inactiveInterval]);
+  }, [user?.id, enabled, startPolling, stopPolling]);
 
   // Restart polling when report activity changes
   useEffect(() => {
@@ -238,10 +238,20 @@ export function useLabReportsPolling(
         }
       }
     }
-  }, [reports, user?.id, enabled, activeInterval, inactiveInterval]);
+  }, [
+    reports,
+    user?.id,
+    enabled,
+    activeInterval,
+    inactiveInterval,
+    getPollingStrategy,
+    stopPolling,
+    hasActiveReports,
+    startPolling,
+  ]);
 
   // Manual refresh function
-  const refresh = async () => {
+  const refresh = useCallback(async () => {
     console.log("🔄 Manual refresh requested");
     setLoading(true);
     try {
@@ -257,7 +267,7 @@ export function useLabReportsPolling(
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchLabReports, getPollingStrategy, startPolling, setLoading]);
 
   return {
     refresh,
