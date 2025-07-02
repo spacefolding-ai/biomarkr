@@ -6,6 +6,7 @@ export interface Biomarker {
   value: number;
   unit: string;
   reference_range: string;
+  optimal_range?: string;
   abnormal_flag: string | null;
   created_at: string;
   report_date: string;

@@ -24,12 +24,22 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       loading: true,
       initAuth: () => {
+        console.log("🔐 initAuth called");
         supabase.auth.getSession().then(({ data: { session } }) => {
+          console.log(
+            "🔐 Initial session loaded:",
+            session?.user?.id || "No session"
+          );
           set({ session, user: session?.user ?? null, loading: false });
         });
 
         const { data: listener } = supabase.auth.onAuthStateChange(
-          (_event, session) => {
+          (event, session) => {
+            console.log(
+              "🔐 Auth state changed:",
+              event,
+              session?.user?.id || "No user"
+            );
             set({ session, user: session?.user ?? null });
           }
         );
@@ -54,6 +64,7 @@ export const useAuthStore = create<AuthState>()(
         }
       },
       logout: async () => {
+        console.log("🔐 Logout called");
         await handleLogout();
         set({ session: null, user: null });
       },

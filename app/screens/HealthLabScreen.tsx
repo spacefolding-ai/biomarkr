@@ -17,7 +17,7 @@ interface HealthLabScreenProps {
 
 const HealthLabScreen: React.FC<HealthLabScreenProps> = ({ navigation }) => {
   const { biomarkers, setBiomarkers } = useBiomarkersStore();
-  const { reports, setReports } = useLabReportsStore();
+  const { setReports } = useLabReportsStore();
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState(0);
@@ -89,9 +89,9 @@ const HealthLabScreen: React.FC<HealthLabScreenProps> = ({ navigation }) => {
 
   const LabReportsTab = (props) => (
     <LabReportsScreen
-      reports={reports}
       refreshing={refreshing}
       onRefresh={onRefresh}
+      navigation={navigation}
       {...props}
     />
   );

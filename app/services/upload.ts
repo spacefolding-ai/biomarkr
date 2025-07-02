@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { supabase } from "../supabase/supabaseClient";
 import { ExtractionStatus } from "../types/ExtractionStatus.enum";
+import { LabReport } from "../types/LabReport";
 import { generatePreview } from "../utils/file";
 import { getFileContentHash } from "../utils/getFileContentHash";
 import { uploadFileToStorage } from "./storage";
@@ -63,39 +64,109 @@ export async function uploadFileAndInsertToDb(
     );
   }
 
-  // 3. Proceed with upload if no duplicate found
+  // 3. Create lab_report record first (before file upload to avoid wasting storage if this fails)
+  console.log("📄 Creating lab_report record before file upload");
+
+  // Generate file info for the lab report
   const fileExt = fileName.split(".").pop()?.toLowerCase();
   const mimeType = getMimeType(fileName);
   const uniqueFileName = `${uuidv4()}.${fileExt}`;
   const filePath = `reports/${userId}/${uniqueFileName}`;
 
-  // Upload the main file
-  const fileData = await uploadFileToStorage(fileUri, filePath, mimeType);
-  if (!fileData) throw new Error("File upload failed");
+  // Determine thumbnail path immediately
+  const thumbnailPath = mimeType.startsWith("image")
+    ? `reports/${userId}/thumb_${uniqueFileName}`
+    : filePath; // For PDFs and other files, use main file as thumbnail
 
-  let thumbData;
+  const { data: labReportData, error: labReportError } = await supabase
+    .from("lab_reports")
+    .insert({
+      user_id: userId,
+      file_name: fileName, // Use original filename for user-friendly display
+      file_path: filePath, // Use planned file path
+      thumbnail_path: thumbnailPath, // Set thumbnail path immediately
+      extraction_status: ExtractionStatus.PENDING,
+      // created_at will be handled by Supabase default
+      // report_date will be handled by n8n when processing
+      // Other fields like patient_name, laboratory_name, etc. will be populated by n8n
+    })
+    .select("*")
+    .single();
 
-  // Generate and upload the thumbnail only for images
-  if (mimeType.startsWith("image")) {
-    try {
-      const previewUri = await generatePreview(fileUri, "image");
-      const previewFileName = `thumb_${uniqueFileName}`;
-      const previewFilePath = `reports/${userId}/${previewFileName}`;
-      thumbData = await uploadFileToStorage(
-        previewUri as string,
-        previewFilePath,
-        "image/jpeg"
-      );
-    } catch (thumbnailError: any) {
-      // If thumbnail fails, use the main file path as fallback
-      thumbData = { path: fileData.path };
-    }
-  } else {
-    // For PDFs and other non-image files, use the main file path as thumbnail path
-    thumbData = { path: fileData.path };
+  console.log("labReportData", labReportData);
+
+  if (labReportError) {
+    console.error("Failed to create lab_report:", labReportError);
+    throw new Error(
+      "Failed to create lab report record: " + labReportError.message
+    );
   }
 
-  // Insert file into the database with content hash
+  if (!labReportData) {
+    throw new Error("Lab report data is null after insertion");
+  }
+
+  console.log("✅ Lab report created successfully:", labReportData.id);
+
+  // 4. Now proceed with file upload ONLY after lab_report is successfully created
+  console.log(
+    "📤 Starting file upload to storage (lab_report created successfully)"
+  );
+
+  let fileData;
+  let thumbData;
+
+  try {
+    // Upload the main file
+    fileData = await uploadFileToStorage(fileUri, filePath, mimeType);
+    if (!fileData) throw new Error("File upload failed");
+
+    console.log("✅ Main file uploaded successfully:", fileData.path);
+
+    // Generate and upload the thumbnail only for images
+    if (mimeType.startsWith("image")) {
+      try {
+        const previewUri = await generatePreview(fileUri, "image");
+        const previewFileName = `thumb_${uniqueFileName}`;
+        const previewFilePath = `reports/${userId}/${previewFileName}`;
+        thumbData = await uploadFileToStorage(
+          previewUri as string,
+          previewFilePath,
+          "image/jpeg"
+        );
+        console.log("✅ Thumbnail uploaded successfully:", thumbData.path);
+      } catch (thumbnailError: any) {
+        console.warn(
+          "⚠️ Thumbnail upload failed, using main file as fallback:",
+          thumbnailError.message
+        );
+        // If thumbnail fails, use the main file path as fallback
+        thumbData = { path: fileData.path };
+      }
+    } else {
+      // For PDFs and other non-image files, use the main file path as thumbnail path
+      thumbData = { path: fileData.path };
+      console.log("📄 Using main file as thumbnail for non-image file");
+    }
+  } catch (uploadError) {
+    console.error(
+      "❌ File upload failed after lab_report creation:",
+      uploadError
+    );
+
+    // Clean up the lab_report record since file upload failed
+    console.log("🧹 Cleaning up lab_report record due to file upload failure");
+    try {
+      await supabase.from("lab_reports").delete().eq("id", labReportData.id);
+      console.log("✅ Lab report cleanup successful");
+    } catch (cleanupError) {
+      console.error("❌ Failed to cleanup lab_report:", cleanupError);
+    }
+
+    throw new Error("File upload failed: " + uploadError.message);
+  }
+
+  // 5. Now insert file into the database with reference to the lab_report
   const { data: dataFile, error: insertError } = await supabase
     .from("files")
     .insert({
@@ -107,19 +178,26 @@ export async function uploadFileAndInsertToDb(
       extraction_status: ExtractionStatus.PENDING,
       uploaded_at: new Date().toISOString(),
       content_hash: contentHash, // Store the hash for future duplicate checks
+      report_id: labReportData.id, // Reference to the lab report
     })
     .select("*")
     .single();
 
-  if (!dataFile) {
-    throw new Error("File data is null, cannot insert lab report");
-  }
-
   if (insertError) {
-    throw insertError;
+    console.error("Failed to create file record:", insertError);
+    throw new Error("Failed to create file record: " + insertError.message);
   }
 
-  return { dataFile };
+  if (!dataFile) {
+    throw new Error("File data is null after insertion");
+  }
+
+  console.log("✅ File record created successfully:", dataFile.id);
+
+  return {
+    dataFile,
+    labReport: labReportData as LabReport,
+  };
 }
 
 /**

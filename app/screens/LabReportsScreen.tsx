@@ -1,7 +1,7 @@
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { format } from "date-fns";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Button,
   FlatList,
@@ -17,23 +17,42 @@ import { FileText } from "lucide-react-native";
 import { useMemo } from "react";
 import ExtractionProgressBar from "../components/ExtractionProgressBar";
 import { ThumbnailLoader } from "../components/ThumbnailLoader";
+import { debugLabReports } from "../services/labReports";
+import { useAuthStore } from "../store/useAuthStore";
+import { useLabReportsStore } from "../store/useLabReportsStore";
 import { ExtractionStatus } from "../types/ExtractionStatus.enum";
 import { LabReport } from "../types/LabReport";
 
 interface LabReportsScreenProps {
-  reports: LabReport[];
   refreshing: boolean;
   onRefresh: () => void;
+  navigation?: any;
 }
 
 const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
-  reports,
   refreshing,
   onRefresh,
+  navigation: propNavigation,
 }) => {
   const [filter, setFilter] = useState("By date Added");
   const [isModalVisible, setModalVisible] = useState(false);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+  const { user } = useAuthStore();
+
+  // Get reports directly from the store to ensure immediate re-renders on updates
+  const { reports } = useLabReportsStore();
+
+  // Debug: Log when reports change
+  useEffect(() => {
+    console.log("LabReportsScreen: reports changed, count:", reports.length);
+    if (reports.length > 0) {
+      console.log(
+        "Latest report:",
+        reports[0]?.laboratory_name,
+        reports[0]?.extraction_status
+      );
+    }
+  }, [reports]);
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
@@ -58,9 +77,65 @@ const LabReportsScreen: React.FC<LabReportsScreenProps> = ({
     });
   }, [reports, filter]);
 
-  const handleRefresh = useCallback(() => {
+  const handleRefresh = useCallback(async () => {
+    console.log("🔄 Manual refresh triggered");
+
+    // Debug: Check what's actually in the database
+    if (user?.id) {
+      await debugLabReports(user.id);
+    }
+
+    // Side-by-side subscription test
+    console.log("🧪 Side-by-side subscription comparison test");
+
+    // Test both tables with identical setup
+    // DISABLED: Realtime subscription tests disabled to avoid CLOSED status issues
+    // const testBiomarkers = () => {
+    //   const biomarkersChannel = supabase.channel(
+    //     `test_biomarkers_${Date.now()}`
+    //   );
+    //   biomarkersChannel
+    //     .on(
+    //       "postgres_changes",
+    //       { event: "INSERT", schema: "public", table: "biomarkers" },
+    //       (payload) => console.log("🧪 Biomarkers test event:", payload)
+    //     )
+    //     .subscribe((status) => {
+    //       console.log("🧪 Biomarkers test status:", status);
+    //       if (status !== "CHANNEL_ERROR" && status !== "TIMED_OUT") {
+    //         setTimeout(() => biomarkersChannel.unsubscribe(), 2000);
+    //       }
+    //     });
+    // };
+
+    // const testLabReports = () => {
+    //   const labReportsChannel = supabase.channel(
+    //     `test_lab_reports_${Date.now()}`
+    //   );
+    //   labReportsChannel
+    //     .on(
+    //       "postgres_changes",
+    //       { event: "INSERT", schema: "public", table: "lab_reports" },
+    //       (payload) => console.log("🧪 Lab reports test event:", payload)
+    //     )
+    //     .subscribe((status) => {
+    //       console.log("🧪 Lab reports test status:", status);
+    //       if (status !== "CHANNEL_ERROR" && status !== "TIMED_OUT") {
+    //         setTimeout(() => labReportsChannel.unsubscribe(), 2000);
+    //       }
+    //     });
+    // };
+
+    // console.log("🧪 Testing biomarkers subscription...");
+    // testBiomarkers();
+
+    // setTimeout(() => {
+    //   console.log("🧪 Testing lab_reports subscription...");
+    //   testLabReports();
+    // }, 500);
+
     onRefresh();
-  }, [onRefresh]);
+  }, [onRefresh, user?.id]);
 
   const renderReportItem = ({ item }: { item: LabReport }) => {
     return (

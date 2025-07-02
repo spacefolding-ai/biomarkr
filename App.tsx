@@ -6,7 +6,7 @@ import {
 } from "@expo-google-fonts/roboto";
 import { NavigationContainer } from "@react-navigation/native";
 import * as ScreenOrientation from "expo-screen-orientation";
-import React, { useEffect } from "react";
+import React, { memo, useEffect } from "react";
 import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-get-random-values";
@@ -16,8 +16,21 @@ import AppNavigator from "./app/navigation/AppNavigator";
 import { useAuthStore } from "./app/store/useAuthStore";
 import { useBiomarkersStore } from "./app/store/useBiomarkersStore";
 import { useLabReportsStore } from "./app/store/useLabReportsStore";
-import { useBiomarkersRealtime } from "./app/supabase/hooks/useBiomarkersRealtime";
-import { useLabReportsRealtime } from "./app/supabase/hooks/useLabReportsRealtime";
+
+// Memoized component to prevent excessive re-renders
+const RealtimeSubscriptions = memo(() => {
+  const { user } = useAuthStore();
+
+  console.log("🔄 RealtimeSubscriptions component rendered");
+  console.log("👤 User in RealtimeSubscriptions:", user?.id || "No user");
+
+  // DISABLED: Realtime subscriptions are causing CLOSED status issues
+  // TODO: Re-enable once realtime issues are resolved
+  // useLabReportsRealtime();
+  // useBiomarkersRealtime();
+
+  return null;
+});
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -30,16 +43,12 @@ export default function App() {
   const { setUserId: setBiomarkersUserId } = useBiomarkersStore();
   const { setUserId: setLabReportsUserId } = useLabReportsStore();
 
-  // Initialize realtime hooks
-  useLabReportsRealtime();
-  useBiomarkersRealtime();
-
   useEffect(() => {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT);
     initAuth();
   }, []);
 
-  // Set user IDs when user is available
+  // Set user IDs when user is available (keeping for backward compatibility with other parts)
   useEffect(() => {
     if (user && session) {
       setBiomarkersUserId(user.id);
@@ -61,6 +70,7 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <NavigationContainer>
+        <RealtimeSubscriptions />
         <AppNavigator />
         <Toast />
       </NavigationContainer>
