@@ -1,4 +1,5 @@
 import * as FileSystem from "expo-file-system";
+import * as MediaLibrary from "expo-media-library";
 import Toast from "react-native-toast-message";
 import { supabase } from "../supabase/supabaseClient";
 import { decode } from "../utils/file";
@@ -137,5 +138,76 @@ export async function deleteAllFilesFromStorageByReportId(
     }
   } catch (error) {
     throw new Error("Unexpected error: " + error);
+  }
+}
+
+export async function downloadFileFromStorage(
+  filePath: string,
+  fileName: string
+): Promise<void> {
+  try {
+    // Get download URL from Supabase storage
+    const { data, error } = await supabase.storage
+      .from("uploads")
+      .download(filePath);
+
+    if (error) {
+      throw new Error(`Failed to download file: ${error.message}`);
+    }
+
+    // Convert blob to base64
+    const reader = new FileReader();
+    reader.readAsDataURL(data);
+
+    return new Promise((resolve, reject) => {
+      reader.onload = async () => {
+        try {
+          const base64Data = reader.result as string;
+          const base64String = base64Data.split(",")[1];
+
+          // Create file URI in document directory
+          const fileUri = FileSystem.documentDirectory + fileName;
+
+          // Write file to device
+          await FileSystem.writeAsStringAsync(fileUri, base64String, {
+            encoding: FileSystem.EncodingType.Base64,
+          });
+
+          // Request media library permissions
+          const { status } = await MediaLibrary.requestPermissionsAsync();
+          if (status === "granted") {
+            // Save to media library (Downloads folder)
+            await MediaLibrary.saveToLibraryAsync(fileUri);
+
+            Toast.show({
+              type: "success",
+              text1: "Success",
+              text2: `File downloaded: ${fileName}`,
+            });
+          } else {
+            Toast.show({
+              type: "info",
+              text1: "Downloaded",
+              text2: `File saved to app directory: ${fileName}`,
+            });
+          }
+
+          resolve();
+        } catch (saveError) {
+          reject(new Error(`Failed to save file: ${saveError.message}`));
+        }
+      };
+
+      reader.onerror = () => {
+        reject(new Error("Failed to read file data"));
+      };
+    });
+  } catch (error: any) {
+    Toast.show({
+      type: "error",
+      text1: "Error",
+      text2: error.message || "Failed to download file",
+    });
+    throw error;
   }
 }
