@@ -1,6 +1,16 @@
-import { format } from "date-fns";
-import React, { useEffect, useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Picker } from "@react-native-picker/picker";
+import { format, subMonths, subYears } from "date-fns";
+import React, { useState } from "react";
+import {
+  Button,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useColorScheme,
+} from "react-native";
+import ReactNativeModal from "react-native-modal";
 import { Circle, G, Path, Rect, Text as SvgText } from "react-native-svg";
 import { Grid, LineChart } from "react-native-svg-charts";
 import { useLabReportsStore } from "../store/useLabReportsStore";
@@ -28,7 +38,23 @@ interface ChartRange {
   fallbackRange?: [number, number];
 }
 
+type TimePeriod = "all time" | "last year" | "last six months";
+
 // ========================= HELPER FUNCTIONS =========================
+
+// Helper function to filter data by time period
+const filterDataByTimePeriod = (
+  data: DataPoint[],
+  period: TimePeriod
+): DataPoint[] => {
+  if (period === "all time") return data;
+
+  const now = new Date();
+  const cutoffDate =
+    period === "last year" ? subYears(now, 1) : subMonths(now, 6);
+
+  return data.filter((item) => new Date(item.date) >= cutoffDate);
+};
 
 // Helper function to expand reference range for visual zone display
 const getExpandedReferenceRange = (
@@ -806,25 +832,164 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
   optimalRange,
   navigation,
 }) => {
-  // Initialize with the last data point selected by default (if data exists)
   const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(
-    data && data.length > 0 ? data.length - 1 : null
+    null
   );
+  const [selectedTimePeriod, setSelectedTimePeriod] =
+    useState<TimePeriod>("all time");
+  const [isTimePeriodModalVisible, setTimePeriodModalVisible] = useState(false);
+  const [tempTimePeriod, setTempTimePeriod] = useState<TimePeriod>("all time");
 
-  // Get lab reports from store for navigation
+  const colorScheme = useColorScheme();
+  const isDarkMode = colorScheme === "dark";
+
   const { reports } = useLabReportsStore();
 
-  // Handle navigation to lab report
-  const handleNavigateToLabReport = (reportId: string) => {
-    if (!navigation) return;
+  // Filter data based on selected time period
+  const filteredData = filterDataByTimePeriod(data, selectedTimePeriod);
 
-    const labReport = reports.find((report) => report.id === reportId);
-    if (labReport) {
-      navigation.navigate("LabReportDetails", {
-        labReport,
-        isEditMode: false,
-      });
+  // Sort data by date to ensure proper chronological display
+  const sortedData = [...filteredData].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+
+  // Prepare data for the chart
+  const values = sortedData.map((item) => item.value);
+  const extendedValues = extendDataForPositioning(values);
+
+  // Chart configuration
+  const { yMin, yMax, fallbackRange } = calculateChartRange(
+    values,
+    referenceRange,
+    optimalRange
+  );
+
+  const handleNavigateToLabReport = (reportId: string) => {
+    const report = reports.find((r) => r.id === reportId);
+    if (report && navigation) {
+      navigation.navigate("LabReportDetails", { report });
     }
+  };
+
+  const toggleTimePeriodModal = () => {
+    if (!isTimePeriodModalVisible) {
+      setTempTimePeriod(selectedTimePeriod);
+    }
+    setTimePeriodModalVisible(!isTimePeriodModalVisible);
+  };
+
+  const handleDone = () => {
+    setSelectedTimePeriod(tempTimePeriod);
+    setTimePeriodModalVisible(false);
+  };
+
+  const handleCancel = () => {
+    setTempTimePeriod(selectedTimePeriod); // Reset to original selection
+    setTimePeriodModalVisible(false);
+  };
+
+  const getTimePeriodDisplayName = (period: TimePeriod) => {
+    switch (period) {
+      case "all time":
+        return "all time";
+      case "last year":
+        return "last year";
+      case "last six months":
+        return "last six months";
+      default:
+        return period;
+    }
+  };
+
+  // Dynamic styles based on color scheme
+  const dynamicStyles = {
+    modalContent: {
+      backgroundColor: isDarkMode ? "#1c1c1e" : "white",
+    },
+    modalHeader: {
+      borderColor: isDarkMode ? "#48484a" : "#ccc",
+    },
+    modalTitle: {
+      color: isDarkMode ? "white" : "black",
+    },
+  };
+
+  const renderTimePeriodModal = () => {
+    return (
+      <ReactNativeModal
+        isVisible={isTimePeriodModalVisible}
+        onBackdropPress={handleCancel}
+        style={{
+          justifyContent: "flex-end",
+          margin: 0,
+        }}
+        {...({} as any)}
+      >
+        <View
+          style={[
+            {
+              borderRadius: 10,
+              alignItems: "center",
+              height: "33%",
+            },
+            dynamicStyles.modalContent,
+          ]}
+        >
+          <View
+            style={[
+              {
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                width: "100%",
+                paddingHorizontal: 10,
+                height: 50,
+                borderBottomWidth: 1,
+              },
+              dynamicStyles.modalHeader,
+            ]}
+          >
+            <Button
+              title="Cancel"
+              onPress={handleCancel}
+              color={isDarkMode ? "#007AFF" : undefined}
+            />
+            <Text
+              style={[
+                {
+                  fontSize: 18,
+                  fontWeight: "500",
+                },
+                dynamicStyles.modalTitle,
+              ]}
+            >
+              Time Period
+            </Text>
+            <Button
+              title="Done"
+              onPress={handleDone}
+              color={isDarkMode ? "#007AFF" : undefined}
+            />
+          </View>
+          <Picker
+            selectedValue={tempTimePeriod}
+            onValueChange={(itemValue) => setTempTimePeriod(itemValue)}
+            style={{
+              width: "100%",
+              flex: 1,
+              color: isDarkMode ? "white" : "black",
+            }}
+            itemStyle={{
+              color: isDarkMode ? "white" : "black",
+            }}
+          >
+            <Picker.Item label="All time" value="all time" />
+            <Picker.Item label="Last year" value="last year" />
+            <Picker.Item label="Last six months" value="last six months" />
+          </Picker>
+        </View>
+      </ReactNativeModal>
+    );
   };
 
   if (!data || data.length === 0) {
@@ -832,47 +997,78 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>Dynamics</Text>
-          <Text style={styles.timeRange}>all time</Text>
+          <TouchableOpacity
+            onPress={toggleTimePeriodModal}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: "#f0f0f0",
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              borderRadius: 20,
+              marginRight: 12,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "500",
+                color: "#000",
+                marginRight: 4,
+              }}
+            >
+              {getTimePeriodDisplayName(selectedTimePeriod)}
+            </Text>
+            <Ionicons name="chevron-down" size={16} color="#666" />
+          </TouchableOpacity>
         </View>
         <View style={styles.noDataContainer}>
           <Text style={styles.noDataText}>No historical data available</Text>
         </View>
+        {renderTimePeriodModal()}
       </View>
     );
   }
 
-  // Sort data by date
-  const sortedData = [...data].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
-  );
-
-  // Update selected index to match sorted data (last item)
-  useEffect(() => {
-    setSelectedPointIndex(sortedData.length - 1);
-  }, [data]);
-
-  const values = sortedData.map((item) => item.value);
-
-  // Handle single data point case
-  if (data.length === 1) {
-    const singlePoint = sortedData[0];
+  if (!filteredData || filteredData.length === 0) {
     return (
-      <SinglePointChart
-        dataPoint={singlePoint}
-        unit={unit}
-        referenceRange={referenceRange}
-        optimalRange={optimalRange}
-      />
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Dynamics</Text>
+          <TouchableOpacity
+            onPress={toggleTimePeriodModal}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: "#f0f0f0",
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              borderRadius: 20,
+              marginRight: 12,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "500",
+                color: "#000",
+                marginRight: 4,
+              }}
+            >
+              {getTimePeriodDisplayName(selectedTimePeriod)}
+            </Text>
+            <Ionicons name="chevron-down" size={16} color="#666" />
+          </TouchableOpacity>
+        </View>
+        <View style={styles.noDataContainer}>
+          <Text style={styles.noDataText}>
+            No data available for {getTimePeriodDisplayName(selectedTimePeriod)}
+          </Text>
+        </View>
+        {renderTimePeriodModal()}
+      </View>
     );
   }
-
-  // Multi-point chart logic
-  const { yMin, yMax, fallbackRange } = calculateChartRange(
-    values,
-    referenceRange,
-    optimalRange
-  );
-  const extendedValues = extendDataForPositioning(values);
 
   // Create decorator components that receive x, y from LineChart context
   const BackgroundZonesDecorator = ({ x, y }: any) => (
@@ -915,7 +1111,30 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Dynamics</Text>
-        <Text style={styles.timeRange}>all time</Text>
+        <TouchableOpacity
+          onPress={toggleTimePeriodModal}
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            backgroundColor: "#f0f0f0",
+            paddingHorizontal: 12,
+            paddingVertical: 8,
+            borderRadius: 20,
+            marginRight: 12,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 16,
+              fontWeight: "500",
+              color: "#000",
+              marginRight: 4,
+            }}
+          >
+            {getTimePeriodDisplayName(selectedTimePeriod)}
+          </Text>
+          <Ionicons name="chevron-down" size={16} color="#666" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.chartContainer}>
@@ -963,6 +1182,8 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
         unit={unit}
         onNavigate={handleNavigateToLabReport}
       />
+
+      {renderTimePeriodModal()}
     </View>
   );
 };
