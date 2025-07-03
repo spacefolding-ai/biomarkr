@@ -301,7 +301,7 @@ const LabReportDetailsScreen: React.FC<LabReportDetailsScreenProps> = ({
         navigation={navigation}
       />
     ),
-    docs: () => <DocumentsTab />,
+    docs: () => <DocumentsTab labReport={labReport} />,
   });
 
   const handleIndexChange = (newIndex: number) => {
