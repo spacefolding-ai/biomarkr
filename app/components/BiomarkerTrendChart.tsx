@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
 import { format, subMonths, subYears } from "date-fns";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   StyleSheet,
@@ -119,7 +119,7 @@ const getAbnormalFlagIcon = (flag?: string) => {
 };
 
 const formatListDate = (date: string) => {
-  return format(new Date(date), "MMM d");
+  return format(new Date(date), "MMM d, yyyy");
 };
 
 const formatChartDate = (date: string) => {
@@ -297,25 +297,56 @@ const SinglePointChart: React.FC<SinglePointChartProps> = ({
             )}
           </View>
 
-          {/* Dot positioned at correct Y-value */}
+          {/* Flex container for precise 60% positioning - accounting for chart insets */}
           <View
-            style={[
-              styles.singlePointDotContainer,
-              {
-                bottom: `${((dataPoint.value - yMin) / (yMax - yMin)) * 150}px`,
-              },
-            ]}
+            style={{
+              position: "absolute",
+              bottom: `${((dataPoint.value - yMin) / (yMax - yMin)) * 150}px`,
+              left: 20, // Match contentInset left
+              right: 20, // Match contentInset right
+              flexDirection: "row",
+              height: 16, // Height of the dot
+              alignItems: "center",
+            }}
           >
-            <View style={[styles.singleDot, { backgroundColor: color }]} />
+            {/* 60% spacer */}
+            <View style={{ flex: 0.6 }} />
+            {/* Dot positioned exactly at 60% boundary */}
+            <View
+              style={[
+                styles.singleDot,
+                { backgroundColor: color, transform: [{ translateX: -8 }] },
+              ]}
+            />
+            {/* 40% spacer */}
+            <View style={{ flex: 0.4 }} />
           </View>
 
-          {/* Full vertical line passing through the dot */}
+          {/* Vertical line positioned using flex calculation - accounting for chart insets */}
           <View
-            style={[
-              styles.singlePointVerticalLine,
-              { left: "50%", transform: [{ translateX: -0.5 }] },
-            ]}
-          />
+            style={{
+              position: "absolute",
+              top: 20, // Match contentInset top
+              bottom: 20, // Match contentInset bottom
+              left: 20, // Match contentInset left
+              right: 20, // Match contentInset right
+              flexDirection: "row",
+            }}
+          >
+            {/* 60% spacer for line positioning */}
+            <View style={{ flex: 0.6 }} />
+            {/* Vertical line at 60% boundary */}
+            <View
+              style={{
+                width: 1,
+                height: "100%",
+                backgroundColor: color,
+                opacity: 0.5,
+                transform: [{ translateX: -0.5 }],
+              }}
+            />
+            <View style={{ flex: 0.4 }} />
+          </View>
 
           {/* X-axis line */}
           <View style={styles.xAxisLine} />
@@ -671,7 +702,7 @@ const MultiColorDecorator: React.FC<MultiColorDecoratorProps> = ({
         React.createElement(Path, {
           key: `vertical-line-${index}`,
           d: `M ${lineX} ${lineBottom} L ${lineX} ${lineTop}`,
-          stroke: "#007AFF",
+          stroke: color,
           strokeWidth: 1,
           strokeDasharray: "3,3",
           opacity: 0.5,
@@ -750,31 +781,40 @@ interface DateLabelsProps {
   x: any;
   sortedData: DataPoint[];
   selectedPointIndex: number | null;
+  referenceRange?: [number, number];
+  optimalRange?: [number, number];
 }
 
 const DateLabels: React.FC<DateLabelsProps> = ({
   x,
   sortedData,
   selectedPointIndex,
+  referenceRange,
+  optimalRange,
 }) => {
   const elements = [];
 
-  for (let index = 0; index < sortedData.length; index++) {
-    const dataPoint = sortedData[index];
-    const isSelected = selectedPointIndex === index;
-    const dotX = x(index);
+  // Only show date for the selected point
+  if (selectedPointIndex !== null && selectedPointIndex < sortedData.length) {
+    const dataPoint = sortedData[selectedPointIndex];
+    const dotX = x(selectedPointIndex);
+    const dotColor = getLineColorForValue(
+      dataPoint.value,
+      referenceRange,
+      optimalRange
+    );
 
     elements.push(
       React.createElement(
         SvgText,
         {
-          key: `date-${index}`,
+          key: `date-${selectedPointIndex}`,
           x: dotX,
           y: 15,
           textAnchor: "middle",
           fontSize: 12,
-          fontWeight: isSelected ? "600" : "400",
-          fill: isSelected ? "#007AFF" : "#8E8E93",
+          fontWeight: "600",
+          fill: dotColor,
         },
         formatChartDate(dataPoint.date)
       )
@@ -795,9 +835,12 @@ const ValuesList: React.FC<ValuesListProps> = ({
   unit,
   onNavigate,
 }) => {
+  // Sort data in descending order (most recent first) for the values list
+  const reversedData = [...sortedData].reverse();
+
   return (
     <View style={styles.valuesList}>
-      {sortedData.map((dataPoint, index) => {
+      {reversedData.map((dataPoint, index) => {
         const flagInfo = getAbnormalFlagIcon(dataPoint.abnormal_flag);
         return (
           <TouchableOpacity
@@ -832,9 +875,6 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
   optimalRange,
   navigation,
 }) => {
-  const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(
-    null
-  );
   const [selectedTimePeriod, setSelectedTimePeriod] =
     useState<TimePeriod>("all time");
   const [isTimePeriodModalVisible, setTimePeriodModalVisible] = useState(false);
@@ -852,6 +892,20 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
   const sortedData = [...filteredData].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
   );
+
+  // Initialize selectedPointIndex to the latest date (last item in sorted array)
+  const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(
+    sortedData.length > 0 ? sortedData.length - 1 : null
+  );
+
+  // Update selectedPointIndex when data or time period changes (not on every render)
+  useEffect(() => {
+    if (sortedData.length > 0) {
+      setSelectedPointIndex(sortedData.length - 1);
+    } else {
+      setSelectedPointIndex(null);
+    }
+  }, [data, selectedTimePeriod]);
 
   // Prepare data for the chart
   const values = sortedData.map((item) => item.value);
@@ -1104,6 +1158,8 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
       x={x}
       sortedData={sortedData}
       selectedPointIndex={selectedPointIndex}
+      referenceRange={referenceRange}
+      optimalRange={optimalRange}
     />
   );
 
@@ -1250,7 +1306,7 @@ const styles = StyleSheet.create({
     height: 200,
     justifyContent: "flex-end",
     alignItems: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 0, // Remove horizontal padding to give more chart area
     position: "relative",
   },
   singlePointChart: {
@@ -1268,12 +1324,11 @@ const styles = StyleSheet.create({
   },
   singlePointZone: {
     position: "absolute",
-    left: 0,
-    right: 0,
+    left: 1, // Start from Y-axis (1px width)
+    right: 0, // Extend to right edge
   },
   singlePointDotContainer: {
     position: "absolute",
-    left: "50%",
     transform: [{ translateX: -8 }],
   },
   singlePointLine: {
