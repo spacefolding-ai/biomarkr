@@ -29,14 +29,44 @@ interface ChartRange {
 }
 
 // ========================= HELPER FUNCTIONS =========================
+
+// Helper function to expand reference range for visual zone display
+const getExpandedReferenceRange = (
+  referenceRange?: [number, number]
+): [number, number] | undefined => {
+  if (!referenceRange) return undefined;
+
+  const rangeSpan = referenceRange[1] - referenceRange[0];
+  const expansionFactor = 0.15; // Expand by 15% on each side
+  const expansion = rangeSpan * expansionFactor;
+
+  return [
+    Math.max(0, referenceRange[0] - expansion), // Don't go below 0
+    referenceRange[1] + expansion,
+  ];
+};
+
+// Helper function to get color based on Y position (which zone the line is in)
+const getColorForYPosition = (
+  yValue: number,
+  referenceRange?: [number, number]
+): string => {
+  if (!referenceRange) return "#FF9500"; // Orange if no reference range
+
+  if (yValue >= referenceRange[0] && yValue <= referenceRange[1]) {
+    return "#34C759"; // Green for normal zone
+  } else {
+    return "#FF9500"; // Orange for abnormal zones
+  }
+};
+
 const getLineColorForValue = (
   value: number,
   referenceRange?: [number, number],
   optimalRange?: [number, number]
 ) => {
-  if (optimalRange && value >= optimalRange[0] && value <= optimalRange[1]) {
-    return "#007AFF"; // Blue for optimal
-  } else if (
+  // Use original reference range for color determination, not expanded
+  if (
     referenceRange &&
     value >= referenceRange[0] &&
     value <= referenceRange[1]
@@ -77,7 +107,10 @@ const calculateChartRange = (
 ): ChartRange => {
   const minValue = Math.min(...values);
   const maxValue = Math.max(...values);
-  const ranges = [referenceRange, optimalRange].filter(Boolean) as [
+
+  // Use expanded reference range for chart scaling to accommodate wider zones
+  const expandedReferenceRange = getExpandedReferenceRange(referenceRange);
+  const ranges = [expandedReferenceRange || referenceRange].filter(Boolean) as [
     number,
     number
   ][];
@@ -131,8 +164,11 @@ const SinglePointChart: React.FC<SinglePointChartProps> = ({
     optimalRange
   );
 
+  // Get expanded reference range for visual display
+  const expandedReferenceRange = getExpandedReferenceRange(referenceRange);
+
   // Calculate Y-axis range
-  const ranges = [referenceRange, optimalRange].filter(Boolean) as [
+  const ranges = [expandedReferenceRange || referenceRange].filter(Boolean) as [
     number,
     number
   ][];
@@ -159,15 +195,16 @@ const SinglePointChart: React.FC<SinglePointChartProps> = ({
           {/* Background zones */}
           <View style={styles.singlePointBackground}>
             {/* Gray abnormal zones */}
-            {referenceRange && (
+            {expandedReferenceRange && (
               <>
-                {/* Abnormal HIGH zone (above reference range) */}
+                {/* Abnormal HIGH zone (above expanded reference range) */}
                 <View
                   style={[
                     styles.singlePointZone,
                     {
                       height: `${
-                        ((yMax - referenceRange[1]) / (yMax - yMin)) * 100
+                        ((yMax - expandedReferenceRange[1]) / (yMax - yMin)) *
+                        100
                       }%`,
                       backgroundColor: "#8E8E93",
                       opacity: 0.2,
@@ -175,12 +212,16 @@ const SinglePointChart: React.FC<SinglePointChartProps> = ({
                     },
                   ]}
                 />
-                {/* Abnormal LOW zone (below reference range) */}
+                {/* Abnormal LOW zone (below expanded reference range) - extend to bottom */}
                 <View
                   style={[
                     styles.singlePointZone,
                     {
-                      height: `${(referenceRange[0] / (yMax - yMin)) * 100}%`,
+                      height: `${
+                        ((expandedReferenceRange[0] - yMin) / (yMax - yMin)) *
+                          100 +
+                        10
+                      }%`, // Extra 10% to ensure full coverage to bottom
                       backgroundColor: "#8E8E93",
                       opacity: 0.2,
                       bottom: 0,
@@ -190,38 +231,22 @@ const SinglePointChart: React.FC<SinglePointChartProps> = ({
               </>
             )}
 
-            {/* Green normal zone */}
-            {referenceRange && (
+            {/* Green normal zone (using expanded range for wider visual display) */}
+            {expandedReferenceRange && (
               <View
                 style={[
                   styles.singlePointZone,
                   {
                     height: `${
-                      ((referenceRange[1] - referenceRange[0]) /
+                      ((expandedReferenceRange[1] - expandedReferenceRange[0]) /
                         (yMax - yMin)) *
                       100
                     }%`,
                     backgroundColor: "#34C759",
                     opacity: 0.2,
-                    bottom: `${(referenceRange[0] / (yMax - yMin)) * 100}%`,
-                  },
-                ]}
-              />
-            )}
-
-            {/* Blue optimal zone (striped overlay) */}
-            {optimalRange && (
-              <View
-                style={[
-                  styles.singlePointZone,
-                  {
-                    height: `${
-                      ((optimalRange[1] - optimalRange[0]) / (yMax - yMin)) *
-                      100
+                    bottom: `${
+                      (expandedReferenceRange[0] / (yMax - yMin)) * 100
                     }%`,
-                    backgroundColor: "#007AFF",
-                    opacity: 0.15,
-                    bottom: `${(optimalRange[0] / (yMax - yMin)) * 100}%`,
                   },
                 ]}
               />
@@ -321,10 +346,13 @@ const BackgroundZones: React.FC<BackgroundZonesProps> = ({
   const zoneStartX = 0; // Start from Y-axis
   const zoneWidth = x(extendedValues.length - 1); // Extend to full chart width
 
+  // Get expanded reference range for visual display
+  const expandedReferenceRange = getExpandedReferenceRange(referenceRange);
+
   // Abnormal HIGH zone (above normal range) - Gray
-  if (referenceRange) {
-    const abnormalHighY = y(yMax);
-    const abnormalHighHeight = y(referenceRange[1]) - y(yMax);
+  if (expandedReferenceRange) {
+    const abnormalHighY = 0; // Start from top of chart
+    const abnormalHighHeight = y(expandedReferenceRange[1]); // Extend to top of expanded normal range
 
     if (abnormalHighHeight > 0) {
       zones.push(
@@ -341,10 +369,11 @@ const BackgroundZones: React.FC<BackgroundZonesProps> = ({
     }
   }
 
-  // Normal range zone - Green
-  if (referenceRange) {
-    const normalY = y(referenceRange[1]);
-    const normalHeight = y(referenceRange[0]) - y(referenceRange[1]);
+  // Normal range zone - Green (using expanded range for wider visual display)
+  if (expandedReferenceRange) {
+    const normalY = y(expandedReferenceRange[1]);
+    const normalHeight =
+      y(expandedReferenceRange[0]) - y(expandedReferenceRange[1]);
 
     zones.push(
       React.createElement(Rect, {
@@ -359,42 +388,24 @@ const BackgroundZones: React.FC<BackgroundZonesProps> = ({
     );
   }
 
-  // Optimal zone (blue striped overlay) - Blue over green
-  if (optimalRange) {
-    const optimalY = y(optimalRange[1]);
-    const optimalHeight = y(optimalRange[0]) - y(optimalRange[1]);
+  // Abnormal LOW zone (below normal range) - Gray
+  if (expandedReferenceRange) {
+    const abnormalLowY = y(expandedReferenceRange[0]);
+    // Extend to bottom of chart area (including contentInset) by using a large height
+    // This ensures the zone extends well beyond the visible chart area
+    const abnormalLowHeight = 1000; // Large height to ensure full coverage
 
     zones.push(
       React.createElement(Rect, {
-        key: "optimal-zone",
+        key: "abnormal-low-zone",
         x: zoneStartX,
-        y: optimalY,
+        y: abnormalLowY,
         width: zoneWidth,
-        height: optimalHeight,
-        fill: "#007AFF",
-        fillOpacity: 0.15,
+        height: abnormalLowHeight,
+        fill: "#8E8E93",
+        fillOpacity: 0.2,
       })
     );
-  }
-
-  // Abnormal LOW zone (below normal range) - Gray
-  if (referenceRange) {
-    const abnormalLowY = y(referenceRange[0]);
-    const abnormalLowHeight = y(yMin) - y(referenceRange[0]);
-
-    if (abnormalLowHeight > 0) {
-      zones.push(
-        React.createElement(Rect, {
-          key: "abnormal-low-zone",
-          x: zoneStartX,
-          y: abnormalLowY,
-          width: zoneWidth,
-          height: abnormalLowHeight,
-          fill: "#8E8E93",
-          fillOpacity: 0.2,
-        })
-      );
-    }
   }
 
   // Add fallback range if no normal range provided
@@ -427,6 +438,8 @@ interface MultiColorDecoratorProps {
   setSelectedPointIndex: (index: number) => void;
   referenceRange?: [number, number];
   optimalRange?: [number, number];
+  yMin: number;
+  yMax: number;
 }
 
 const MultiColorDecorator: React.FC<MultiColorDecoratorProps> = ({
@@ -438,6 +451,8 @@ const MultiColorDecorator: React.FC<MultiColorDecoratorProps> = ({
   setSelectedPointIndex,
   referenceRange,
   optimalRange,
+  yMin,
+  yMax,
 }) => {
   const elements = [];
   const realDataLength = sortedData.length;
@@ -477,44 +492,116 @@ const MultiColorDecorator: React.FC<MultiColorDecoratorProps> = ({
     return { cp1x, cp1y, cp2x, cp2y };
   };
 
+  // Helper function to calculate point on cubic Bézier curve
+  const getCubicBezierPoint = (
+    t: number,
+    x1: number,
+    y1: number,
+    cp1x: number,
+    cp1y: number,
+    cp2x: number,
+    cp2y: number,
+    x2: number,
+    y2: number
+  ) => {
+    const mt = 1 - t;
+    return {
+      x:
+        mt * mt * mt * x1 +
+        3 * mt * mt * t * cp1x +
+        3 * mt * t * t * cp2x +
+        t * t * t * x2,
+      y:
+        mt * mt * mt * y1 +
+        3 * mt * mt * t * cp1y +
+        3 * mt * t * t * cp2y +
+        t * t * t * y2,
+    };
+  };
+
+  // Helper function to convert Y screen position back to data value
+  const getDataValueFromY = (yScreen: number): number => {
+    // This is an approximation since we don't have direct access to the inverse y function
+    // We'll estimate based on the chart range
+    const chartHeight = 150; // Approximate chart height
+    const ratio = (chartHeight - yScreen) / chartHeight;
+    return yMin + (yMax - yMin) * ratio;
+  };
+
   // Add cubic Bézier curve segments between points (only for real data)
   for (let i = 0; i < realDataLength - 1; i++) {
     const currentValue = chartData[i];
-    const segmentColor = getLineColorForValue(
-      currentValue,
-      referenceRange,
-      optimalRange
-    );
+    const nextValue = chartData[i + 1];
 
     const x1 = x(i);
     const y1 = y(currentValue);
     const x2 = x(i + 1);
-    const y2 = y(chartData[i + 1]);
+    const y2 = y(nextValue);
 
-    let pathData;
+    let cp1x: number, cp1y: number, cp2x: number, cp2y: number;
 
     if (realDataLength === 2) {
-      const cp1x = x1 + (x2 - x1) * 0.3;
-      const cp1y = y1;
-      const cp2x = x2 - (x2 - x1) * 0.3;
-      const cp2y = y2;
-      pathData = `M ${x1} ${y1} C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${x2} ${y2}`;
+      cp1x = x1 + (x2 - x1) * 0.3;
+      cp1y = y1;
+      cp2x = x2 - (x2 - x1) * 0.3;
+      cp2y = y2;
     } else {
-      const { cp1x, cp1y, cp2x, cp2y } = getControlPoints(i);
-      pathData = `M ${x1} ${y1} C ${cp1x} ${cp1y} ${cp2x} ${cp2y} ${x2} ${y2}`;
+      const controlPoints = getControlPoints(i);
+      cp1x = controlPoints.cp1x;
+      cp1y = controlPoints.cp1y;
+      cp2x = controlPoints.cp2x;
+      cp2y = controlPoints.cp2y;
     }
 
-    elements.push(
-      React.createElement(Path, {
-        key: `curve-${i}`,
-        d: pathData,
-        stroke: segmentColor,
-        strokeWidth: 3,
-        strokeLinecap: "round",
-        strokeLinejoin: "round",
-        fill: "none",
-      })
-    );
+    // Sample points along the curve and create colored segments
+    const numSamples = 20; // Number of segments to create for smooth color transitions
+    for (let j = 0; j < numSamples; j++) {
+      const t1 = j / numSamples;
+      const t2 = (j + 1) / numSamples;
+
+      const point1 = getCubicBezierPoint(
+        t1,
+        x1,
+        y1,
+        cp1x,
+        cp1y,
+        cp2x,
+        cp2y,
+        x2,
+        y2
+      );
+      const point2 = getCubicBezierPoint(
+        t2,
+        x1,
+        y1,
+        cp1x,
+        cp1y,
+        cp2x,
+        cp2y,
+        x2,
+        y2
+      );
+
+      // Get the Y data value at the midpoint to determine color
+      const midY = (point1.y + point2.y) / 2;
+      const midDataValue = getDataValueFromY(midY);
+      const segmentColor = getColorForYPosition(midDataValue, referenceRange);
+
+      // Create a small line segment
+      const segmentPath = `M ${point1.x} ${point1.y} L ${point2.x} ${point2.y}`;
+
+      elements.push(
+        React.createElement(Path, {
+          key: `curve-${i}-segment-${j}`,
+          d: segmentPath,
+          stroke: segmentColor,
+          strokeWidth: 3,
+          strokeLinecap: "round",
+          strokeLinejoin: "round",
+          fill: "none",
+        })
+      );
+    }
   }
 
   // Add dots for each point with zone-based colors (only for real data)
@@ -811,6 +898,8 @@ export const BiomarkerTrendChart: React.FC<BiomarkerTrendChartProps> = ({
       setSelectedPointIndex={setSelectedPointIndex}
       referenceRange={referenceRange}
       optimalRange={optimalRange}
+      yMin={yMin}
+      yMax={yMax}
     />
   );
 
