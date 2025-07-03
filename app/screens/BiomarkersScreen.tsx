@@ -97,10 +97,35 @@ const BiomarkersScreen: React.FC<BiomarkersScreenProps> = ({
       });
     }
 
+    // Deduplicate biomarkers by marker_name, keeping only the latest one
+    const biomarkersByName = filteredByTime.reduce((acc, biomarker) => {
+      const markerName = biomarker.marker_name;
+      if (!markerName) return acc;
+
+      if (!acc[markerName]) {
+        acc[markerName] = biomarker;
+      } else {
+        // Compare dates and keep the one with the latest report_date
+        const currentDate = parseReportDate(acc[markerName].report_date);
+        const newDate = parseReportDate(biomarker.report_date);
+
+        if (newDate && currentDate && newDate > currentDate) {
+          acc[markerName] = biomarker;
+        } else if (newDate && !currentDate) {
+          acc[markerName] = biomarker;
+        }
+      }
+
+      return acc;
+    }, {} as Record<string, Biomarker>);
+
+    // Convert back to array with only distinct biomarkers (latest values)
+    const distinctBiomarkers = Object.values(biomarkersByName) as Biomarker[];
+
     // Filter by abnormal flag if enabled
-    let filteredByAbnormal = filteredByTime;
+    let filteredByAbnormal = distinctBiomarkers;
     if (showAbnormalOnly) {
-      filteredByAbnormal = filteredByTime.filter((biomarker) => {
+      filteredByAbnormal = distinctBiomarkers.filter((biomarker) => {
         const abnormalFlag = biomarker.abnormal_flag?.toLowerCase();
         return abnormalFlag && abnormalFlag !== "normal" && abnormalFlag !== "";
       });
